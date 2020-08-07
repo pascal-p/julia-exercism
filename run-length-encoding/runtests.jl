@@ -34,7 +34,7 @@ end
 @testset "error handling" begin
     @test_throws ArgumentError encode("XY@Z")
     @test_throws ArgumentError encode("XY Z1234aaa")
-    @test_throws ArgumentError decode("XY@Z")  
+    @test_throws ArgumentError decode("XY@Z")
     @test_throws ArgumentError decode("XYZ2")
     @test_throws ArgumentError decode("abc3")
 end

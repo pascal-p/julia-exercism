@@ -1,7 +1,7 @@
 function wordcount(sentence)
   """
   Count the number of words in a given sentence
-  Retuns a dictionay with the count by words 
+  Retuns a dictionay with the count by words
   """
   wc = Dict{String,Int}()
   punctuation = ['\'', ':', ';', '?', '!', ',', '.']
