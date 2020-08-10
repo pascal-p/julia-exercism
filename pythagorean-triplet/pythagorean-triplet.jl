@@ -13,7 +13,12 @@ function to_tuple(t::Triplet)
 end
 
 function gcd(a, b)
-  a, b = a < b ? (a, b) : (b, a)
+  # ensure a & b are non negative
+  a, b = abs(a), abs(b)
+
+  a, b = a < b ? (b, a) : (a, b)
+  b == 0 && return a
+
   r = a
   while r > 1
     r = a % b
