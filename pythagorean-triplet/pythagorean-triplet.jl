@@ -1,11 +1,11 @@
-struct Triplet
-  x::Int
-  y::Int
-  z::Int
+struct Triplet{T <: Integer}
+  x::T
+  y::T
+  z::T
 end
 
 function Base.show(io::IO, t::Triplet)
-  print(io, "<$(t.x), $(t.y), $(t.z)>")
+  print(io, "($(t.x), $(t.y), $(t.z))")  # Tuple(t.x, t.y, t.z))
 end
 
 function to_tuple(t::Triplet)
@@ -15,6 +15,8 @@ end
 function gcd(a, b)
   # ensure a & b are non negative
   a, b = abs(a), abs(b)
+
+  (signbit(a) || signbit(a)) && throw(Overflow("Detected integer overflow..."))
 
   a, b = a < b ? (b, a) : (a, b)
   b == 0 && return a
@@ -27,7 +29,7 @@ function gcd(a, b)
   return r == 0 ? a : r
 end
 
-function triplet(n::Int)
+function ptriplets(n::Int)
   """
   Version using Euclid's formulae (cf. https://en.wikipedia.org/wiki/Pythagorean_triple)
   Take `s` and `t` 2 integers, such that s > t > 0, s & t coprime and not both odd
@@ -43,10 +45,12 @@ function triplet(n::Int)
       gcd(s, t) != 1 && continue
 
       ncand += 1
-      c = s * s + t * t
+      s₂ = s * s
+      t₂ = t * t
+      c = s₂ + t₂
       c > n && break
 
-      a, b = s * s - t * t, 2 * s * t
+      a, b = s₂ - t₂, (s * t) << 1
       a, b = a < b ? (a, b) : (b, a)
       b > n && break
 
@@ -60,8 +64,8 @@ end
 ##
 ## relevant to exercism context (Pythagorean Triplet)
 ##
-function pythagorean_triplets(n::Int)::Array{Tuple{Int,Int,Int},1}
-  triples::Array{Tuple{Int,Int,Int},1} = [(1, 1, 1)]
+function pythagorean_triplets(n::Integer)::Array{Tuple{Integer,Integer,Integer},1}
+  triples::Array{Tuple{Integer,Integer,Integer},1} = [(1, 1, 1)]
 
   for t in 1:n
     for s in t+1:2:n
