@@ -5,8 +5,10 @@
   WIP - no all operations are implemented, nor all are safe
 """
 
+using InteractiveUtils
+
 const SIGNED_INT_LE64 = (Int8, Int16, Int32, Int64)
-const SIGNED_INT_LE128 = (SIGNED_INT_LE64..., Int128)
+const STYPES = sort(subtypes(Signed), lt=(x, y) -> ≤(sizeof(x), sizeof(y)), rev=false)
 
 struct RationalNumber{T<: Integer} <: Real
   num::T
@@ -71,8 +73,10 @@ function Base.abs(r::RationalNumber{T}) where {T <: Integer}
     if signbit(num)
       if x ∈ SIGNED_INT_LE64
         num = abs(Int128(r.num))
+
       elseif isa(x, Int128)
         num = abs(BigInt(x))
+
       end  # No other cases
     end
     num
@@ -133,7 +137,7 @@ function sub_checked(x::Integer, y::Integer)
   if typeof(x) ∈ SIGNED_INT_LE64 && typeof(y) ∈ SIGNED_INT_LE64 && r == Int128(x) - y # y will be promoted
     r  # no overflow for Int64
 
-  elseif typeof(x) ∈ SIGNED_INT_LE128 && typeof(y) ∈ SIGNED_INT_LE128 && r == BigInt(x) - y
+  elseif typeof(x) ∈ STYPES && typeof(y) ∈ STYPES && r == BigInt(x) - y
     r  # no overflow for Int128
 
   elseif x == 0 || y == 0
@@ -163,7 +167,7 @@ function op_checked(op, x::Integer, y::Integer)::Integer
   if typeof(x) ∈ SIGNED_INT_LE64 && typeof(y) ∈ SIGNED_INT_LE64 && r == op(Int128(x), y) # y will be promoted
     r  # no overflow for Int64
 
-  elseif typeof(x) ∈ SIGNED_INT_LE128 && typeof(y) ∈ SIGNED_INT_LE128 && r == op(BigInt(x), y)
+  elseif typeof(x) ∈ subtypes(Signed) && typeof(y) ∈ subtypes(Signed) && r == op(BigInt(x), y)
     r  # no overflow for Int128
 
   elseif x > 0 && y > 0
@@ -173,8 +177,7 @@ function op_checked(op, x::Integer, y::Integer)::Integer
     if op == +
       r
     elseif op == *  # overflow possible for multiplication
-      r = r > 0 ? _retry(op, r, x, y) : r
-
+      r = r ≥ 0 ? _retry(op, r, x, y) : r    # was >
     else
       throw(MethodError("op $(op) not yet implemented"))
     end
@@ -189,7 +192,12 @@ function op_checked(op, x::Integer, y::Integer)::Integer
 end
 
 function _retry(op, r::Integer, x::Integer, y::Integer)::Integer
-  if r < x || r < y
+  if r == 0 && x ≠ 0 && y ≠ 0
+    typeof(r) == Int64 && (r = op(Int128(x), Int128(y)))
+    # is r still 0? x ≠ 0 && y ≠ 0 still...
+    r == 0 && typeof(r) == Int128 && (r = op(BigInt(x), BigInt(y)))
+
+  elseif r < x || r < y
     typeof(r) == Int64 && (r = op(Int128(x), Int128(y)))                       # Redo with Int128
 
     (r < x || r < y) && typeof(r) == Int128 && (r = op(BigInt(x), BigInt(y)))  # Redo with BigInt
@@ -244,16 +252,6 @@ function Base.:^(x::Integer, r::RationalNumber{T}) where {T <: Integer}
 end
 
 
-## Conversion
-# import Base.convert, Base.promote
-#
-# promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer, S<:Integer} = RationalNumber{promote_type(T, S)}
-# promote_rule(::Type{RationalNumber{T}}, ::Type{RationalNumber{S}}) where {T<:Integer, S<:Integer} = RationalNumber{promote_type(T, S)}
-# promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer, S<:AbstractFloat} = promote_type(T,S)
-# convert(::Int128, x::Int) = Int128(x)
-# promote_rule(::Int128, ::Int) = Int128
-
-
 ##
 ## Others
 ##
@@ -294,11 +292,10 @@ end
 function promote_get_sign(n::Integer, sign)
 
   function _promote(n::Integer)
-    tn = typeof(n)
     if isa(n, BigInt)
       n
-    elseif n == typemin(tn)
-      tn == Int64 ? Int128(n) : BigInt(n)
+    elseif n == typemin(typeof(n))
+      promote_f_t(n)
     else
       n
     end
@@ -308,6 +305,8 @@ function promote_get_sign(n::Integer, sign)
   if n < 0
     sign *= -1
     n = _promote(n) * -1
+    # n = promote_f_t(n) * -1
+
     @assert n > 0
     promoted = true
   end
@@ -322,4 +321,22 @@ function promote_other(this, promoted, other, promoted_other)
   end
 
   other, promoted_other
+end
+
+## No advantage in defining a macro
+# macro promote_f_t(n)
+#   quote
+#     local stypes = sort(subtypes(Signed), lt=(x, y) -> ≤(sizeof(x), sizeof(y)), rev=false)
+
+#     for (type_f, type_t) in zip(stypes[1:end-1], stypes[2:end])
+#       isa($(esc(n)), type_f) && return type_t($(esc(n)))
+#     end
+#   end
+# end
+
+function promote_f_t(n::Signed)::Signed
+  for (type_f, type_t) in zip(STYPES[1:end-1], STYPES[2:end])
+    isa(n, type_f) && return type_t(n)
+  end
+  n
 end

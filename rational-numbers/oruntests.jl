@@ -90,14 +90,21 @@ end
     @test mul_checked(1_000_000_000, typemax(Int)) == 1_000_000_000 * Int128(typemax(Int))
     @test mul_checked(typemax(Int), 1_000_000_000) == Int128(typemax(Int)) * 1_000_000_000
 
-    @test mul_checked(typemin(Int), typemax(Int)) == Int128(typemin(Int)) * Int128(typemax(Int))
+    @test mul_checked(typemin(Int), typemax(Int)) == Int128(typemin(Int) * typemax(Int))
 
     @test mul_checked(typemin(Int), typemin(Int)) == Int128(typemin(Int)) * Int128(typemin(Int))
     @test mul_checked(typemax(Int), typemax(Int)) == Int128(typemax(Int)) * Int128(typemax(Int))
     @test mul_checked(typemin(Int), typemin(Int)) > mul_checked(typemax(Int), typemax(Int))
 
-    ## typemax = -(typemin + 1) ≡ typemax² = (-(typemin + 1))² ≡ typemax² = typemin² + 2 × typemin + 1
-    @test mul_checked(typemax(Int), typemax(Int)) == add_checked(add_checked(mul_checked(typemin(Int), typemin(Int)), mul_checked(2, typemin(Int))), 1)
+    ## typemax = -(typemin + 1)
+    ## ≡ typemax² = (-(typemin + 1))²
+    ## ≡ typemax² = typemin² + 2 × typemin + 1
+    ##
+    ## typemax(Int) * typemax(Int) = 85070591730234615847396907784232501249
+    ##
+    @test mul_checked(typemax(Int), typemax(Int)) == add_checked(add_checked(mul_checked(typemin(Int), typemin(Int)),
+                                                                             mul_checked(2, typemin(Int))),
+                                                                 1)
 
     @test typeof(mul_checked(1_000_000, typemax(Int))) == Int128
     @test typeof(mul_checked(typemax(Int), typemax(Int))) == Int128

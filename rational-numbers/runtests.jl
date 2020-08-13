@@ -131,6 +131,9 @@ end
 
   @test abs(RationalNumber(typemin(Int), 2)) == RationalNumber(div(typemax(Int), 2) + 1, 1)  # == RationalNumber(Int128(typemax(Int)) + 1, 2)
   @test abs(RationalNumber(typemin(Int), 1)) == RationalNumber(Int128(typemax(Int)) + 1, 1)
+
+  @test abs(RationalNumber(mul_checked(2, typemin(Int)), 1)) == RationalNumber(mul_checked(add_checked(1, typemax(Int)), 2))
+  # == 18446744073709551616//1
 end
 
 @testset "Reduction to lowest terms" begin
