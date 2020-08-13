@@ -1,20 +1,33 @@
 """
-  Rational numbers
+  Rational numbers: RationalNumber{T<:Integer} <: Real
+    Rational number type, with numerator and denominator of type `T`.
+
+  Caveat no Float management at this stage...
 
   Trying to avoid overflow...
-  WIP - no all operations are implemented, nor all are safe
+
+  TODO:
+      - Exponentiation of a rational number r = a/b to a real (floating-point) number x is the quotient (a^x)/(b^x), which is a real numaber.
+      - Exponentiation of a real number x to a rational number r = a/b is x^(a/b) = root(x^a, b), where root(p, q) is the qth root of p.
 """
 
 using InteractiveUtils
 
+
+import Base: <, ≤, >, ≥, ==, ≠
+import Base: +, -, *, /, //
+import Base: promote_rule, typemin, typemax, show, write, read
+
+
 const SIGNED_INT_LE64 = (Int8, Int16, Int32, Int64)
 const STYPES = sort(subtypes(Signed), lt=(x, y) -> ≤(sizeof(x), sizeof(y)), rev=false)
+
 
 struct RationalNumber{T<: Integer} <: Real
   num::T
   den::T
 
-  function RationalNumber(num::T, den::T) where {T <: Real}
+  function RationalNumber(num::T, den::T) where {T <: Integer}
     den == zero(typeof(den)) && throw(ArgumentError("[1] Denominator cannot be 0 (num: $num, den: $den)"))
     den == num && return new{T}(Base.one(T), Base.one(T))
 
@@ -42,9 +55,18 @@ struct RationalNumber{T<: Integer} <: Real
   end
 end
 
+RationalNumber(r::RationalNumber) = r  ## Identity
+
 RationalNumber(x::Integer) = RationalNumber(x, Base.one(Integer))
 
-for (FT, TT) in ((Int64, Int128), (Int128, BigInt), (Int64, BigInt))  # last one intro. for convenience?
+for (FT, TT) in zip(STYPES[1:(end - 1)], STYPES[2:end])
+  @eval begin
+    RationalNumber(x::$FT, y::$TT) = RationalNumber($TT(x), y)
+    RationalNumber(x::$TT, y::$FT) = RationalNumber(x, $TT(y))
+  end
+end
+
+for (FT, TT) in ((Int8, Int), (Int16, Int), (Int32, Int), (Int, BigInt)) # remainder Int == Int64 (machine dependent)
   @eval begin
     RationalNumber(x::$FT, y::$TT) = RationalNumber($TT(x), y)
     RationalNumber(x::$TT, y::$FT) = RationalNumber(x, $TT(y))
@@ -53,16 +75,18 @@ end
 
 
 ##
+## Promotion rules
+##
+promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer,S<:Integer} = RationalNumber{promote_type(T,S)}
+promote_rule(::Type{RationalNumber{T}}, ::Type{RationalNumber{S}}) where {T<:Integer, S<:Integer} = RationalNumber{promote_type(T,S)}
+promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer,S<:AbstractFloat} = promote_type(T, S)
+
+
+##
 ## Relational
 ##
-import Base.:<, Base.:≤, Base.:>, Base.:≥, Base.==, Base.≠
-
-Base.zero(::Type{RationalNumber{Integer}}) = RationalNumber(0, 1)
-Base.one(::Type{RationalNumber{Integer}}) = RationalNumber(1, 1)
-
-Base.zero(::Type{RationalNumber{Int}}) = RationalNumber(0, 1)
-Base.one(::Type{RationalNumber{Int}}) = RationalNumber(1, 1)
-
+Base.zero(::Type{RationalNumber{T}}) where {T <: Integer}  = RationalNumber(0, 1)
+Base.one(::Type{RationalNumber{T}}) where {T <: Integer} = RationalNumber(1, 1)
 
 Base.isone(r::RationalNumber{T}) where {T <: Integer} = isone(r.num) && isone(r.den)
 Base.iszero(r::RationalNumber{T}) where {T <: Integer} = iszero(r.num)
@@ -112,26 +136,24 @@ end
 ==(x::Integer, r::RationalNumber) = ==(RationalNumber(x), r)
 
 
+
 ##
 ## Arithmetic
 ##
-
-import Base.:+, Base.:-, Base.:*
-
 function mul_checked(x::Integer, y::Integer)::Integer
-  """signed integers ONLY"""
+  """Signed integers ONLY"""
   r = op_checked(*, x, y)
   r
 end
 
 function add_checked(x::Integer, y::Integer)::Integer
-  """signed integers ONLY"""
+  """Signed integers ONLY"""
   r = op_checked(+, x, y)
   r
 end
 
 function sub_checked(x::Integer, y::Integer)
-  """signed integers ONLY"""
+  """Signed integers ONLY"""
   r = x - y
 
   if typeof(x) ∈ SIGNED_INT_LE64 && typeof(y) ∈ SIGNED_INT_LE64 && r == Int128(x) - y # y will be promoted
@@ -208,7 +230,6 @@ function _retry(op, r::Integer, x::Integer, y::Integer)::Integer
   r
 end
 
-
 ## Avoid overflow whenever possible...
 for (op, opchk) in ((:+, add_checked), (:-, sub_checked))
   @eval begin
@@ -252,15 +273,56 @@ function Base.:^(x::Integer, r::RationalNumber{T}) where {T <: Integer}
 end
 
 
+"""
+    //(num, den)
+
+Divide two integers or rational numbers, giving a [`Rational`](@ref) result.
+
+# Examples
+```jldoctest
+julia> 3 // 5
+3//5
+
+julia> (3 // 5) // (2 // 1)
+3//10
+```
+"""
+//(n::Integer,  d::Integer) = RationalNumber(n, d)
+
+//(r::RationalNumber, x::Integer) = r / RationalNumber(x)
+
+//(x::Integer,  r::RationalNumber) = RationalNumber(x) / r
+
+//(r₁::RationalNumber, r₂::RationalNumber) = r₁ / r₂
+
+
+## unary
++(x::RationalNumber) = RationalNumber(+x.num, x.den)
+-(x::RationalNumber) = RationalNumber(-x.num, x.den)
+
+
 ##
 ## Others
 ##
+numerator(x::Integer) = x
 numerator(r::RationalNumber{T}) where {T <: Integer} = r.num
 
+denominator(x::Integer) = one(x)
 denominator(r::RationalNumber{T}) where {T <: Integer} = r.den
+
+typemin(::Type{RationalNumber{T}}) where {T <: Signed} = RationalNumber(typemin(T), one(T))
+typemin(::Type{RationalNumber{T}}) where {T <: Integer} = RationalNumber(zero(T), one(T))     ## Actually Unsigned
+typemax(::Type{RationalNumber{T}}) where {T <: Integer} = RationalNumber(typemax(T), one(T))
 
 Base.show(io::IO, r::RationalNumber{T}) where {T <: Integer} = print(io, "$(r.num)//$(r.den)")
 
+function read(s::IO, ::Type{RationalNumber{T}}) where T<:Integer
+  r = read(s, T)
+  i = read(s, T)
+  r//i
+end
+
+write(s::IO, r::RationalNumber) = write(s, numerator(r), denominator(r))
 
 ##
 ## Utils

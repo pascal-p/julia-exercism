@@ -8,6 +8,10 @@ include("rational-numbers.jl")
 @testset "One- & Zero-elements" begin
   @test zero(RationalNumber{Int}) == RationalNumber(0, 1)
   @test one(RationalNumber{Int})  == RationalNumber(1, 1)
+
+  @test abs(one(RationalNumber{UInt})) === one(RationalNumber{UInt})
+  @test abs(one(RationalNumber{Int})) === one(RationalNumber{Int})
+  @test abs(-one(RationalNumber{Int})) === one(RationalNumber{Int})
 end
 
 @testset "Contructor on limit" begin
@@ -16,6 +20,55 @@ end
   @test RationalNumber(typemax(Int64), typemax(Int64)) == RationalNumber(1, 1)
   @test RationalNumber(typemax(Int128), typemax(Int128)) == RationalNumber(1, 1)
 end
+
+@testset "RationalNumber methods" begin
+  rand_int = rand(Int8)
+
+  for T in [Int8, Int16, Int32, Int128, BigInt]
+    @test numerator(convert(T, rand_int)) == rand_int
+    @test denominator(convert(T, rand_int)) == 1
+
+    T == BigInt && continue  # BigInt typemin, typemax are NOT defined - Should I define them? side-effect of doing so?
+    @test typemin(RationalNumber{T}) == RationalNumber(typemin(T), one(T))  # -one(T)//zero(T)
+    @test typemax(RationalNumber{T}) == RationalNumber(typemax(T), one(T))  # one(T)//zero(T)
+  end
+
+  @test iszero(typemin(RationalNumber{UInt}))
+
+  # @test RationalNumber(Float32(rand_int)) == RationalNumber(rand_int)
+  @test RationalNumber(RationalNumber(rand_int)) == RationalNumber(rand_int)
+
+  # @test begin
+  #   var = -RationalNumber(UInt32(0))
+  #   var == UInt32(0)
+  # end
+
+  # @test RationalNumber(rand_int, 3)/Complex(3, 2) == Complex(RationalNumber(rand_int, 13), -RationalNumber(rand_int*2, 39))
+  # @test Complex(rand_int, 0) == RationalNumber(rand_int)
+  # @test RationalNumber(rand_int) == Complex(rand_int, 0)
+
+  # @test (Complex(rand_int, 4) == RationalNumber(rand_int)) == false
+  # @test (RationalNumber(rand_int) == Complex(rand_int, 4)) == false
+
+  # @test trunc(RationalNumber(BigInt(rand_int), BigInt(3))) == RationalNumber(trunc(BigInt, RationalNumber(BigInt(rand_int),BigInt(3))))
+  # @test  ceil(RationalNumber(BigInt(rand_int), BigInt(3))) == RationalNumber( ceil(BigInt, RationalNumber(BigInt(rand_int),BigInt(3))))
+  # @test round(RationalNumber(BigInt(rand_int), BigInt(3))) == RationalNumber(round(BigInt, RationalNumber(BigInt(rand_int),BigInt(3))))
+
+  for a = -3:3
+    # @test RationalNumber(Float32(a)) == RationalNumber(a)
+    @test RationalNumber(a)//2 == a//2
+    @test a//RationalNumber(2) == a//2 # RationalNumber(a, 2)
+    @test a.//[-2, -1, 1, 2] == [-a//2, -a//1, a//1, a//2]
+    # for b=-3:3, c=1:3
+    #   @test b//(a+c*im) == b*a//(a^2+c^2)-(b*c//(a^2+c^2))*im
+    #   for d=-3:3
+    #     @test (a+b*im)//(c+d*im) == (a*c+b*d+(b*c-a*d)*im)//(c^2+d^2)
+    #     @test Complex(RationalNumber(a)+b*im)//Complex(RationalNumber(c)+d*im) == Complex(a+b*im)//Complex(c+d*im)
+    #   end
+    # end
+  end
+end
+
 
 # julia> RationalNumber(Int128(typemax(Int64)) * 2 + 1, 2)
 # 18446744073709551615//2
@@ -120,6 +173,16 @@ end
     @test RationalNumber( 1, 2) / RationalNumber( 1, 1) == RationalNumber( 1, 2)
 
     @test_throws ArgumentError RationalNumber(1, 2) / RationalNumber(0, 3)
+
+
+    @test RationalNumber( 1, 2) // RationalNumber( 2, 3) == RationalNumber( 3, 4)
+    @test 3 // 4 == RationalNumber( 3, 4)
+
+    @test 3 // RationalNumber( 3, 4) == RationalNumber(4, 1)
+    @test RationalNumber( 3, 4) // 3 == RationalNumber(1, 4)
+    @test RationalNumber( 0, 4) // 3 == RationalNumber(0, 1)
+
+    @test_throws ArgumentError 3 // RationalNumber(0, 3)
   end
 end
 
@@ -166,6 +229,37 @@ end
   @test denominator(r) ==  1
 end
 
+@testset "Relational Operators" begin
+  @test RationalNumber(1, 6) ≠ RationalNumber(2, 3)
+  @test RationalNumber(1, 6) < RationalNumber(2, 3)
+  @test RationalNumber(2, 3) ≤ RationalNumber(2, 3)
+
+  @test RationalNumber(2, 3) > RationalNumber(1, 6)
+  @test RationalNumber(2, 3) ≥ RationalNumber(2, 3)
+  @test RationalNumber(2, 3) == RationalNumber(2, 3)
+
+  @test RationalNumber(Int128(typemax(Int)), typemin(Int)) == RationalNumber(Int128(typemax(Int)) << 1, Int128(typemin(Int)) << 1)
+  # NOTE: typemin(Int) << 1 == 0!
+
+  @test 1//1 == 1
+  @test 2//2 == 1
+  @test 1//1 == 1//1
+  @test 2//2 == 1//1
+  @test 2//4 == 3//6
+  @test 1//2 + 1//2 == 1
+  @test (-1)//3 == -(1//3)
+  @test 1//2 + 3//4 == 5//4
+  @test 1//3 * 3//4 == 1//4
+  @test 1//2 / 3//4 == 2//3
+  @test  (-1//2) // (-2//5) == 5//4
+  @test (3 // 5) // (2 // 1) == 3//10
+
+  @test_throws ArgumentError 1//0
+  @test_throws ArgumentError 5//0
+  @test_throws ArgumentError -1//0
+  @test_throws ArgumentError -7//0
+end
+
 # TODO add to problem spec
 # The following testset is based on the tests for rational numbers in Julia Base (MIT license)
 # https://github.com/JuliaLang/julia/blob/52bafeb981bac548afd2264edb518d8d86944dca/test/rational.jl
@@ -203,4 +297,26 @@ end
 @testset "Showing RationalNumbers" begin
   @test sprint(show, RationalNumber(23, 42)) == "23//42"
   @test sprint(show, RationalNumber(-2500, 5000)) == "-1//2"
+end
+
+@testset "show and RationalNumbers" begin
+  io = IOBuffer()
+  r₁ = RationalNumber(1465, 8593)
+  r₂ = RationalNumber(-4500, 9000)
+
+  @test sprint(show, r₁) == "1465//8593"
+  @test sprint(show, r₂) == "-1//2"
+
+  let
+    io1 = IOBuffer()
+    write(io1, r₁)
+    io1.ptr = 1
+    @test read(io1, typeof(r₁)) == r₁
+
+    io2 = IOBuffer()
+    write(io2, r₂)
+    io2.ptr = 1
+    @test read(io2, typeof(r₂)) == r₂
+  end
+
 end
