@@ -16,14 +16,17 @@ ARY = [1, 2, 3, 4, 5, 6, 7, 8, 9, 153, 370, 371, 407, 1634, 8208, 9474, 54748, 9
   # @test  isarmstrong(5)
   # @test  isarmstrong(9474)
   # @test  isarmstrong(9926315)
+
   for ix in randperm(length(ARY))
     @test isarmstrong(ARY[ix])
   end
 end
 
 @testset "NON- armstrong numbers" begin
-    @test !isarmstrong(10)
-    @test !isarmstrong(100)
-    @test !isarmstrong(9475)
-    @test !isarmstrong(9926314)
+  @test !isarmstrong(10)
+  @test !isarmstrong(100)
+  @test !isarmstrong(9475)
+  @test !isarmstrong(9926314)
+  @test !isarmstrong(147808829414345923316083210206383297601)
+  @test !isarmstrong(147808829414345923316083210206383297601001)
 end

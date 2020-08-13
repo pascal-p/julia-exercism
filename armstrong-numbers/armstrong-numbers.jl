@@ -13,20 +13,19 @@ Ex.
 src: Wikipedia https://en.wikipedia.org/wiki/Narcissistic_number
 """
 
-const POW_LIM = 20
-# NOTE: 9 ^ 20 == -6289078614652622815 (!), BigInt(9) ^ 20 == 12157665459056928801
+const POW_LIM = 40
+## NOTE: 9 ^ 40 = 4389419161382147137 (!), UInt128(9)^40 = 147808829414345923316083210206383297601
+##      BigInt(9) ^ 40 == 147808829414345923316083210206383297601
 
-function isarmstrong(n::Union{Int, Int128, BigInt})::Bool
+function isarmstrong(n::Integer)::Bool
   sn = string(n)
   x = length(sn)  # the exponent
 
-  s = map(collect(sn)) do d
-    i = parse(Int, d)
-    x > POW_LIM ? BigInt(i) ^ x : i ^ x
-  end |> sum
-
-  ## OK for Int128, but not beyond..
-  # s = map(d -> parse(Int, d) ^ x, collect(sn)) |> sum
+  s = if x < POW_LIM
+    map(d -> parse(UInt128, d) ^ x, collect(sn)) |> sum
+  else
+    map(d -> parse(BigInt, d) ^ x, collect(sn)) |> sum
+  end
 
   return n == s
 end
