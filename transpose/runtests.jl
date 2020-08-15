@@ -2,8 +2,8 @@ using Test
 
 include("transpose.jl")
 
-for fn_2_test in [transpose_strings_alt, transpose_strings]
-  println("==== $(fn_2_test) implementation")
+for fn_2_test in [transpose_strings, transpose_strings_alt1,
+                    transpose_strings_alt2, transpose_strings_alt3]
 
   @testset "empty string" begin
     s = []
