@@ -2,13 +2,8 @@
   Rational numbers: RationalNumber{T<:Integer} <: Real
     Rational number type, with numerator and denominator of type `T`.
 
-  Caveat no Float management at this stage...
-
+  Caveat no Float management beyond power operation at this stage...
   Trying to avoid overflow...
-
-  TODO:
-      - Exponentiation of a rational number r = a/b to a real (floating-point) number x is the quotient (a^x)/(b^x), which is a real numaber.
-      - Exponentiation of a real number x to a rational number r = a/b is x^(a/b) = root(x^a, b), where root(p, q) is the qth root of p.
 """
 
 using InteractiveUtils
@@ -259,17 +254,33 @@ function Base.:/(r₁::RationalNumber{T}, r₂::RationalNumber{T}) where {T <: I
 end
 
 function Base.:^(r::RationalNumber{T}, x::Integer) where {T <: Integer}
-  x == 0 && return one(RationalNumber{T})
+  iszero(r) && iszero(x) && throw(ArgumentError("Undefined from 0^0"))
+  iszero(x) && return one(RationalNumber{T})
 
   RationalNumber(r.num ^ x, r.den ^ x)
 end
 
+function Base.:^(r::RationalNumber{T}, x::AbstractFloat) where {T <: Integer}
+  iszero(r) && iszero(x) && throw(ArgumentError("Undefined from 0^0"))
+  iszero(x) && return one(AbstractFloat)
+
+  r.num^x / r.den^x
+end
+
 function Base.:^(x::Integer, r::RationalNumber{T}) where {T <: Integer}
   iszero(x) && iszero(r) && throw(ArgumentError("Undefined from 0^0"))
-  iszero(r) && return one(T)
-  r == one(RationalNumber{T}) && return x
+  iszero(r) && return AbstractFloat(1)
+  isone(r) && return AbstractFloat(x)
 
   x ^ (r.num / r.den)
+end
+
+function Base.:^(x::AbstractFloat, r::RationalNumber{T}) where {T <: Integer}
+  iszero(x) && iszero(r) && throw(ArgumentError("Undefined from 0^0"))
+  iszero(r) && return AbstractFloat(1)
+  isone(r) && return x
+
+  (x ^ r.num) ^ (1 / r.den)
 end
 
 
@@ -339,12 +350,12 @@ function _gcd(n::Integer, d::Integer)::Integer
   Calculate gcd(n, d)
   """
   n, d = n < d ? (d, n) : (n, d)
-  d == 0 && return n
+  iszero(d) && return n
 
   r = n
   while r > 1
     r = n % d
-    n, d = d, r
+    n, d = d, r    
   end
 
   return r == 0 ? n : r
@@ -366,9 +377,7 @@ function promote_get_sign(n::Integer, sign)
   promoted = false
   if n < 0
     sign *= -1
-    n = _promote(n) * -1
-    # n = promote_f_t(n) * -1
-
+    n = _promote(n) * -1 # n = promote_f_t(n) * -1
     @assert n > 0
     promoted = true
   end

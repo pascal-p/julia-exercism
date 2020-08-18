@@ -15,7 +15,7 @@ function detect_anagrams(subject::AbstractString, candidates::Vector{String})
 
   for cand in candidates
     lowercase(cand) == subject_lw && continue ## Ignore case
-    length(cand) ≠ subject_len && continue
+    length(cand) ≠ subject_len && continue    ## Ignore ≠ length
 
     if subject_char_sorted == str_arychar(cand) && cand ∉ ary[1:ix-1]
       ary[ix] = cand

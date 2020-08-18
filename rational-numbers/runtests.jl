@@ -147,22 +147,45 @@ end
   end
 
   @testset "Exponentiation" begin
-    @testset "Exponentiation of a rational number" begin
+    @testset "Exponentiation of a rational number with integer" begin
       @test RationalNumber( 1, 2)^3 == RationalNumber( 1, 8)
       @test RationalNumber(-1, 2)^3 == RationalNumber(-1, 8)
       @test RationalNumber( 0, 1)^5 == RationalNumber( 0, 1)
       @test RationalNumber( 1, 1)^4 == RationalNumber( 1, 1)
       @test RationalNumber( 1, 2)^0 == RationalNumber( 1, 1)
       @test RationalNumber(-1, 2)^0 == RationalNumber( 1, 1)
+
+      @test_throws ArgumentError RationalNumber( 0, 10)^0
     end
 
-    @testset "Exponentiation of a real number to a rational number" begin
+    @testset "Exponentiation of a integer number to a rational number" begin
       @test 8^RationalNumber( 4, 3) ≈ 15.999999999999998
       @test 9^RationalNumber(-1, 2) ≈ 0.3333333333333333
       @test 2^RationalNumber( 0, 1) ≈ 1.0
       @test 2^RationalNumber( 1, 1) ≈ 2.0
+      @test 100^RationalNumber( 2, 2) ≈ 100.0
 
       @test_throws ArgumentError 0^RationalNumber( 0, 1)
+    end
+
+    @testset "Exponentiation of a rational number with real" begin
+      @test RationalNumber( 1, 2)^0.0 ≈ 1.0
+      @test RationalNumber( 2, 3)^2.0 ≈ 0.4444444444444444
+      @test RationalNumber( 2, 3)^2.1 ≈ 0.4267842225743191
+      @test RationalNumber( 1, 10)^100.0 ≈ 1.0e-100
+
+      @test_throws ArgumentError RationalNumber( 0, 1)^0.0 # undefined form
+    end
+
+    @testset "Exponentiation of a real number to a rational number" begin
+      @test 8.0^RationalNumber( 4, 3) ≈ 15.999999999999998
+      @test 9.0^RationalNumber(-1, 2) ≈ 0.3333333333333333
+      @test 2.0^RationalNumber( 0, 1) ≈ 1.0
+      @test 2.0^RationalNumber( 1, 1) ≈ 2.0
+      @test 100.0^RationalNumber( 2, 2) ≈ 100.0
+      @test 2.0^RationalNumber( -100, 3) ≈ 9.239890216664653e-11
+
+      @test_throws ArgumentError 0.0^RationalNumber( 0, 1)
     end
   end
 
