@@ -355,7 +355,7 @@ function _gcd(n::Integer, d::Integer)::Integer
   r = n
   while r > 1
     r = n % d
-    n, d = d, r    
+    n, d = d, r
   end
 
   return r == 0 ? n : r
