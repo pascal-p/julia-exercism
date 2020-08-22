@@ -4,7 +4,7 @@ using Test
 include("prime-factors.jl")
 
 for algo in (pf_trial, pf_wheel,)
-  println("\n+++ method $(algo)\n")
+  println("\n=== method $(algo)")
 
   @testset "no factors" begin
     @test prime_factors(1; algo) == []
@@ -59,6 +59,7 @@ for algo in (pf_trial, pf_wheel,)
   end
 
   @testset "factors of a huge integer 2^64 - 1" begin
-    @test prime_factors(UInt128(340282366920938463463374607431768211455); algo) == [3, 5, 17, 257, 641, 65537, 274177, 6_700_417, 672_804_213_107_21]
+    @test prime_factors(UInt128(340282366920938463463374607431768211455);
+                        algo) == [3, 5, 17, 257, 641, 65537, 274177, 6_700_417, 672_804_213_107_21]
   end
 end

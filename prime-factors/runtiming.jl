@@ -1,9 +1,6 @@
-# canonical data version 1.1.0
-
 include("prime-factors.jl")
 
-# create a macro
-
+## create a macro
 macro show_time(what, body)
   return quote
     println("+ ", $(esc(what)), ": ")

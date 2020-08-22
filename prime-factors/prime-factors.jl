@@ -2,13 +2,14 @@ const FIRST_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19]
 
 
 ## entry point => dispatch
-function prime_factors(n::Integer; algo=pf_trial)
+function prime_factors(n::Integer; algo=pf_wheel)
   n ≤ 0 && throw(DomainError("N should be positive"))
   isone(n) && return []
   n ∈ FIRST_PRIMES && return [n]
 
   algo(n)
 end
+
 
 ## Trial division
 function pf_trial(n::Integer)::Vector{Integer}
@@ -17,7 +18,6 @@ function pf_trial(n::Integer)::Vector{Integer}
   function try_div(d::Unsigned)
     while true
       q, r = divrem(n, d)
-
       !iszero(r) && break
 
       push!(divisors, d)
@@ -33,7 +33,7 @@ function pf_trial(n::Integer)::Vector{Integer}
     d += 1
   end
 
-  while d * d ≤ n # d ≤ floor(UInt128, AbstractFloat(√n))
+  while d * d ≤ n
     try_div(d)
     d += 2
   end
@@ -42,25 +42,26 @@ function pf_trial(n::Integer)::Vector{Integer}
   return divisors[2:end]
 end
 
+
 ## Wheel factorization
+"""
+cf. https://en.wikipedia.org/wiki/Wheel_factorization
+
+Given a basis: (2, 3, 5,) we obtain a first turn (of divisors):
+(7, 11, 13, 17, 19, 23, 29, 31)
+
+a second turn is produced by adding 30 (Σ(basis)) to first turn:
+(37, 41, 43, 47, 49, 53, 59, 61)
+
+third turn: (67, 71, 73, 77, 79, 83, 89, 91)
+And so forth...
+
+One can notice the same gap between factors in each turn:
+(4, 2, 4, 2, 4, 6, 2, 6)
+
+last increment(inc) (6 here) is what we need for first factor of next turn
+"""
 function pf_wheel(n::Integer)::Vector{Integer}
-  """
-  cf. https://en.wikipedia.org/wiki/Wheel_factorization
-
-  Given a basis: (2, 3, 5,) we obtain a first turn (of divisors):
-  (7, 11, 13, 17, 19, 23, 29, 31)
-
-  a second turn is produced by adding 30 (Σ(basis)) to first turn:
-  (37, 41, 43, 47, 49, 53, 59, 61)
-
-  third turn: (67, 71, 73, 77, 79, 83, 89, 91)
-  And so forth...
-
-  One can notice the same gap between factors in each turn:
-  (4, 2, 4, 2, 4, 6, 2, 6)
-
-  last increment(inc) (6 here) is what we need for first factor of next turn
-  """
   base = (2, 3, 5,)
   base_prod = reduce(*, base; init=1)
   inc  = [4, 2, 4, 2, 4, 6, 2, 6]
@@ -80,6 +81,7 @@ function pf_wheel(n::Integer)::Vector{Integer}
   q, ix = 7, 1
   while q * q ≤ n
     nq, r = divrem(n, q)
+
     if r == 0
       push!(divisors, q)
       n = nq
