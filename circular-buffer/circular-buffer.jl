@@ -1,10 +1,14 @@
 import Base: push!, popfirst!, empty!
 import Base: isempty, length, size, eltype
 import Base: first, last, append!, getindex, setindex!
-import Base: pushfirst!
+import Base: pushfirst!, convert
 
 abstract type CircularBufferAbstract{T} <: AbstractVector{T} end
 
+"""
+head and tail are indexes (pointers) initialized with value 0
+
+"""
 mutable struct CircularBuffer{T} <: CircularBufferAbstract{T}
   capacity::UInt
   occupancy:: UInt
@@ -15,23 +19,25 @@ mutable struct CircularBuffer{T} <: CircularBufferAbstract{T}
   function CircularBuffer{T}(capacity::Integer) where {T}
     capacity ≤ 0 && throw(ArgumentError("Capacity of a circular buffer must be > 0"))
 
-    buffer = Vector{T}(undef, capacity) # [[] for _ in 1:capacity]
-    new(capacity, 0, buffer, 1, 0) ## new(capacity, 0, buffer, 1, 1)
+    buffer = Vector{T}(undef, capacity)
+    new(capacity, 0, buffer, 0, 0)
   end
 end
 
 function push!(cb::CircularBuffer, item; overwrite::Bool=false)
-  ## typeof(item) === typeof(cb.buffer[1]) || throw(TypeError())
+  "add an element to the back and overwrite front if full"
 
-  if !isfull(cb)  ## insert at tail
-    inc_tail(cb)
+  ## typeof(item) === typeof(cb.buffer[1]) || throw(TypeError())
+  if !isfull(cb)  ## insert at tail (back)
+    cb.head == 0 && (cb.head = 1)
+    _inc_tail(cb)
     cb.buffer[cb.tail] = item
     cb.occupancy += 1
 
   else
     if overwrite
-      cb.buffer[cb.head] = item ## insert at head
-      inc_head(cb)
+      cb.buffer[cb.head] = item ## insert at head (front)
+      _inc_head(cb)
       ## cb.occupancy remains invariant
 
     else
@@ -42,39 +48,39 @@ function push!(cb::CircularBuffer, item; overwrite::Bool=false)
   cb
 end
 
-## FIXME: REVIEW !!
 function pushfirst!(cb::CircularBuffer, item; overwrite::Bool=false)
+  "add an element to the front and overwrite back if full"
+
   if !isfull(cb)  ## insert before head
-    dec_head(cb)
-    cb.buffer[cb.head] = item
+    cb.tail == 0 && (cb.tail = 1)
+    _dec_head(cb)
+    cb.buffer[cb.head] = item  ## insert at head (front)
     cb.occupancy += 1
 
-    if cb.tail == 0
-      cb.tail = cb.capacity
-    end
-      
   else
     if overwrite
-      inc_tail(cb)
-      cb.buffer[cb.tail] = item ## insert at tail
+      cb.buffer[cb.tail] = item ## insert at tail (back)
+      _dec_tail(cb)
       ## cb.occupancy remains invariant
-      
+
     else
       throw(BoundsError()) ## buffer is full!
     end
   end
+
   cb
 end
 
 function append!(cb::CircularBuffer, items; overwrite::Bool=false)
-  n = length(items)
+  "push at most last `capacity` items"
 
+  n = length(items)
   if n > cb.capacity - cb.occupancy
     if overwrite
 
       for item in items
         cb.buffer[cb.head] = item ## insert at head
-        inc_head(cb)
+        _inc_head(cb)
       end
 
       cb.occupancy = cb.capacity
@@ -94,7 +100,17 @@ function popfirst!(cb::CircularBuffer)
   isempty(cb) && throw(BoundsError()) ## buffer is empty!
 
   item = cb.buffer[cb.head] ## popfirst!(cb.buffer[cb.head])
-  inc_head(cb)
+  _inc_head(cb)
+  cb.occupancy -= 1
+
+  return item
+end
+
+function pop!(cb::CircularBuffer)
+  isempty(cb) && throw(BoundsError()) ## buffer is empty!
+
+  item = cb.buffer[cb.tail]
+  _dec_head(cb)
   cb.occupancy -= 1
 
   return item
@@ -123,6 +139,8 @@ isempty(cb::CircularBuffer) = cb.occupancy == 0
 
 eltype(cb::CircularBuffer{T}) where {T} = T
 
+convert(::Type{Array}, cb::CircularBuffer{T}) where {T} = _to_ary(cb)
+
 function first(cb::CircularBuffer{T}) where {T}
   isempty(cb) && throw(BoundsError())
   cb.buffer[cb.head]
@@ -133,36 +151,46 @@ function last(cb::CircularBuffer{T}) where {T}
   cb.buffer[cb.tail]
 end
 
+## negative indexing is not supported
 function getindex(cb::CircularBuffer{T}, ix::Integer) where {T}
-  # TODO: what if ix is < 0
-  !(1 ≤ ix ≤ cb.capacity) && throw(BoundsError())
-
-  jx = cb.head + ix - 1 ≤ cb.capacity ? cb.head + ix - 1 : (cb.head + ix - 1) % cb.capacity
+  jx = _offset(cb, ix)
   return cb.buffer[jx]
 end
 
 function setindex!(cb::CircularBuffer{T}, item::T, ix::Integer) where {T}
-  !(1 ≤ ix ≤ cb.capacity) && throw(BoundsError())
-
-  jx = cb.head + ix - 1 ≤ cb.capacity ? cb.head + ix - 1 : (cb.head + ix - 1) % cb.capacity
+  jx = _offset(cb, ix)
   cb.buffer[jx] = item
   return
 end
 
 
 ## Utilities
-for (fn, fdn)  in [(:inc_head, :head), (:inc_tail, :tail)]
+for (fn, fdn)  in [(:_inc_head, :head), (:_inc_tail, :tail)]
   @eval begin
     $fn(cb::CircularBuffer)::UInt = cb.$fdn = cb.$fdn < cb.capacity ? cb.$fdn + 1 : 1
   end
 end
 
-for (fn, fdn)  in [(:dec_head, :head), ]
+for (fn, fdn)  in [(:_dec_head, :head), (:_dec_tail, :tail)]
   @eval begin
-    $fn(cb::CircularBuffer)::UInt = cb.$fdn = cb.$fdn == 1 ? cb.capacity : cb.$fdn - 1
+    $fn(cb::CircularBuffer)::UInt = cb.$fdn = cb.$fdn ≤ 1 ? cb.capacity : cb.$fdn - 1
   end
 end
 
+function _to_ary(cb::CircularBuffer{T}) where {T}
+  # println(" =DEBUG=> cb.head: $(cb.head) / cb.tail: $(cb.tail)  / cb.tail + cb.capacity: $(cb.tail + cb.capacity)")
+
+  istart, iend = cb.head ≤ cb.tail ? (cb.head, cb.tail) : (cb.head, cb.tail + cb.capacity)
+  T[cb.buffer[ix ≤ cb.capacity ? ix : ix - cb.capacity] for ix in istart:iend]
+end
+
+function _offset(cb::CircularBuffer{T}, ix::Integer)::Integer where {T}
+  "offset from head of circular buffer"
+  !(1 ≤ ix ≤ cb.capacity) && throw(BoundsError())
+
+  jx = cb.head + ix - 1
+  jx ≤ cb.capacity ? jx : jx % cb.capacity
+end
 
 
 # include("circular-buffer.jl")
