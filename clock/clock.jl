@@ -1,12 +1,12 @@
 using Printf, Dates
 
-import Base: +, -
+import Base: +, -, show
 import Dates: Hour, Minute, Second
 
 struct Clock
-  hour::Dates.Hour # ::UInt8
-  min::Dates.Minute  # ::UInt8
-  sec::Dates.Second  # ::UInt8
+  hour::Dates.Hour
+  min::Dates.Minute
+  sec::Dates.Second
 
   function Clock(h::Hour, m::Minute)
     new(h, m, Second(0))
@@ -21,7 +21,8 @@ struct Clock
   end
 end
 
-# Base.show(io::IO, clock::Clock) = print(io, @sprintf("%02d:%02d:%02d", clock.hour, clock.min, clock.sec))
+
+Base.show(io::IO, clock::Clock) = print(io, @sprintf("\"%02d:%02d\"", clock.hour.value, clock.min.value))
 
 
 ##
@@ -37,12 +38,9 @@ function -(clock::Clock, min::Minute)::Clock
   (h_hour, m_min) = if clock.min < min
     # How many 60 minutes do we need ?
     nb_hour_to_min = ceil(Int, min.value / 60)
-
     hdiff = (clock.hour.value - nb_hour_to_min) % 24
 
     h_ = Hour(0 ≤ hdiff ≤ 23 ? hdiff : 24 + hdiff)
-    # h_ = Hour(24 + (clock.hour.value - nb_hour_to_min) % 24) ## Hour(24) + Hour((clock.hour - Hour(nb_hour_to_min)) % 24)
-
     m_ = Minute(nb_hour_to_min * 60 + clock.min.value - min.value)
     (h_, m_)
   else
@@ -62,7 +60,7 @@ function convert_hms(h::Integer, m::Integer, s::Integer=0)
   if m < 0
     count = abs(div(m, 60) - 1) ## number of time to decr. hour
     h -= count
-    m = count * 60 + m ## rest
+    m = count * 60 + m          ## rest
   end
 
   h < 0 && (h = 24 + (h % 24))

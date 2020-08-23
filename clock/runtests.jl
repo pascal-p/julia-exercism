@@ -4,7 +4,7 @@ using Dates, Test
 
 include("clock.jl")
 
-@testset "Create a new clock with an initial time" begin
+@testset "Create a new clock with an initial time: hour. min" begin
   # on the hour
   @test Clock(8, 0) == Clock(8, 0)
 
@@ -119,75 +119,75 @@ end
   @test Clock(2, 20) - Dates.Minute(3000) == Clock(0, 20)
 end
 
-# @testset "Compare two clocks for equality" begin
-#   # clocks with same time
-#   @test Clock(15, 37) == Clock(15, 37)
+@testset "Compare two clocks for equality" begin
+  # clocks with same time
+  @test Clock(15, 37) == Clock(15, 37)
 
-#   # clocks a minute apart
-#   @test Clock(15, 36) != Clock(15, 37)
+  # clocks a minute apart
+  @test Clock(15, 36) != Clock(15, 37)
 
-#   # clocks an hour apart
-#   @test Clock(14, 37) != Clock(15, 37)
+  # clocks an hour apart
+  @test Clock(14, 37) != Clock(15, 37)
 
-#   # clocks with hour overflow
-#   @test Clock(10, 37) == Clock(34, 37)
+  # clocks with hour overflow
+  @test Clock(10, 37) == Clock(34, 37)
 
-#   # clocks with hour overflow by several days
-#   @test Clock(3, 11) == Clock(99, 11)
+  # clocks with hour overflow by several days
+  @test Clock(3, 11) == Clock(99, 11)
 
-#   # clocks with negative hour
-#   @test Clock(22, 40) == Clock(-2, 40)
+  # clocks with negative hour
+  @test Clock(22, 40) == Clock(-2, 40)
 
-#   # clocks with negative hour that wraps
-#   @test Clock(17, 3) == Clock(-31, 3)
+  # clocks with negative hour that wraps
+  @test Clock(17, 3) == Clock(-31, 3)
 
-#   # clocks with negative hour that wraps multiple times
-#   @test Clock(13, 49) == Clock(-83, 49)
+  # clocks with negative hour that wraps multiple times
+  @test Clock(13, 49) == Clock(-83, 49)
 
-#   # clocks with minute overflow
-#   @test Clock(0, 1) == Clock(0, 1441)
+  # clocks with minute overflow
+  @test Clock(0, 1) == Clock(0, 1441)
 
-#   # clocks with minute overflow by several days
-#   @test Clock(2, 2) == Clock(2, 4322)
+  # clocks with minute overflow by several days
+  @test Clock(2, 2) == Clock(2, 4322)
 
-#   # clocks with negative minute
-#   @test Clock(2, 40) == Clock(3, -20)
+  # clocks with negative minute
+  @test Clock(2, 40) == Clock(3, -20)
 
-#   # clocks with negative minute that wraps
-#   @test Clock(4, 10) == Clock(5, -1490)
+  # clocks with negative minute that wraps
+  @test Clock(4, 10) == Clock(5, -1490)
 
-#   # clocks with negative minute that wraps multiple times
-#   @test Clock(6, 15) == Clock(6, -4305)
+  # clocks with negative minute that wraps multiple times
+  @test Clock(6, 15) == Clock(6, -4305)
 
-#   # clocks with negative hours and minutes
-#   @test Clock(7, 32) == Clock(-12, -268)
+  # clocks with negative hours and minutes
+  @test Clock(7, 32) == Clock(-12, -268)
 
-#   # clocks with negative hours and minutes that wrap
-#   @test Clock(18, 7) == Clock(-54, -11513)
+  # clocks with negative hours and minutes that wrap
+  @test Clock(18, 7) == Clock(-54, -11513)
 
-#   # full clock and zeroed clock
-#   @test Clock(24, 0) == Clock(0, 0)
-# end
+  # full clock and zeroed clock
+  @test Clock(24, 0) == Clock(0, 0)
+end
 
-# @testset "displaying clocks" begin
-#   @test sprint(show, Clock(8, 0)) == "\"08:00\""
-#   @test sprint(show, Clock(11, 9)) == "\"11:09\""
-#   @test sprint(show, Clock(24, 0)) == "\"00:00\""
-#   @test sprint(show, Clock(25, 0)) == "\"01:00\""
-#   @test sprint(show, Clock(100, 0)) == "\"04:00\""
-#   @test sprint(show, Clock(1, 60)) == "\"02:00\""
-#   @test sprint(show, Clock(0, 160)) == "\"02:40\""
-#   @test sprint(show, Clock(0, 1723)) == "\"04:43\""
-#   @test sprint(show, Clock(25, 160)) == "\"03:40\""
-#   @test sprint(show, Clock(201, 3001)) == "\"11:01\""
-#   @test sprint(show, Clock(72, 8640)) == "\"00:00\""
-#   @test sprint(show, Clock(-1, 15)) == "\"23:15\""
-#   @test sprint(show, Clock(-25, 0)) == "\"23:00\""
-#   @test sprint(show, Clock(-91, 0)) == "\"05:00\""
-#   @test sprint(show, Clock(1, -40)) == "\"00:20\""
-#   @test sprint(show, Clock(1, -160)) == "\"22:20\""
-#   @test sprint(show, Clock(1, -4820)) == "\"16:40\""
-#   @test sprint(show, Clock(2, -60)) == "\"01:00\""
-#   @test sprint(show, Clock(-25, -160)) == "\"20:20\""
-#   @test sprint(show, Clock(-121, -5810)) == "\"22:10\""
-# end
+@testset "displaying clocks" begin
+  @test sprint(show, Clock(8, 0)) == "\"08:00\""
+  @test sprint(show, Clock(11, 9)) == "\"11:09\""
+  @test sprint(show, Clock(24, 0)) == "\"00:00\""
+  @test sprint(show, Clock(25, 0)) == "\"01:00\""
+  @test sprint(show, Clock(100, 0)) == "\"04:00\""
+  @test sprint(show, Clock(1, 60)) == "\"02:00\""
+  @test sprint(show, Clock(0, 160)) == "\"02:40\""
+  @test sprint(show, Clock(0, 1723)) == "\"04:43\""
+  @test sprint(show, Clock(25, 160)) == "\"03:40\""
+  @test sprint(show, Clock(201, 3001)) == "\"11:01\""
+  @test sprint(show, Clock(72, 8640)) == "\"00:00\""
+  @test sprint(show, Clock(-1, 15)) == "\"23:15\""
+  @test sprint(show, Clock(-25, 0)) == "\"23:00\""
+  @test sprint(show, Clock(-91, 0)) == "\"05:00\""
+  @test sprint(show, Clock(1, -40)) == "\"00:20\""
+  @test sprint(show, Clock(1, -160)) == "\"22:20\""
+  @test sprint(show, Clock(1, -4820)) == "\"16:40\""
+  @test sprint(show, Clock(2, -60)) == "\"01:00\""
+  @test sprint(show, Clock(-25, -160)) == "\"20:20\""
+  @test sprint(show, Clock(-121, -5810)) == "\"22:10\""
+end
