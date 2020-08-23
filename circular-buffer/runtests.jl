@@ -5,142 +5,150 @@ using Test
 
 include("circular-buffer.jl")
 
-# @testset "reading empty buffer should fail" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test_throws BoundsError popfirst!(cb)
-# end
+enable_base_tests = true
 
-# @testset "can read an item just written" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test push!(cb, 1) === cb
-#   @test popfirst!(cb) == 1
-# end
+if @isdefined(enable_base_tests) && enable_base_tests
+  println("\nBonus tests enabled.\n")
 
-# @testset "each item may only be read once" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test push!(cb, 1) === cb
-#   @test popfirst!(cb) == 1
-#   @test_throws BoundsError popfirst!(cb)
-# end
+  @testset "reading empty buffer should fail" begin
+    cb = CircularBuffer{Int}(1)
+    @test_throws BoundsError popfirst!(cb)
+  end
 
-# @testset "items are read in the order they are written" begin
-#   cb = CircularBuffer{Int}(2)
-#   @test push!(cb, 1) === cb
-#   @test push!(cb, 2) === cb
-#   @test popfirst!(cb) == 1
-#   @test popfirst!(cb) == 2
-# end
+  @testset "can read an item just written" begin
+    cb = CircularBuffer{Int}(1)
+    @test push!(cb, 1) === cb
+    @test popfirst!(cb) == 1
+  end
 
-# @testset "full buffer can't be written to" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test push!(cb, 1) === cb
-#   @test_throws BoundsError push!(cb, 2)
-# end
+  @testset "each item may only be read once" begin
+    cb = CircularBuffer{Int}(1)
+    @test push!(cb, 1) === cb
+    @test popfirst!(cb) == 1
+    @test_throws BoundsError popfirst!(cb)
+  end
 
-# @testset "a read frees up capacity for another write" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test push!(cb, 1) === cb
-#   @test popfirst!(cb) == 1
-#   @test push!(cb, 2) === cb
-#   @test popfirst!(cb) == 2
-# end
+  @testset "items are read in the order they are written" begin
+    cb = CircularBuffer{Int}(2)
+    @test push!(cb, 1) === cb
+    @test push!(cb, 2) === cb
+    @test popfirst!(cb) == 1
+    @test popfirst!(cb) == 2
+  end
 
-# @testset "read position is maintained even across multiple writes" begin
-#   cb = CircularBuffer{Int}(3)
-#   @test push!(cb, 1) === cb
-#   @test push!(cb, 2) === cb
-#   @test popfirst!(cb) == 1
-#   @test push!(cb, 3) === cb
-#   @test popfirst!(cb) == 2
-#   @test popfirst!(cb) == 3
-# end
+  @testset "full buffer can't be written to" begin
+    cb = CircularBuffer{Int}(1)
+    @test push!(cb, 1) === cb
+    @test_throws BoundsError push!(cb, 2)
+  end
 
-# @testset "items cleared out of buffer can't be read" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test push!(cb, 1) === cb
-#   @test empty!(cb) === cb
-#   @test_throws BoundsError popfirst!(cb)
-# end
+  @testset "a read frees up capacity for another write" begin
+    cb = CircularBuffer{Int}(1)
+    @test push!(cb, 1) === cb
+    @test popfirst!(cb) == 1
+    @test push!(cb, 2) === cb
+    @test popfirst!(cb) == 2
+  end
 
-# @testset "clear frees up capacity for another write" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test push!(cb, 1) === cb
-#   @test empty!(cb) === cb
-#   @test push!(cb, 2) === cb
-#   @test popfirst!(cb) == 2
-# end
+  @testset "read position is maintained even across multiple writes" begin
+    cb = CircularBuffer{Int}(3)
+    @test push!(cb, 1) === cb
+    @test push!(cb, 2) === cb
+    @test popfirst!(cb) == 1
+    @test push!(cb, 3) === cb
+    @test popfirst!(cb) == 2
+    @test popfirst!(cb) == 3
+  end
 
-# @testset "clear does nothing on empty buffer" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test empty!(cb) === cb
-#   @test push!(cb, 1) === cb
-#   @test popfirst!(cb) == 1
-# end
+  @testset "items cleared out of buffer can't be read" begin
+    cb = CircularBuffer{Int}(1)
+    @test push!(cb, 1) === cb
+    @test empty!(cb) === cb
+    @test_throws BoundsError popfirst!(cb)
+  end
 
-# @testset "overwrite acts like write on non-full buffer" begin
-#   cb = CircularBuffer{Int}(2)
-#   @test push!(cb, 1) === cb
-#   @test push!(cb, 2; overwrite=true) === cb
-#   @test popfirst!(cb) == 1
-#   @test popfirst!(cb) == 2
-# end
+  @testset "clear frees up capacity for another write" begin
+    cb = CircularBuffer{Int}(1)
+    @test push!(cb, 1) === cb
+    @test empty!(cb) === cb
+    @test push!(cb, 2) === cb
+    @test popfirst!(cb) == 2
+  end
 
-# @testset "overwrite replaces the oldest item on full buffer" begin
-#   cb = CircularBuffer{Int}(2)
-#   @test push!(cb, 1) === cb
-#   @test push!(cb, 2) === cb
-#   @test push!(cb, 3; overwrite=true) === cb
-#   @test popfirst!(cb) == 2
-#   @test popfirst!(cb) == 3
-# end
+  @testset "clear does nothing on empty buffer" begin
+    cb = CircularBuffer{Int}(1)
+    @test empty!(cb) === cb
+    @test push!(cb, 1) === cb
+    @test popfirst!(cb) == 1
+  end
 
-# @testset "overwrite replaces the oldest item remaining in buffer following a read" begin
-#   cb = CircularBuffer{Int}(3)
-#   @test push!(cb, 1) === cb
-#   @test push!(cb, 2) === cb
-#   @test push!(cb, 3) === cb
-#   @test popfirst!(cb) == 1
-#   @test push!(cb, 4) === cb
-#   @test push!(cb, 5; overwrite=true) === cb
-#   @test popfirst!(cb) == 3
-#   @test popfirst!(cb) == 4
-#   @test popfirst!(cb) == 5
-# end
+  @testset "overwrite acts like write on non-full buffer" begin
+    cb = CircularBuffer{Int}(2)
+    @test push!(cb, 1) === cb
+    @test push!(cb, 2; overwrite=true) === cb
+    @test popfirst!(cb) == 1
+    @test popfirst!(cb) == 2
+  end
 
-# @testset "initial clear does not affect wrapping around" begin
-#   cb = CircularBuffer{Int}(2)
-#   @test empty!(cb) === cb
-#   @test push!(cb, 1) === cb
-#   @test push!(cb, 2) === cb
-#   @test push!(cb, 3; overwrite=true) === cb
-#   @test push!(cb, 4; overwrite=true) === cb
-#   @test popfirst!(cb) == 3
-#   @test popfirst!(cb) == 4
-#   @test_throws BoundsError popfirst!(cb)
-# end
+  @testset "overwrite replaces the oldest item on full buffer" begin
+    cb = CircularBuffer{Int}(2)
+    @test push!(cb, 1) === cb
+    @test push!(cb, 2) === cb
+    @test push!(cb, 3; overwrite=true) === cb
+    @test popfirst!(cb) == 2
+    @test popfirst!(cb) == 3
+  end
 
-# @testset "overwrite=true and overwrite=false" begin
-#   cb = CircularBuffer{Int}(2)
-#   @test empty!(cb) === cb
-#   @test push!(cb, 1; overwrite=true) === cb
-#   @test push!(cb, 2; overwrite=true) === cb
-#   @test_throws BoundsError push!(cb, 3; overwrite=false)
-#   @test push!(cb, 4; overwrite=true) === cb
-#   @test popfirst!(cb) == 2
-#   @test popfirst!(cb) == 4
-#   @test_throws BoundsError popfirst!(cb)
-# end
+  @testset "overwrite replaces the oldest item remaining in buffer following a read" begin
+    cb = CircularBuffer{Int}(3)
+    @test push!(cb, 1) === cb
+    @test push!(cb, 2) === cb
+    @test push!(cb, 3) === cb
+    @test popfirst!(cb) == 1
+    @test push!(cb, 4) === cb
+    @test push!(cb, 5; overwrite=true) === cb
+    @test popfirst!(cb) == 3
+    @test popfirst!(cb) == 4
+    @test popfirst!(cb) == 5
+  end
 
-# @testset "type parameter" begin
-#   cb = CircularBuffer{Int}(1)
-#   @test_throws Exception push!(cb, "0")
-#   cb = CircularBuffer{String}(1)
-#   @test_throws Exception push!(cb, 0)
-#   @test push!(cb, "0") === cb
-#   @test popfirst!(cb) == "0"
-# end
+  @testset "initial clear does not affect wrapping around" begin
+    cb = CircularBuffer{Int}(2)
+    @test empty!(cb) === cb
+    @test push!(cb, 1) === cb
+    @test push!(cb, 2) === cb
+    @test push!(cb, 3; overwrite=true) === cb
+    @test push!(cb, 4; overwrite=true) === cb
+    @test popfirst!(cb) == 3
+    @test popfirst!(cb) == 4
+    @test_throws BoundsError popfirst!(cb)
+  end
 
-# Uncomment the following line to enable bonus tests.
+  @testset "overwrite=true and overwrite=false" begin
+    cb = CircularBuffer{Int}(2)
+    @test empty!(cb) === cb
+    @test push!(cb, 1; overwrite=true) === cb
+    @test push!(cb, 2; overwrite=true) === cb
+    @test_throws BoundsError push!(cb, 3; overwrite=false)
+    @test push!(cb, 4; overwrite=true) === cb
+    @test popfirst!(cb) == 2
+    @test popfirst!(cb) == 4
+    @test_throws BoundsError popfirst!(cb)
+  end
+
+  @testset "type parameter" begin
+    cb = CircularBuffer{Int}(1)
+    @test_throws Exception push!(cb, "0")
+    cb = CircularBuffer{String}(1)
+    @test_throws Exception push!(cb, 0)
+    @test push!(cb, "0") === cb
+    @test popfirst!(cb) == "0"
+  end
+
+end
+
+
+## "toggle" the following boolean to enable/disable bonus tests.
 enable_bonus_tests = true
 
 if @isdefined(enable_bonus_tests) && enable_bonus_tests
@@ -152,6 +160,7 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
 
   ## Copied from DataStructures.jl and slightly modified.
   @testset "Bonus test set taken from DataStructures.jl (CircularBuffer)" begin
+
     @testset "Core Functionality" begin
       cb = CircularBuffer{Int}(5)
 
@@ -174,7 +183,7 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
         @test first(cb) == last(cb)
       end
 
-      @testset "Appending many elements" begin
+      @testset "Appending many elements - with overwrite" begin
         append!(cb, 2:8; overwrite=true)
         @test length(cb) == capacity(cb)
         @test size(cb) == (length(cb),)
@@ -216,54 +225,120 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
       end
     end
 
-    # @testset "Issue 429" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   map(x -> pushfirst!(cb, x; overwrite=true), 1:8)
-    #   pop!(cb)
-    #   pushfirst!(cb, 9)
-    #   arr = convert(Array, cb)
-    #   @test arr == Int[9, 8, 7, 6, 5]
-    # end
+    @testset "Issue 429" begin
+      cb = CircularBuffer{Int}(5)
 
-    # @testset "Issue 379" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   pushfirst!(cb, 1)
-    #   @test cb == [1]
-    #   pushfirst!(cb, 2)
-    #   @test cb == [2, 1]
-    # end
+      map(x -> pushfirst!(cb, x; overwrite=true), 1:8)
 
-    # @testset "empty!" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   push!(cb, 13)
-    #   empty!(cb)
-    #   @test length(cb) == 0
-    # end
+      item = pop!(cb)
+      @test item == 4
 
-    # @testset "pop!" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   for i in 0:5    # one extra to force wraparound
-    #     push!(cb, i; overwrite=true)
-    #   end
-    #   for j in 5:-1:1
-    #     @test pop!(cb) == j
-    #     @test convert(Array, cb) == collect(1:j-1)
-    #   end
-    #   @test isempty(cb)
-    #   @test_throws BoundsError pop!(cb)
-    # end
+      pushfirst!(cb, 9)
+      arr = convert(Array, cb)
+      @test arr == Int[9, 8, 7, 6, 5]
+    end
 
-    # @testset "popfirst!" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   for i in 0:5    # one extra to force wraparound
-    #     push!(cb, i; overwrite=true)
-    #   end
-    #   for j in 1:5
-    #     @test popfirst!(cb) == j
-    #     @test convert(Array, cb) == collect(j+1:5)
-    #   end
-    #   @test isempty(cb)
-    #   @test_throws BoundsError popfirst!(cb)
-    # end
+    @testset "Issue 379" begin
+      cb = CircularBuffer{Int}(5)
+
+      pushfirst!(cb, 1)
+      @test cb == [1]
+
+      pushfirst!(cb, 2)
+      @test cb == [2, 1]
+    end
+
+    @testset "empty!" begin
+      cb = CircularBuffer{Int}(5)
+      push!(cb, 13)
+      empty!(cb)
+      @test length(cb) == 0
+    end
+
+    @testset "pop!" begin
+      cb = CircularBuffer{Int}(5)
+      for i in 0:5    # one extra to force wraparound
+        push!(cb, i; overwrite=true)
+      end
+
+      ## Addition
+      @test convert(Array, cb) == collect(1:5)
+
+      for j in 5:-1:1
+        @test pop!(cb) == j
+        @test convert(Array, cb) == collect(1:j-1)
+      end
+
+      @test isempty(cb)
+      @test_throws BoundsError pop!(cb)
+    end
+
+    @testset "popfirst!" begin
+      cb = CircularBuffer{Int}(5)
+      for i in 0:5    # one extra to force wraparound
+        push!(cb, i; overwrite=true)
+      end
+      for j in 1:5
+        @test popfirst!(cb) == j
+        @test convert(Array, cb) == collect(j+1:5)
+      end
+      @test isempty(cb)
+      @test_throws BoundsError popfirst!(cb)
+    end
   end
+
+  ## Additions
+  @testset "Bonus test - more on Append..." begin
+    @testset "Appending as many elements as possible - w/o overwrite - 1" begin
+      cap = 10
+      cb1 = CircularBuffer{Int}(cap)
+
+      append!(cb1, 1:(cap + 5); overwrite=false)
+      @test length(cb1) == capacity(cb1)
+      @test size(cb1) == (length(cb1),)
+
+      @test isempty(cb1) == false
+      @test isfull(cb1) == true
+
+      @test convert(Array, cb1) == collect(1:cap)
+    end
+
+    @testset "Appending as many elements as possible - w/o overwrite - 2" begin
+      cap = 10
+      cb1 = CircularBuffer{Int}(cap)
+      map(x -> push!(cb1, x; overwrite=true), 10:11)  ## push 2 items
+
+      append!(cb1, 1:(cap + 5); overwrite=false)      ## Actually add 8 items
+      @test length(cb1) == capacity(cb1)
+      @test size(cb1) == (length(cb1),)
+
+      @test isempty(cb1) == false
+      @test isfull(cb1) == true
+
+      @test convert(Array, cb1) == [10, 11, collect(1:cap - 2)...]
+    end
+
+    @testset "Appending as many elements as possible - w/o overwrite - 3" begin
+      cap = 10
+      cb1 = CircularBuffer{Int}(cap)
+      items = cap:(2 * cap - 1)
+      map(x -> push!(cb1, x), items)  ## push 10 items (no overwrite)
+
+      @test isfull(cb1)
+      @test convert(Array, cb1) == collect(items)
+
+      @test_throws BoundsError append!(cb1, 1:(cap + 5)) ## ; overwrite=false)
+
+      @test length(cb1) == capacity(cb1)
+      @test size(cb1) == (length(cb1),)
+
+      # No change actually
+      @test isempty(cb1) == false
+      @test isfull(cb1) == true
+
+      @test convert(Array, cb1) == collect(items)
+    end
+
+  end
+
 end
