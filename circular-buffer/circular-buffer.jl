@@ -1,7 +1,8 @@
 import Base: push!, popfirst!, empty!
 import Base: isempty, length, size, eltype
-import Base: first, last, append!, getindex, setindex!
+import Base: first, last, append!
 import Base: pushfirst!, convert
+import Base: iterate, getindex, setindex!
 
 abstract type CircularBufferAbstract{T} <: AbstractVector{T} end
 
@@ -25,81 +26,76 @@ mutable struct CircularBuffer{T} <: CircularBufferAbstract{T}
 end
 
 function push!(cb::CircularBuffer, item; overwrite::Bool=false)
-  "add an element to the back and overwrite front if full"
-
+  "Add an element to the back and overwrite front if full"
   ## typeof(item) === typeof(cb.buffer[1]) || throw(TypeError())
-  if !isfull(cb)  ## insert at tail (back)
+
+  if !isfull(cb)                ## insert at tail (back)
     cb.head == 0 && (cb.head = 1)
     _inc_tail(cb)
     cb.buffer[cb.tail] = item
     cb.occupancy += 1
 
   else
-    if overwrite
+    if overwrite                ## cb.occupancy remains invariant
       cb.buffer[cb.head] = item ## insert at head (front)
       _inc_head(cb)
-      ## cb.occupancy remains invariant
+      _inc_tail(cb)             ## symetry with  pushfirst!
 
     else
-      throw(BoundsError()) ## buffer is full!
+      throw(BoundsError())      ## buffer is full!
     end
   end
-
   cb
 end
 
 function pushfirst!(cb::CircularBuffer, item; overwrite::Bool=false)
-  "add an element to the front and overwrite back if full"
+  "Add an element to the front (head) and overwrite back (tail) if full"
 
-  if !isfull(cb)  ## insert before head
-    cb.tail == 0 && (cb.tail = 1)
+  if !isfull(cb)               ## insert before head (front)
+    cb.tail == 0 && (cb.tail = cb.capacity)
     _dec_head(cb)
     cb.buffer[cb.head] = item  ## insert at head (front)
     cb.occupancy += 1
 
   else
-    if overwrite
+    if overwrite                ## cb.occupancy remains invariant
       cb.buffer[cb.tail] = item ## insert at tail (back)
       _dec_tail(cb)
-      ## cb.occupancy remains invariant
+      _dec_head(cb)             ## Need to update head (front) to most recent element in most recent position
 
     else
-      throw(BoundsError()) ## buffer is full!
+      throw(BoundsError())      ## buffer is full!
     end
+  end
+  cb
+end
+
+function append!(cb::CircularBuffer, items; overwrite::Bool=false)
+  """
+  Push at most last `capacity` items if overwrite is false
+  Push everything if overwrite is true (overwritting oldest elements)
+  """
+
+  if overwrite
+    map(x -> push!(cb, x; overwrite=true), items)
+
+  else
+    isfull(cb) && throw(BoundsError())
+
+    n = length(items)
+    n = n > cb.capacity - cb.occupancy ? cb.capacity - cb.occupancy : n
+
+    map(x -> push!(cb, x; overwrite=true), 1:n)
   end
 
   cb
 end
 
-function append!(cb::CircularBuffer, items; overwrite::Bool=false)
-  "push at most last `capacity` items"
-
-  n = length(items)
-  if n > cb.capacity - cb.occupancy
-    if overwrite
-
-      for item in items
-        cb.buffer[cb.head] = item ## insert at head
-        _inc_head(cb)
-      end
-
-      cb.occupancy = cb.capacity
-      cb.tail = cb.head == 1 ? cb.capacity : cb.head - 1
-
-    else
-      throw(BoundsError()) ## or append as much items as possible then throw ?
-    end
-  else # FINE
-    # TODO...
-  end
-
-  return cb
-end
-
 function popfirst!(cb::CircularBuffer)
+  "Remove the element at the front (head)"
   isempty(cb) && throw(BoundsError()) ## buffer is empty!
 
-  item = cb.buffer[cb.head] ## popfirst!(cb.buffer[cb.head])
+  item = cb.buffer[cb.head]
   _inc_head(cb)
   cb.occupancy -= 1
 
@@ -107,12 +103,14 @@ function popfirst!(cb::CircularBuffer)
 end
 
 function pop!(cb::CircularBuffer)
+  "Remove the element at the back (tail)"
   isempty(cb) && throw(BoundsError()) ## buffer is empty!
 
   item = cb.buffer[cb.tail]
-  _dec_head(cb)
+  _dec_tail(cb)
   cb.occupancy -= 1
 
+  cb.occupancy == 0 && (cb.tail = cb.head = 0)
   return item
 end
 
@@ -123,9 +121,6 @@ function empty!(cb::CircularBuffer)
   return cb
 end
 
-#
-# impl: length, size, capacity, isempty, isfull, convert?, pop!
-#
 
 capacity(cb::CircularBuffer) = cb.capacity
 
@@ -151,7 +146,19 @@ function last(cb::CircularBuffer{T}) where {T}
   cb.buffer[cb.tail]
 end
 
-## negative indexing is not supported
+
+## Iteration ##
+function iterate(cb::CircularBuffer{T}, ix::Integer=cb.head) where {T}
+  limit = cb.tail < cb.head ? cb.tail + cb.capacity : cb.tail
+
+  if ix ≤ limit
+    (cb.buffer[ix], ix + 1)
+  else
+    nothing
+  end
+end
+
+## Negative indexing is not supported
 function getindex(cb::CircularBuffer{T}, ix::Integer) where {T}
   jx = _offset(cb, ix)
   return cb.buffer[jx]
@@ -162,6 +169,7 @@ function setindex!(cb::CircularBuffer{T}, item::T, ix::Integer) where {T}
   cb.buffer[jx] = item
   return
 end
+
 
 
 ## Utilities
@@ -178,10 +186,26 @@ for (fn, fdn)  in [(:_dec_head, :head), (:_dec_tail, :tail)]
 end
 
 function _to_ary(cb::CircularBuffer{T}) where {T}
-  # println(" =DEBUG=> cb.head: $(cb.head) / cb.tail: $(cb.tail)  / cb.tail + cb.capacity: $(cb.tail + cb.capacity)")
+  istart, iend = if cb.head < cb.tail
+    (cb.head, cb.tail)
 
-  istart, iend = cb.head ≤ cb.tail ? (cb.head, cb.tail) : (cb.head, cb.tail + cb.capacity)
-  T[cb.buffer[ix ≤ cb.capacity ? ix : ix - cb.capacity] for ix in istart:iend]
+  elseif cb.head == cb.tail
+    if isfull(cb)         ## either full
+      (cb.head, cb.tail + cb.capacity - 1)
+
+    else                  ## or 1 item left
+      (cb.tail, cb.tail)  ## ≡ (cb.head, cb.head)
+
+    end
+  else
+    (cb.head, cb.tail + cb.capacity)  ## cb.head ≥ cb.tail, depends how full or empty buffer is...
+  end
+
+  if isempty(cb)
+    T[]
+  else
+    T[cb.buffer[ix ≤ cb.capacity ? ix : ix - cb.capacity] for ix in istart:iend]
+  end
 end
 
 function _offset(cb::CircularBuffer{T}, ix::Integer)::Integer where {T}
@@ -191,26 +215,3 @@ function _offset(cb::CircularBuffer{T}, ix::Integer)::Integer where {T}
   jx = cb.head + ix - 1
   jx ≤ cb.capacity ? jx : jx % cb.capacity
 end
-
-
-# include("circular-buffer.jl")
-# cb = CircularBuffer{Int}(2)
-# push!(cb, 100); cb
-# push!(cb, 101); cb
-# push!(cb, 101); cb    ## Error
-
-# item = popfirst!(cb); cb
-# push!(cb, 110); cb
-
-# push!(cb, 105, overwrite=true); cb
-# empty!(cb)
-
-
-# cb = CircularBuffer{Int}(5)
-
-# for i in -5:5
-#   println(i)
-#   pushfirst!(cb, i; overwrite=true)
-#   if i == -1; println(cb.buffer); end
-#   if i == 0; println(cb.buffer); end
-# end

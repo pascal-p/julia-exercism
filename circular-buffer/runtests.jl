@@ -5,7 +5,7 @@ using Test
 
 include("circular-buffer.jl")
 
-enable_base_tests = false
+enable_base_tests = true
 
 if @isdefined(enable_base_tests) && enable_base_tests
   println("\nBonus tests enabled.\n")
@@ -160,6 +160,7 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
 
   ## Copied from DataStructures.jl and slightly modified.
   @testset "Bonus test set taken from DataStructures.jl (CircularBuffer)" begin
+
     @testset "Core Functionality" begin
       cb = CircularBuffer{Int}(5)
 
@@ -182,7 +183,7 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
         @test first(cb) == last(cb)
       end
 
-      @testset "Appending many elements" begin
+      @testset "Appending many elements - with overwrite" begin
         append!(cb, 2:8; overwrite=true)
         @test length(cb) == capacity(cb)
         @test size(cb) == (length(cb),)
@@ -224,21 +225,25 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
       end
     end
 
-    # @testset "Issue 429" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   map(x -> pushfirst!(cb, x; overwrite=true), 1:8)
-    #   pop!(cb)
-    #   pushfirst!(cb, 9)
-    #   arr = convert(Array, cb)
-    #   @test arr == Int[9, 8, 7, 6, 5]
-    # end
+    @testset "Issue 429" begin
+      cb = CircularBuffer{Int}(5)
+
+      map(x -> pushfirst!(cb, x; overwrite=true), 1:8)
+
+      item = pop!(cb)
+      @test item == 4
+
+      pushfirst!(cb, 9)
+      arr = convert(Array, cb)
+      @test arr == Int[9, 8, 7, 6, 5]
+    end
 
     @testset "Issue 379" begin
       cb = CircularBuffer{Int}(5)
 
       pushfirst!(cb, 1)
       @test cb == [1]
-      
+
       pushfirst!(cb, 2)
       @test cb == [2, 1]
     end
@@ -250,32 +255,90 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
       @test length(cb) == 0
     end
 
-    # @testset "pop!" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   for i in 0:5    # one extra to force wraparound
-    #     push!(cb, i; overwrite=true)
-    #   end
-      
-    #   for j in 5:-1:1
-    #     @test pop!(cb) == j
-    #     @test convert(Array, cb) == collect(1:j-1)
-    #   end
+    @testset "pop!" begin
+      cb = CircularBuffer{Int}(5)
+      for i in 0:5    # one extra to force wraparound
+        push!(cb, i; overwrite=true)
+      end
 
-    #   @test isempty(cb)
-    #   @test_throws BoundsError pop!(cb)
-    # end
+      ## Addition
+      @test convert(Array, cb) == collect(1:5)
 
-    # @testset "popfirst!" begin
-    #   cb = CircularBuffer{Int}(5)
-    #   for i in 0:5    # one extra to force wraparound
-    #     push!(cb, i; overwrite=true)
-    #   end
-    #   for j in 1:5
-    #     @test popfirst!(cb) == j
-    #     @test convert(Array, cb) == collect(j+1:5)
-    #   end
-    #   @test isempty(cb)
-    #   @test_throws BoundsError popfirst!(cb)
-    # end
+      for j in 5:-1:1
+        @test pop!(cb) == j
+        @test convert(Array, cb) == collect(1:j-1)
+      end
+
+      @test isempty(cb)
+      @test_throws BoundsError pop!(cb)
+    end
+
+    @testset "popfirst!" begin
+      cb = CircularBuffer{Int}(5)
+      for i in 0:5    # one extra to force wraparound
+        push!(cb, i; overwrite=true)
+      end
+      for j in 1:5
+        @test popfirst!(cb) == j
+        @test convert(Array, cb) == collect(j+1:5)
+      end
+      @test isempty(cb)
+      @test_throws BoundsError popfirst!(cb)
+    end
   end
+
+  ## Additions
+  @testset "Bonus test - more on Append..." begin
+    @testset "Appending as many elements as possible - w/o overwrite - 1" begin
+      cap = 10
+      cb1 = CircularBuffer{Int}(cap)
+
+      append!(cb1, 1:(cap + 5); overwrite=false)
+      @test length(cb1) == capacity(cb1)
+      @test size(cb1) == (length(cb1),)
+
+      @test isempty(cb1) == false
+      @test isfull(cb1) == true
+
+      @test convert(Array, cb1) == collect(1:cap)
+    end
+
+    @testset "Appending as many elements as possible - w/o overwrite - 2" begin
+      cap = 10
+      cb1 = CircularBuffer{Int}(cap)
+      map(x -> push!(cb1, x; overwrite=true), 10:11)  ## push 2 items
+
+      append!(cb1, 1:(cap + 5); overwrite=false)      ## Actually add 8 items
+      @test length(cb1) == capacity(cb1)
+      @test size(cb1) == (length(cb1),)
+
+      @test isempty(cb1) == false
+      @test isfull(cb1) == true
+
+      @test convert(Array, cb1) == [10, 11, collect(1:cap - 2)...]
+    end
+
+    @testset "Appending as many elements as possible - w/o overwrite - 3" begin
+      cap = 10
+      cb1 = CircularBuffer{Int}(cap)
+      items = cap:(2 * cap - 1)
+      map(x -> push!(cb1, x), items)  ## push 10 items (no overwrite)
+
+      @test isfull(cb1)
+      @test convert(Array, cb1) == collect(items)
+
+      @test_throws BoundsError append!(cb1, 1:(cap + 5)) ## ; overwrite=false)
+
+      @test length(cb1) == capacity(cb1)
+      @test size(cb1) == (length(cb1),)
+
+      # No change actually
+      @test isempty(cb1) == false
+      @test isfull(cb1) == true
+
+      @test convert(Array, cb1) == collect(items)
+    end
+
+  end
+
 end
