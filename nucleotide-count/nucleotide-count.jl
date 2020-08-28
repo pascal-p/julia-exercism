@@ -1,17 +1,18 @@
 """
-    count_nucleotides(strand)
+  count_nucleotides(strand)
 
 The frequency of each nucleotide within `strand` as a dictionary.
 
 Invalid strands raise a `DomainError`.
-
 """
+
+const Nucleotides = ('A', 'C', 'G', 'T',)
+
 function count_nucleotides(strand)
-  letters = ['A', 'C', 'G', 'T']
-  hsh = Dict(l => 0 for l in letters)
+  hsh = Dict(l => 0 for l in Nucleotides)
 
   for ch in strand
-    ch ∉ letters && throw(DomainError(strand, "all letters must be in $(letters)"))
+    ch ∉ Nucleotides && throw(DomainError(strand, "all letters must be in $(Nucleotides)"))
     hsh[ch] += 1
   end
 
