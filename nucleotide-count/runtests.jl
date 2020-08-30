@@ -17,3 +17,7 @@ end
 @testset "strand with invalid nucleotides" begin
   @test_throws DomainError count_nucleotides("AGXXACT")
 end
+
+@testset "strand with repeated nucleotides in mixed cases" begin
+  @test count_nucleotides("GGGttttttgggGGaaaa") == Dict('A' => 4, 'C' => 0, 'G' => 8, 'T' => 6)
+end
