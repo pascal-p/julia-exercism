@@ -3,7 +3,7 @@ const FIRST_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19]
 
 ## entry point => dispatch
 function prime_factors(n::Integer; algo=pf_wheel)
-  n ≤ 0 && throw(DomainError("N should be positive"))
+  n ≤ 0 && throw(DomainError("n should be positive"))
   isone(n) && return []
   n ∈ FIRST_PRIMES && return [n]
 

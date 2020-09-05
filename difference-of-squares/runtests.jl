@@ -8,13 +8,17 @@ include("difference-of-squares.jl")
   @test square_of_sum(100)::Integer == 25502500
 
   ## Addition
-  @test square_of_sum(1_000)::Integer == 250500250000
-  @test square_of_sum(10_000)::Integer == 2500500025000000
-  @test square_of_sum(100_000)::Integer == 6553755928790448384
+  @test square_of_sum(1_000)::Integer            ==            250500250000
+  @test square_of_sum(5_000)::Integer            ==         156312506250000
+  @test square_of_sum(10_000)::Integer           ==        2500500025000000
+  @test square_of_sum(100_000)::Integer          ==     6553755928790448384
+  @test square_of_sum(UInt128(500_000))::Integer == 15625062500062500000000
 
   ## overflow -8222430735553051648 !
   @test square_of_sum(1_000_000)::Integer == 0x8de40ecf711b4400 # == 10224313338156499968
   @test square_of_sum(UInt(1_000_000))::Integer == 0x8de40ecf711b4400
+
+
 end
 
 @testset "Sum the squares of the numbers up to the given number" begin
@@ -22,10 +26,11 @@ end
   @test sum_of_squares(10)::Integer == 385
   @test sum_of_squares(100)::Integer == 338350
 
-  @test sum_of_squares(1_000)::Integer == 333833500
-  @test sum_of_squares(10_000)::Integer == 333383335000
-  @test sum_of_squares(100_000)::Integer == 333338333350000
-  @test sum_of_squares(200_000)::Integer == 2666686666700000
+  @test sum_of_squares(1_000)::Integer   ==         333833500
+  @test sum_of_squares(5_000)::Integer   ==       41679167500
+  @test sum_of_squares(10_000)::Integer  ==      333383335000
+  @test sum_of_squares(100_000)::Integer ==   333338333350000
+  @test sum_of_squares(200_000)::Integer ==  2666686666700000
   @test sum_of_squares(500_000)::Integer == 41666791666750000
 
   @test sum_of_squares(1_000_000)::Integer == 333333833333500000
