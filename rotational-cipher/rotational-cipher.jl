@@ -1,7 +1,7 @@
-function rot_n(n::Int)
-  Punct = ['\'', ',', '.', '?', '!', '"', ';', ':']
-  Digit_As_Char = map(x -> '0' + x, 0:9) # map integer 0..9 to char '0'..'9'
+const Punct = ['\'', ',', '.', '?', '!', '"', ';', ':']
+const Digit_As_Char = map(x -> '0' + x, 0:9) # map integer 0..9 to char '0'..'9'
 
+function rot_n(n::Int)
   fn = function(letter::Char)
     if 'a' ≤ letter ≤ 'z'
       return 'a' + (letter - 'a' + n) % 26
@@ -10,7 +10,7 @@ function rot_n(n::Int)
     elseif letter in [' ', Punct..., Digit_As_Char...]
       return letter
     else
-      throw(ArgumentError("$(letter) is not a latin letter"))
+      throw(ArgumentError("$(letter) is not a latin alphabet"))
     end
   end
 
