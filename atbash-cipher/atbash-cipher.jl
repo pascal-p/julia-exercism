@@ -12,19 +12,16 @@
 const GROUP_FACT = 5
 
 function encode(input::AbstractString; enc=true)::AbstractString
-  s = ""
-  enc && (n = GROUP_FACT)
+  s = " "
 
   for ch in input
     !occursin(r"[a-zA-Z0-9]+", string(ch)) && continue
 
     s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
-    if enc
-      s, n = length(s) % n == 0 ? (string(s, ' '), n + GROUP_FACT + 1) : (s, n)
-    end
+    enc && length(s) % (GROUP_FACT + 1) == 0  && (s = string(s, ' '))
   end
 
-  return rstrip(s, ' ')
+  return strip(s, ' ')
 end
 
 decode(input::AbstractString)::AbstractString = encode(input; enc=false)
