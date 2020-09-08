@@ -4,7 +4,7 @@ Binary Search (Assume array sorted, but can be in reverse order)
 Assume elem can be ∈ array multiple times
 """
 function binarysearch(ary::Vector{T}, elem::T;
-                      by=identity, lt=isless, rev::Bool=false,) where T
+                      by=identity, lt=isless, rev::Bool=false, all::Bool=false,) where T
 
   # empty array case
   isempty(ary) && return 1:0
@@ -39,24 +39,30 @@ function binarysearch(ary::Vector{T}, elem::T;
     end
   end
 
-  # return found ? (m:m) : (m:m-1) # if elem ∈ ary onl;y once
-  if found
-    lx = m
-    m > l && (lx = find_others(n_ary, elem, lx, l, lt = <, inc=-1))
-    rx = m
-    m < r && (rx = find_others(n_ary, elem, rx, r, lt = >, inc=1))
+  if all # return all occurences
+    if found
+      lx = m
+      m > l && (lx = find_others(n_ary, elem, lx, l, lt=isless, inc=-1))
+      rx = m
+      m < r && (rx = find_others(n_ary, elem, rx, r, lt=isgreater, inc=1))
 
-    lx:rx
+      (lx:rx)
+    else
+      (m:m-1)
+    end
   else
-    m:m-1
+    # if elem ∈ ary only once
+    return found ? (m:m) : (m:m-1)
   end
 end
 
-function find_others(ary::Vector{T}, elem::T, ix::Int, n::Int;
-                     lt=<, inc::Int=1) where T
+function find_others(ary::Vector{T}, elem::T, ix::Integer, n::Integer;
+                     lt=isless, inc::Integer=1) where T
   while elem == ary[ix]
     ix += inc
     lt(ix, n) && break
   end
   ix -= inc
 end
+
+isgreater(x::T, y::T) where T = x > y
