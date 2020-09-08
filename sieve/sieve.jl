@@ -14,9 +14,9 @@ function sieve(limit)
       ary[jx] = false
     end
 
-    while !ary[ix]; ix += 1; end
+    while !ary[ix]; ix += 2; end
     cand = ix
-    ix += 1
+    ix += 2
   end
 
   ## how many primes

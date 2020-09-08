@@ -58,6 +58,7 @@ end
                "anobstacleisoftenasteppingstone",
                "An obstacle is often a stepping stone",
                long_str]
-    @test (decode ∘ encode)(text) == replace(lowercase(text), r"\s+|\.|,|\?|!|;|;|\+|\*|\-|/|%|\$|\^|&|'|\"" => "")
+    @test (decode ∘ encode)(text) == replace(lowercase(text),
+                                             r"\s+|\.|,|\?|!|;|;|\+|\*|\-|/|%|\$|\^|&|'|\"" => "")
   end
 end
