@@ -19,10 +19,11 @@ function to_roman(number)
     elseif num == 4
       (ya_map[p], ya_map[5 * p])             # Ex. 40 => XL
 
-    elseif 5 ≤ num < 9
+    elseif num < 9
       (ya_map[5 * p], ya_map[p] ^ (num - 5)) # Ex. 70 => LXX
 
     else # 9
+      @assert num == 9
       (ya_map[p], ya_map[10 * p])            # Ex. 90 => XC
 
     end
