@@ -56,21 +56,20 @@ function build_isbn10_from_prefix(prefix::String)::ISBN
   check_validity(cisbn, n)
 
   ## Compute partial sum, given prefix
-  sum = 0
-  for (p, s) in zip(collect(ISBN_LEN:-1:ISBN_LEN - n + 1), split(cisbn, ""))
-    sum += parse(Int, s) * p
-  end
+  s = foldl((s, t) -> s += parse(Int, t[1]) * t[2],
+            zip(split(cisbn, ""), collect(ISBN_LEN:-1:ISBN_LEN - n + 1));
+            init=0)
 
-  isbn, msum = cisbn, sum
+  isbn, msum = cisbn, s
   n_att = 0
   while true
     m = ISBN_LEN - n
     for (p, i) in zip(collect(m:-1:2), rand(0:9, m - 1))
-      sum += i * p
+      s += i * p
       isbn = string(isbn, i)
     end
 
-    check_digit = (11 - sum % 11) % 11
+    check_digit = (11 - s % 11) % 11
 
     if check_digit > 0
       check_digit = check_digit == 10 ? 'X' : check_digit
@@ -82,7 +81,7 @@ function build_isbn10_from_prefix(prefix::String)::ISBN
     n_att += 1
     n_att ≥ N_ATTEMPTS &&
       throw(ArgumentError("generated ISBN10 is not valid! gave up after $(n_att) attempts"))
-    isbn, sum = cisbn, msum
+    isbn, s = cisbn, msum
   end
 
   # Final check
@@ -111,20 +110,18 @@ function build_isbn13_from_prefix(prefix::String)::ISBN
   end
 
   ## Compute partial sum, given prefix
-  sum = 0
-  for (p, s) in zip(BASE_ISBN13[1:n], split(cisbn, ""))
-    sum += parse(Int, s) * p
-  end
+  s = foldl((s, t) -> s += parse(Int, t[1]) * t[2],
+            zip(split(cisbn, "")[1:n], BASE_ISBN13[1:n]);
+            init=0)
 
-  isbn, msum = cisbn, sum
-  n_att = 0
+  isbn, n_att = cisbn, 0
   while true
     for (p, i) in zip(BASE_ISBN13[n+1:end], rand(0:9, ISBN13_LEN - n - 1))
-      sum += i * p
+      s += i * p
       isbn = string(isbn, i)
     end
 
-    check_digit = (10 - sum % 10) % 10
+    check_digit = (10 - s % 10) % 10
     isbn = string(isbn, check_digit)
     break
 
@@ -192,33 +189,28 @@ end
   No need for any multitplication
 """
 function is_valid10(isbn::String)::Bool
-  # !occursin(r"\d\-?\d{3}\-?\d{5}\-?(\d|X)", isbn) && throw(ArgumentError("Not a vild ISBN10"))
   !occursin(r"\A\d\-?\d{3}\-?\d{5}\-?(\d|X)\Z", isbn) && return false
 
-  sum, t = 0, 0
-  for ch in isbn[1:end-1]
-    t += parse(Int, ch)
-    sum += t
+  # now isbn is valid
+  λ = function(s, ch)
+    s[1] += s[2] += "0" ≤ ch ≤ "9" ? parse(Int, ch) : 10
+    s
   end
+  (s, _) = foldl(λ, split(isbn, ""); init=zeros(Int, 2))
 
-  string(isbn[end]) ∉ VALID_SUBSTR && return false  # NOTE: isbn[end] is a Char
-  t += uppercase(isbn[end]) == 'X' ? 10 : parse(Int, isbn[end])
-  sum += t
-
-  return sum % 11 == 0
+  return s % 11 == 0
 end
 
 
 function checksum(isbn::String)::Int
   "for ISBN13 .,."
+  !occursin(r"\A\d{13}\Z", isbn) && return -1
 
-  sum, lim = 0, length(isbn) - 1
-  for (p, s) in zip(BASE_ISBN13[1:end - 1], split(isbn, ""))
-    "0" ≤ s ≤ "9" || return -1
-    sum += parse(Int, s) * p
-  end
+  s = foldl((s, t) -> s += parse(Int, t[1]) * t[2],
+            zip(split(isbn, "")[1:end - 1], BASE_ISBN13[1:end - 1]);
+            init=0)
 
-  return (10 - sum % 10) % 10
+  return (10 - s % 10) % 10
 end
 
 
