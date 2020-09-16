@@ -14,7 +14,7 @@ function binarysearch(ary::Vector{T}, elem::T;
   n == 1 && ary[1] == elem && return 1:1
 
   # apply transfo.
-  n_ary = sort(ary, by=by, rev=rev, lt=lt)
+  n_ary = rev ? sort(ary, by=by, rev=rev, lt=lt) : ary
 
   # edge cases
   elem < n_ary[1] && return 1:0
@@ -39,28 +39,27 @@ function binarysearch(ary::Vector{T}, elem::T;
     end
   end
 
-  if all # return all occurences
+  if all       ## return all occurences
     if found
       lx = m
-      m > l && (lx = find_others(n_ary, elem, lx, l, lt=isless, inc=-1))
+      m > l && (lx = find_others(n_ary, elem, lx, l))
       rx = m
-      m < r && (rx = find_others(n_ary, elem, rx, r, lt=isgreater, inc=1))
+      m < r && (rx = find_others(n_ary, elem, rx, r, cmp=isgreater, inc=1))
 
       (lx:rx)
     else
       (m:m-1)
     end
   else
-    # if elem ∈ ary only once
     return found ? (m:m) : (m:m-1)
   end
 end
 
 function find_others(ary::Vector{T}, elem::T, ix::Integer, n::Integer;
-                     lt=isless, inc::Integer=1) where T
+                     cmp=isless, inc::Integer=-1) where T
   while elem == ary[ix]
     ix += inc
-    lt(ix, n) && break
+    cmp(ix, n) && break
   end
   ix -= inc
 end
