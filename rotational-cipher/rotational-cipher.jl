@@ -1,36 +1,31 @@
-const Punct = ['\'', ',', '.', '?', '!', '"', ';', ':']
+const Punctuation = ['\'', ',', '.', '?', '!', '"', ';', ':']
 const Digit_As_Char = map(x -> '0' + x, 0:9) # map integer 0..9 to char '0'..'9'
 
-function rot_n(n::Int)
-  fn = function(letter::Char)
+function rot_n_maker(n::Int)
+  rot_fn = function(letter::Char)
     if 'a' ≤ letter ≤ 'z'
       return 'a' + (letter - 'a' + n) % 26
     elseif 'A' ≤ letter ≤ 'Z'
       return 'A' + (letter - 'A' + n) % 26
-    elseif letter in [' ', Punct..., Digit_As_Char...]
+    elseif letter in [' ', Punctuation..., Digit_As_Char...]
       return letter
     else
       throw(ArgumentError("$(letter) is not a latin alphabet"))
     end
   end
 
-  return fn
+  return rot_fn
 end
 
 
-function rotate(n::Int, src::Union{String,Char})
-  rot_fn = rot_n(n)
+function rotate(n::Int, src::Union{String, Char})
+  rot_fn = rot_n_maker(n)
 
   ===(typeof(src), Char) && return rot_fn(src)
 
-  <<(s::String, l::Char) = cipher = string(s, l)
+  <<(s::String, l::Char) = string(s, l)
 
-  cipher = ""
-  for l in src
-    cipher << rot_fn(l)
-  end
-
-  return cipher
+  return foldl((cipher, l) -> cipher << rot_fn(l), src, init="")
 end
 
 # macro R13_str(s)
