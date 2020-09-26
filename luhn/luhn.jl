@@ -10,14 +10,13 @@ end
 
 function extract_calc(ary)
   """
-  Do not build arrya => too expensive
+  Do not build array => too expensive
 
   Extract, double and sum every 2nd digit while
-    extract and sum every 1st digit
+    extractimg and summing every 1st digit
 
   return sum of these two sums
   """
-  ds, s = 0, 0
   r = length(ary) % 2 == 0 ? 0 : 1
 
   res = foldl(enumerate(ary); init=[0, 0]) do csum, (ix, ch)
