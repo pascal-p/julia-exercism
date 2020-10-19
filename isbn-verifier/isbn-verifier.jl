@@ -6,11 +6,14 @@
 
 using Random
 
-const VALID_SUBSTR = vcat(string.(collect(1:10)), ["X"])
+const VALID_SUBSTR = vcat(string.(collect(1:9)), ["X"])
 const BASE_ISBN13 = [1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1]
 const N_ATTEMPTS = 5  # Max. num of attempt for creating an ISBN code from a given prefix
 const ISBN_LEN = 10
 const ISBN13_LEN = 13
+
+const ISBN_REXP = r"\A\d\-?\d{3}\-?\d{5}\-?(\d|X)\Z"
+const ISBN13_REXP = r"\A\d{13}\Z"
 
 
 abstract type  AbstractISBN <: AbstractString end
@@ -32,7 +35,7 @@ struct ISBN13 <: AbstractISBN
     cisbn = string("978", isbn)
     @assert isa(cisbn, String)
 
-    isbn = string(cisbn[1:12], checksum(cisbn))
+    isbn = string(cisbn[1:(ISBN13_LEN - 1)], checksum(cisbn))
     new(isbn)
   end
 
@@ -157,7 +160,7 @@ show(io::IO, isbn::ISBN13) = print(io, "$(val[1:3])-$(val[4])-$(val[5:7])-$(val[
 
 
 function isvalid(AbstractISBN, isbn::String)::Bool
-  length(isbn) ∉ [ISBN_LEN, ISBN13_LEN, 17] && return false
+  length(isbn) ∉ [ISBN_LEN, ISBN13_LEN, ISBN13_LEN + 4] && return false
 
   ## Get rid of "-"
   isbn = split(isbn, "-") |> s -> join(s)
@@ -178,7 +181,7 @@ function is_valid13(isbn::String)::Bool
   check_digit = checksum(isbn::String)
   check_digit == -1 && return false
 
-  return check_digit == parse(Int, isbn[end])
+  return string(check_digit) == string(isbn[end])
 end
 
 
@@ -189,9 +192,13 @@ end
   No need for any multitplication
 """
 function is_valid10(isbn::String)::Bool
-  !occursin(r"\A\d\-?\d{3}\-?\d{5}\-?(\d|X)\Z", isbn) && return false
+  !occursin(ISBN_REXP, isbn) && return false
 
-  # now isbn is valid
+  # now isbn is valid - calc sum
+  #
+  # NOTE: s[2] is the sum, while s[1] is the cumulative sum of the sum...
+  # x₁ × 10 + x₂ × 9 + x₃ × 8 + ... + x₉ × 2 + x₁₀ × 1 ≡
+  # x₁ + (x₁ + x₂) + (x₁ + x₂ + x₃) + ... + (x₁ + x₂ + x₃ + ... + x₉ + x₁₀)  # sum of cumulative sum
   λ = function(s, ch)
     s[1] += s[2] += "0" ≤ ch ≤ "9" ? parse(Int, ch) : 10
     s
@@ -204,19 +211,25 @@ end
 
 function checksum(isbn::String)::Int
   "for ISBN13 .,."
-  !occursin(r"\A\d{13}\Z", isbn) && return -1
+  !occursin(ISBN13_REXP, isbn) && return -1
 
-  s = foldl((s, t) -> s += parse(Int, t[1]) * t[2],
-            zip(split(isbn, "")[1:end - 1], BASE_ISBN13[1:end - 1]);
-            init=0)
+  #s = foldl((s, t) -> s += parse(Int, t[1]) * t[2],
+  #          zip(split(isbn, "")[1:end - 1], BASE_ISBN13[1:end - 1]);
+  #          init=0)
+  s = [
+       parse(Int, sd) * b for (sd, b) in zip(split(isbn, "")[1:end - 1], BASE_ISBN13[1:end - 1])
+  ] |> a -> sum(a)
 
   return (10 - s % 10) % 10
 end
 
 
-function check_validity(cisbn::String, len::Int)
-  "Check validity of prefix in the context of building an ISBN number"
+"""
+    check_validity(cisbn::String, len::Int)
 
+    Check validity of prefix in the context of building an ISBN(10) number
+"""
+function check_validity(cisbn::String, len::Int)
   for s in split(cisbn, "")[1:len-1]
     !("0" ≤ string(s) ≤ "9") && throw(ArgumentError("not a valid prefix!"))
   end
@@ -229,10 +242,12 @@ function check_validity(cisbn::String, len::Int)
   !cond && throw(ArgumentError("not a valid prefix!"))
 end
 
+"""
+    check_validity13(cisbn::String, len::Int)
 
+    Check validity of prefix in the context of building an ISBN13 number
+"""
 function check_validity13(cisbn::String, len::Int)
-  "Check validity of prefix in the context of building an ISBN13 number"
-
   for s in split(cisbn, "")
     !("0" ≤ string(s) ≤ "9") && throw(ArgumentError("not a valid prefix!"))
   end

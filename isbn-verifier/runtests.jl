@@ -64,7 +64,13 @@ end
 end
 
 @testset "invalid ISBN13 numbers" begin
-  # TODO...
+  @test !isvalid(ISBN13, "978-3-598-21508-1")
+
+  @test !isvalid(ISBN13, "978_3_598_21508_1")
+
+  @test !isvalid(ISBN13, "978359821508X")
+
+  @test !isvalid(ISBN13, "9780306406153")
 end
 
 @testset "constructing valid ISBN numbers" begin
