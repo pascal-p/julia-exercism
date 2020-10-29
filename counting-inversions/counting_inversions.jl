@@ -1,27 +1,16 @@
-const VInt = Array{Int, 1}
-
-# (or other type assoicated with an order)
+const VReal{T} = Vector{T} where T<: Real
 
 """
-   counting_inversions(a::Vector{Integer})::Tuple{Integer}
-
+   counting_inversions(a::VReal)::Tuple{Integer}
 
    input: a array of integer in a random order
    output: sorted array (a sorted) b and the number of inversions
-
-   n ≤ 1 && return (a, 0)
-
-   (c, left_inv_cnt) = sort_and_count(a, start_lix, end_lix)
-   (b, right_inv_cnt) = sort_and_count(a, start_rix, end_rix)
-
-   (b, shift_inv_cnt) = merge_and_count(c, d)
-   return (b, left_inv_cnt + right_inv_cnt + shift_inv_cnt)
 """
 
-function counting_inversions(a::VInt)::Tuple{VInt, Integer}
+function counting_inversions(a::VReal)::Tuple{VReal, Integer}
   n_a = length(a)
 
-  function sort_and_count(a)
+  function sort_and_count(a::VReal)::Tuple{VReal, Integer}
     n = length(a)
     n ≤ 1 && return(a, 0)
 
@@ -38,7 +27,7 @@ function counting_inversions(a::VInt)::Tuple{VInt, Integer}
   end
 
   (b, num_inv) = sort_and_count(a)
-  @assert n_a == length(b) "input array $(a), and resulting array $(b) should have same length" 
+  @assert n_a == length(b) "input array $(a), and resulting array $(b) should have same length"
   return (b, num_inv)
 end
 
@@ -48,10 +37,10 @@ function counting_inversions(a::Any)::Tuple{Any, Integer}
   throw(ArgumentError("$(typeof(a)) not managed yet..."))
 end
 
-function merge_and_count(c::VInt, d::VInt)::Tuple{VInt, Integer}  
+function merge_and_count(c::VReal, d::VReal)::Tuple{VReal, Integer}
   ix_lim, jx_lim = length(c), length(d)
   kx, ix, jx, num_inv = 1, 1, 1, 0
-  b = VInt(undef, ix_lim + jx_lim)
+  b = VReal{eltype(c)}(undef, ix_lim + jx_lim)
 
   ## merge c, d => b
   for k in 1:(ix_lim + jx_lim)
@@ -59,7 +48,7 @@ function merge_and_count(c::VInt, d::VInt)::Tuple{VInt, Integer}
       kx = k
       break
     end
-    
+
     if c[ix] ≤ d[jx]
       b[k] = c[ix]
       ix += 1
@@ -71,7 +60,7 @@ function merge_and_count(c::VInt, d::VInt)::Tuple{VInt, Integer}
   end
 
   ## copy remaining elements of c into b (if any)
-  while ix ≤ ix_lim    
+  while ix ≤ ix_lim
     b[kx] = c[ix]
     kx += 1
     ix += 1
