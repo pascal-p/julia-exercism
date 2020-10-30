@@ -35,6 +35,18 @@ const MInt = Matrix{T} where T <: Real
 
   X × Y = |P₅ + P₄ - P₂ + P₆        P₁ + P₂     |
           |     P₃ + P₄        P₁ + P₅ - P₃ - P₇|
+
+
+  The running time of the Strassen algorithm can be found by using the Master Method (parameterized
+  by 3 var. a,b and d) as follows:
+  - a = 7 (number of recursive calls or sub-problems)
+  - b = 2 (each sub-problems is half the size of the original one)
+  - d = 1 (outside the rec. call we need to do some addtions and subtractions - which is done in linear
+           time)
+
+  Therefore: a (= 7) > bᵈ (= 2), master method states that the running time is:
+    O(n^(log₂(7))) ≈ O(n².⁸¹) (subcubic)
+    And actually Ω(n².⁸¹)
 """
 
 function strassen_fn(X::MInt, Y::MInt)::MInt

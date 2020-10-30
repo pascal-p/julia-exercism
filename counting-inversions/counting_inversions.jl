@@ -5,6 +5,17 @@ const VReal{T} = Vector{T} where T<: Real
 
    input: a array of integer in a random order
    output: sorted array (a sorted) b and the number of inversions
+
+   The running time of this algorithm (using Gauss trick 3 mult. instead of 4) can be found
+   by using the Master Method (parameterized by 3 var. a,b and d) as follows:
+
+   - a = 3 (number of recursive calls or sub-problems)
+   - b = 2 (each sub-problems is half the size of the original one)
+     d = 1 (outside the rec. call we need to do some addtions and subtractions - which is done in linear
+            time)
+
+     Therefore  a (= 3) > bᵈ (= 2)  => Running time is:
+       O( n^(log₂(3)) ) ≈ O(n¹.⁵⁸)
 """
 
 function counting_inversions(a::VReal)::Tuple{VReal, Integer}
