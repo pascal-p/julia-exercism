@@ -121,11 +121,11 @@ function median_3(a, l, r)
   if x < y
     y < z && return m # y
     x < z && return r # z, y ≥ z && y > x
-    return l # x
+    return l          # x
 
   else # x ≥ y
     y > z && return m # y
     x < z && return l # x,  y ≤ z
-    return r # z
+    return r          # z
   end
 end

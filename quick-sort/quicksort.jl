@@ -2,7 +2,7 @@ using Random
 
 
 """
-  QuickSort standard not dealing with ties 
+  QuickSort standard, not dealing with ties
 """
 function quick_sort!(a; shuffle=true, cmp_count=false, pivot="first")
   length(a) ≤ 1 && return a
@@ -15,24 +15,22 @@ function quick_sort!(a; shuffle=true, cmp_count=false, pivot="first")
   function qsort!(a, l, r)  # closure
     l ≥ r && return
 
-    print()
-    ixp = choose_pivot(a, l, r, pivot)
-    a[l], a[ixp] = a[ixp], a[l]  # set pivot in first pos.
-
-    jx = partition(a, l, r)
+    ip = choose_pivot(a, l, r, pivot)  # return index of chosen pivot
+    a[l], a[ip] = a[ip], a[l]          # move pivot in first pos. (at index l)
+    ix = partition(a, l, r)
+    nb_cmp += r - l
     #
     # There’s no need to count the comparisons one by one. When there is a
     # recursive call on a subarray of length m, you can simply add m - 1 to your running
     # total of comparisons. (Recall that the pivot element is compared to each of the
     # other m - 1 elements in the subarray in this recursive call.)
     #
-    qsort!(a, l, jx - 1)
-    qsort!(a, jx + 1, r)
-    nb_cmp += r - l
+    qsort!(a, l, ix - 1)
+    qsort!(a, ix + 1, r)
   end
 
   shuffle && Random.shuffle!(a)
-  qsort!(a, 1, length(a)) # ; nb_cmp += length(a) - 1
+  qsort!(a, 1, length(a))
   return cmp_count ? (a, nb_cmp) : a
 end
 
@@ -48,8 +46,8 @@ function partition(a, l, r)
   end
 
   ix -= 1
-  a[l], a[ix] = a[ix], a[l]
-  return ix
+  a[l], a[ix] = a[ix], a[l] # move pivot to its final place in sorted arr=ay
+  return ix                 # indice of pivot
 end
 
 function choose_pivot(a, l, r, pivot)
@@ -57,6 +55,8 @@ function choose_pivot(a, l, r, pivot)
     l
   elseif pivot == "last"
     r
+  elseif pivot == "random"
+    rand(l:r)
   elseif pivot == "median-3"
     median_3(a, l, r)
   else
@@ -66,17 +66,17 @@ end
 
 function median_3(a, l, r)
   s =  (r - l + 1)
-  m = s % 2 == 0 ? s ÷ 2 : ceil(Int, s / 2)
+  m = (l  - 1) + ceil(Int, s / 2)
   x, y, z = a[l], a[m], a[r]
 
   if x < y
-    y < z && return m # y
+    y ≤ z && return m # y
     x < z && return r # z, y ≥ z && y > x
-    return l # x
+    return l          # x
 
   else # x ≥ y
-    y > z && return m # y
+    y ≥ z && return m # y
     x < z && return l # x,  y ≤ z
-    return r # z
+    return r          # z
   end
 end
