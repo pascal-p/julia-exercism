@@ -88,7 +88,7 @@ end
   @test quick_sort!(x, shuffle=false, cmp_count=true; pivot="median-3") == (sorted_x, nb_cmp_med)
 end
 
-@testset "qsort 10_000 num - random sleection of pivot" begin
+@testset "qsort 10_000 num - random selection of pivot" begin
   sorted_x = slurp("file_10000_num_sorted.txt")
 
   tot_nb_cmp = 0

@@ -69,22 +69,6 @@ harder to guess things based on word boundaries.
     - `15 * 7 mod 26 = 105 mod 26 = 1`
     - `7` is the MMI of `15 mod 26`
 
-
-## Running the tests
-
-To run the tests, run `pytest affine_cipher_test.py`
-
-Alternatively, you can tell Python to run the pytest module:
-`python -m pytest affine_cipher_test.py`
-
-### Common `pytest` options
-
-- `-v` : enable verbose output
-- `-x` : stop running tests on first failure
-- `--ff` : run failures from previous test before running other test cases
-
-For other options, see `python -m pytest -h`
-
 ## Source
 
 Wikipedia [http://en.wikipedia.org/wiki/Affine_cipher](http://en.wikipedia.org/wiki/Affine_cipher)
