@@ -1,4 +1,5 @@
 using Test
+using Random
 
 include("quicksort.jl")
 

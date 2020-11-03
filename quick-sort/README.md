@@ -1,4 +1,4 @@
-# Counting inversions 
+# Sort
 
     Programming Problem 5.6: QuickSort
 
