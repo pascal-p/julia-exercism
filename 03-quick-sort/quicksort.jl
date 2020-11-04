@@ -46,7 +46,7 @@ function partition(a, l, r)
   end
 
   ix -= 1
-  a[l], a[ix] = a[ix], a[l] # move pivot to its final place in sorted arr=ay
+  a[l], a[ix] = a[ix], a[l] # move pivot to its final place in sorted array
   return ix                 # indice of pivot
 end
 

@@ -1,8 +1,7 @@
 # Sort
-
-    Programming Problem 5.6: QuickSort
-
-### Work
+    
+## Work
+Programming Problem 5.6: QuickSort.  
 
   - Test case #1: 10 integers, representing a 10-element array.  
     Your program should count:
