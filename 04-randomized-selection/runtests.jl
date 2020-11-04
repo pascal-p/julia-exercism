@@ -3,6 +3,13 @@ using Random
 
 include("rselect.jl")
 
+function slurp(ifile) # :: vector of ints
+  open(ifile) do f
+    readlines(f)
+  end |> a -> map(s -> parse(Int, s), a)
+end
+
+
 @testset "rselect basics" begin
   @test rselect([], 2) == nothing
   @test rselect([2, 1], 3) == nothing
@@ -44,4 +51,26 @@ end
   for ith in 10000:5000:100_000
     @test rselect(x, ith) == ith
   end
+end
+
+@testset "challenge 1 / 10 num" begin
+  x = slurp("problem6.5test_10.txt")
+  @test rselect(x, 5) == 5469
+end
+
+@testset "challenge 2 / 100 num" begin
+  x = slurp("problem6.5test_100.txt")
+  @test rselect(x, 50) == 4715
+end
+
+@testset "challenge 3 / π digits" begin
+  str = open("pi_first_100000.txt") do f
+    readlines(f)[1]
+  end
+
+  n = length(str)
+  x = [ parse(Int, str[ix:ix + 10]) for ix in 3:10:(n - 10) ]
+
+  n = length(x)
+  @test rselect(x, n ÷ 2) == 50217159133
 end

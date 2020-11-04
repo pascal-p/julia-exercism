@@ -1,6 +1,6 @@
 # Randomized Selection
     
-    Programming Problem 6.5: Randomized Linear-Time Selection
+  **Programming Problem 6.5: Randomized Linear-Time Selection**
     
 ## Work
 
