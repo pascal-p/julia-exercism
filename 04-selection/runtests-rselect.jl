@@ -1,13 +1,8 @@
 using Test
 using Random
 
+include("file_utils.jl")
 include("rselect.jl")
-
-function slurp(ifile) # :: vector of ints
-  open(ifile) do f
-    readlines(f)
-  end |> a -> map(s -> parse(Int, s), a)
-end
 
 
 @testset "rselect basics" begin
