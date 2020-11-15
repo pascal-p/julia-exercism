@@ -3,8 +3,6 @@ using Test
 include("di_graph_scc.jl")
 
 const FILEDIR = "./tests"
-# g = Digraph{Int}(11)
-# g = Digraph{Int}("11v_17e.txt")
 
 @testset "loading a DiGraph from file 11v_17e" begin
   g = DiGraph{Int}("$(FILEDIR)/11v_17e.txt")
@@ -16,8 +14,7 @@ const FILEDIR = "./tests"
   @test g.adj[1] == [3]      # [[3], [4, 10], [5, 11], [7], [1, 7, 9], [10], [9], [6], [2, 4, 8], [8], [6]]
   @test g.adj[2] == [4, 10]
 
-  # println(reverse(g))      # [[5], [9], [1], [2, 9], [3], [8, 11], [4, 5], [9, 10], [5, 7], [2, 6], [3]]
-  @test gᵣ.adj[1] == [5]
+  @test gᵣ.adj[1] == [5]     # [[5], [9], [1], [2, 9], [3], [8, 11], [4, 5], [9, 10], [5, 7], [2, 6], [3]]
   @test gᵣ.adj[4] == [2, 9]
 end
 
@@ -131,7 +128,7 @@ end
 ## 371762 SCC
 @testset "SCC 875714v_5105043e" begin
   (scc_g, _g) = calc_scc("$(FILEDIR)/875714v_5105043e_tc.txt")
-  
+
   @test count(scc_g) == 371762
 
   @test topn(scc_g) == [ 218472 => 434821, 214518 => 968, 213230 => 459, 363858 => 313, 188585 => 211 ] # 5-element Array{Pair{Int64,Int64},1}

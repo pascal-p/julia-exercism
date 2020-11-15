@@ -22,13 +22,12 @@ function encode(str::String)::String
     end
   end
 
-  # add last char, amd implicitly return it
+  # add last char, and implicitly return it
   nstr = string(nstr, count > 1 ? count : "", pch)
 end
 
 function decode(str::String)::String
   length(str) == 0 && (return "")
-
   check_valid(str[end])
 
   snum, num, dec = "", 0, ""
