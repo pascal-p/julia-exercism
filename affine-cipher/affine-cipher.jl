@@ -18,7 +18,7 @@ macro coprime_checker(fn)
     fn.args[1].args[2]                 == AbstractString
     fn.args[1].args[1].args[1]         == encode
     fn.args[1].args[1].args[2]         == plain::AbstractString
-    fn.args[1].args[1].args[3]         ==  α::Integer
+    fn.args[1].args[1].args[3]         == α::Integer
     fn.args[1].args[1].args[3].args[1] == α
     fn.args[2]                         == whole body of fn
   """
@@ -51,7 +51,7 @@ end
     s -> strip(s)
 end
 
-@coprime_checker  function decode(ciphered::AbstractString, α::Integer, β::Integer)::AbstractString
+@coprime_checker function decode(ciphered::AbstractString, α::Integer, β::Integer)::AbstractString
   """
   D(y) = α-¹ × (y - β) ≡ m
   """
@@ -79,7 +79,7 @@ end
 
 function grouping(s::AbstractString, ch::Char)::AbstractString
   l = length(s) + 1
-  l % GRP_SIZE == 0 ? string(s, ch, ' ') :  string(s, ch)
+  l % GRP_SIZE == 0 ? string(s, ch, ' ') : string(s, ch)
 end
 
 function translate(x::Char, α::Integer, β::Integer, op::Symbol)
