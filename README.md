@@ -16,18 +16,18 @@ Julia Programming Implementation.
 
 The primary topics in this part of the specialization are: asymptotic ("Big-oh") notation, sorting and searching, divide and conquer (master method, integer and matrix multiplication, closest pair), and randomized algorithms (QuickSort, contraction algorithm for min cuts).
 
- - [X] [week 1 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/01-karatsuba-int-mult/README.md)  
- - [X] [week 2 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/02-counting-inversions/README.md)  
- - [X] [week 3 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/03-quick-sort/README.md)  
- - [X] [week 4 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/04-selection/README.md)  
+ - [X] [week 1 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/Algo/01-karatsuba-int-mult/README.md)  
+ - [X] [week 2 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/Algo/02-counting-inversions/README.md)  
+ - [X] [week 3 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/Algo/03-quick-sort/README.md)  
+ - [X] [week 4 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/Algo/04-selection/README.md)  
 
 ### C02 - Graph Search, Shortest Paths, and Data Structures
  - [ ] (Graph Search, Shortest Paths, and Data Structures)https://www.coursera.org/learn/algorithms-graphs-data-structures
 
 The primary topics in this part of the specialization are: data structures (heaps, balanced search trees, hash tables, bloom filters), graph primitives (applications of breadth-first and depth-first search, connectivity, shortest paths), and their applications (ranging from deduplication to social network analysis).
     
- - [X] [week 1 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/06-digraph-scc/README.md)
- - [X] [week 2 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/07-dijkstra-sp/README.md)
+ - [X] [week 1 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/Algo/06-digraph-scc/README.md)
+ - [X] [week 2 - Assignment](https://github.com/pascal-p/julia-exercism/blob/master/Algo/07-dijkstra-sp/README.md)
  - [ ] [week 3 - Assignment]()
  - [ ] [week 4 - Assignment]()
 

@@ -1,10 +1,9 @@
-
 *~
 .*~
 *.ipynb
 .exercism
-*.org  
+*.org
 sum/*
 
-*/tests/problem8.10.txt
-*/tests/875714v_5105043e_tc.txt
+Algo/*/tests/problem8.10.txt
+Algo/*/tests/875714v_5105043e_tc.txt
