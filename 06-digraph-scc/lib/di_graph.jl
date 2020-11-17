@@ -16,7 +16,6 @@ mutable struct DiGraph{T}
   function DiGraph{T}(infile::String) where T
     from_file(infile, DiGraph{T})
   end
-
 end
 
 function add_edge(self::DiGraph{T}, x::Int, y::Int) where T

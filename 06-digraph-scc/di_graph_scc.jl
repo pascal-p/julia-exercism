@@ -1,6 +1,6 @@
 push!(LOAD_PATH, "./lib")
 
-using YaG
+using YAG_SCC
 
 function calc_scc(infile::String)  # T == Int here...
   g = DiGraph{Int}(infile)

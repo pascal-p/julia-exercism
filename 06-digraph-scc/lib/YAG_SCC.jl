@@ -1,4 +1,4 @@
-module YaG
+module YAG_SCC
   import Base: reverse, count, size
 
   using DataStructures
@@ -17,5 +17,4 @@ module YaG
   # include("./di_dfs.jl")
   include("./di_dfo.jl")
   include("./di_scc.jl")
-
 end
