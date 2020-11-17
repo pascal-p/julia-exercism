@@ -11,6 +11,8 @@
 
 const GROUP_FACT = 5 + 1  # counting 1 extra space
 
+const ALPHA_REXP = r"[a-zA-Z0-9]+"
+
 function encode_v1(input::AbstractString; enc=true)::AbstractString
   s = " "
 
@@ -26,7 +28,7 @@ end
 
 function encode(input::AbstractString; enc=true)::AbstractString
   trans_fn = function(s, ch)
-    !occursin(r"[a-zA-Z0-9]+", string(ch)) && (return s)
+    !occursin(ALPHA_REXP, string(ch)) && (return s)
 
     s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
     enc && length(s) % GROUP_FACT == 0 ? string(s, ' ') : s

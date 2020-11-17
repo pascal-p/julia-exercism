@@ -99,7 +99,7 @@ end
 # ==> distance to: 165 is 2442
 # ==> distance to: 188 is 2505
 # ==> distance to: 197 is 3068
-#
+# 2599,2610,2947,2052,2367,2399,2029,2442,2505,3068
 
 # for x in [7,37,59,82,99,115,133,165,188,197]
 #          println("==> path to: $(x) from 1 is $(path_to(dsp, g, x))")
