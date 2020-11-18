@@ -1,6 +1,5 @@
 using Random
 
-
 """
   QuickSort standard, not dealing with ties
 """

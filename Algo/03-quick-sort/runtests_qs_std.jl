@@ -42,26 +42,20 @@ end
 
 @testset "100_000 random-sample with no repeated values" begin
   sorted_x = collect(1:100_000)
-  x = Random.shuffle(collect(1:100_000))
-  @test quick_sort!(x; shuffle=false, pivot="median-3") == sorted_x
 
-  x = Random.shuffle(collect(1:100_000))
-  @test quick_sort!(x; shuffle=false, pivot="first") == sorted_x
-
-  x = Random.shuffle(collect(1:100_000))
-  @test quick_sort!(x; shuffle=false, pivot="last") == sorted_x
+  for _ in 1:3
+    x = Random.shuffle(collect(1:100_000))
+    @test quick_sort!(x; shuffle=false, pivot="median-3") == sorted_x
+  end
 end
 
 @testset "1_000_000 random-sample with no repeated values" begin
   sorted_x = collect(1:1_000_000)
-  x = Random.shuffle(collect(1:1_000_000))
-  @test quick_sort!(x; shuffle=false, pivot="median-3") == sorted_x
 
-  x = Random.shuffle(collect(1:1_000_000))
-  @test quick_sort!(x; shuffle=false, pivot="first") == sorted_x
-
-  x = Random.shuffle(collect(1:1_000_000))
-  @test quick_sort!(x; shuffle=false, pivot="last") == sorted_x
+  for _ in 1:3
+    x = Random.shuffle(collect(1:1_000_000))
+    @test quick_sort!(x; shuffle=false, pivot="median-3") == sorted_x
+  end
 end
 
 @testset "10_000_000 random-sample with no repeated values" begin
@@ -70,4 +64,3 @@ end
 
   @test quick_sort!(x; shuffle=false, pivot="median-3") == sorted_x
 end
-
