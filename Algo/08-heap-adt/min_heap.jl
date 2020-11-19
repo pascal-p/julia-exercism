@@ -103,7 +103,7 @@ function buble_down!(self::MinHeap{T}, k::T) where T
   while 2k ≤ n
     j = 2k                                         ## first child position
     j < n && self.h[j] > self.h[j + 1] && (j += 1) ## move to 2nd child if necessary
-    self.h[k] < self.h[j] && break                 ## we are done
+    self.h[k] ≤ self.h[j] && break                 ## we are done
 
     self.h[k], self.h[j] = self.h[j], self.h[k]    ## exchange
     k = j
