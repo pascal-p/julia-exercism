@@ -3,7 +3,7 @@
 # maxheap property: a key at a parent level is ≥ the keys at children level
 #
 
-import Base: isempty, size, insert!, peek, delete!
+import Base: isempty, size, length, insert!, peek, delete!
 
 abstract type AbsHeap end
 abstract type MinHeap <: AbsHeap end
@@ -20,6 +20,19 @@ mutable struct Heap{T} <: AbsHeap
   end
 end
 
+
+"""
+  length
+    - Current number of items in the heap
+"""
+function length(self::Heap{T})::Int where T
+  self.last - 1
+end
+
+"""
+  size
+    - Current (Allocated) size of the heap
+"""
 function size(self::Heap{T})::Int where T
   length(self.h)
 end
