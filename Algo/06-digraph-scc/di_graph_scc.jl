@@ -1,5 +1,4 @@
-push!(LOAD_PATH, "./lib")
-
+push!(LOAD_PATH, "./src")
 using YAG_SCC
 
 function calc_scc(infile::String)  # T == Int here...
