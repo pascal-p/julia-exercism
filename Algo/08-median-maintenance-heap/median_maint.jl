@@ -1,4 +1,4 @@
-push!(LOAD_PATH, "../08-heap-adt/lib")
+push!(LOAD_PATH, "../08-heap/src")
 using YAH
 
 const MOD = 10_000 # only the last 4 digits

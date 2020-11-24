@@ -1,7 +1,7 @@
 using Test
-# using Random
 
 include("median_maint.jl")
+
 
 const MOD = 10_000
 
