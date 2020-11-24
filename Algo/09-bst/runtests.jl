@@ -3,6 +3,16 @@ using Test
 push!(LOAD_PATH, "./lib")
 using YAB
 
+
+@testset "Empty bst -> one node bst" begin
+  bst = BST{Int}()
+  @test size(bst) == 0
+
+  k, data = 5, 5.0
+  insert!(bst, (k, data))
+  @test key(bst) == k
+end
+
 @testset "one node bst" begin
   k, data = 5, 5.0
   bst = BST{Int}((k, data))

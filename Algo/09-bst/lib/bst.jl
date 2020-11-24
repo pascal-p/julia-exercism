@@ -129,8 +129,14 @@ end
 
 function insert!(bst::BST{T}, input=Tuple{T, Any}) where T
   data = length(input) < 2 ? nothing : input[2]
-  insert_node(bst.root,
-              TNode{T}(input[1]; data=data))
+  nnode = TNode{T}(input[1]; data=data)
+
+  if is_nothing(bst.root)
+    bst.root = nnode
+  else
+    insert_node(bst.root, nnode)
+  end
+
   bst
 end
 
@@ -195,7 +201,11 @@ end
 #
 
 defined(node::TN{T}) where T = node != nothing
+
 is_nothing(node::TN{T}) where T = node == nothing
+# is_noting(bst::BST{T}) where T = bst == nothing
+# is_nothing(nothing) where T = true
+
 
 function insert_node(root::TN{T}, node::TNode{T}) where T
 
