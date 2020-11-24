@@ -1,8 +1,8 @@
 using Test
 
-push!(LOAD_PATH, "./lib")
+push!(LOAD_PATH, "./src")
 using YAH
-# include("heap.jl")
+
 
 @testset "min heap basics" begin
   n = 10
