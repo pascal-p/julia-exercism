@@ -79,8 +79,7 @@ function init_median(v, min_heap, max_heap)
     insert!(min_heap, x)
     insert!(max_heap, y)
     x + y
-  else
-                          # x ≤ y
+  else                    ## x ≤ y
     insert!(max_heap, x)
     insert!(min_heap, y)
     2x
@@ -95,10 +94,10 @@ function init_median(v, min_heap, max_heap, medians)
     medians[x] = 1
     medians[y] = 1
     x + y
-  else                    # x ≤ y
+  else                    ## x ≤ y
     insert!(max_heap, x)
     insert!(min_heap, y)
-    medians[x] = 2        # same median...
+    medians[x] = 2        ## same median...
     2x
   end
 end

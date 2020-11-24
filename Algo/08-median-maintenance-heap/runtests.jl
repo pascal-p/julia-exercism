@@ -26,10 +26,10 @@ function decr_median(lim)
 
   (sum_hash(meds) % MOD, meds)
 end
-  
+
 @testset "median tests 1..6 / 1" begin
   lim = 6
-  e_median, e_medians = incr_median(lim)  
+  e_median, e_medians = incr_median(lim)
   @test median_maint(collect(1:lim); with_medians=true) == (e_median, e_medians)
 end
 
@@ -41,19 +41,19 @@ end
 
 @testset "median tests 5..1" begin
   lim = 5
-  e_median, e_medians = decr_median(lim)  
+  e_median, e_medians = decr_median(lim)
   @test median_maint(collect(lim:-1:1); with_medians=true) == (e_median, e_medians)
 end
-  
+
 @testset "median tests 1..10" begin
   lim = 10
-  e_median, e_medians = incr_median(lim)  
+  e_median, e_medians = incr_median(lim)
   @test median_maint(collect(1:lim); with_medians=true) == (e_median, e_medians)
 end
 
 @testset "median tests 10..1" begin
   lim = 10
-  e_median, e_medians = decr_median(lim)  
+  e_median, e_medians = decr_median(lim)
   @test median_maint(collect(lim:-1:1); with_medians=true) == (e_median, e_medians)
 end
 
@@ -72,14 +72,14 @@ end
 @testset "median tests 1..10_000" begin
   lim = 10_000
   e_median, e_medians = incr_median(lim)
-  
+
   @test median_maint(collect(1:lim); with_medians=true) == (e_median, e_medians)
   @test median_maint(collect(1:lim); with_medians=false)[1] == e_median
 end
 
 @testset "median tests 1..10_000" begin
   lim = 10_000
-  e_median, e_medians = decr_median(lim)  
+  e_median, e_medians = decr_median(lim)
   @test median_maint(collect(lim:-1:1); with_medians=true) == (e_median, e_medians)
   @test median_maint(collect(lim:-1:1); with_medians=false)[1] == e_median
 end
