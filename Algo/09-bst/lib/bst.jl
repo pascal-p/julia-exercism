@@ -16,7 +16,6 @@ mutable struct BST{T}
       data = length(input[1]) < 2 ? nothing : input[1][2]
       root = TNode{T}(input[1][1]; data=data)
       size = 1
-
       for t in input[2:end]
         data = length(t) < 2 ? nothing : t[2]
         insert_node(root, TNode{T}(t[1]; data=data))
@@ -35,26 +34,19 @@ mutable struct BST{T}
       throw(ArgumentError(""))
 
     end
-
     bst = new(root, size)
   end
 
   BST{T}() where T = new(nothing, 0)
 end
 
+BST() = BST{Any}()
+
 size(bst::BST{T}) where T = bst.size
 length(bst::BST{T}) where T = bst.size     ## Synonym
 left(bst::BST{T}) where T = bst.root.left
 right(bst::BST{T}) where T = bst.root.right
 key(bst::BST{T}) where T = bst.root.key
-
-function insert!(bst::BST{T}, input=Tuple{T, Any}) where T
-  data = length(input) < 2 ? nothing : input[2]
-  insert_node(bst.root,
-              TNode{T}(input[1]; data=data))
-  bst.size += 1
-  bst
-end
 
 """
   search(bst, key)
@@ -91,9 +83,9 @@ for (fn, link) in [(:min, :left), (:max, :right)]
   @eval begin
 
     function $(fn)(cnode::TN{T}) where T      ## ::TN{T} where T
-      cnode == nothing && return nothing
+      defined(cnode) || return nothing
 
-      while cnode.$(link) != nothing
+      while defined(cnode.$(link))
         cnode = cnode.$(link)
       end
 
@@ -108,12 +100,12 @@ max(bst::BST{T}) where T = max(bst.root)
 
 function pred(bst::BST{T}, key::T)::TN{T} where T
   root = search(bst, key)
-  root == nothing && return nothing
+  defined(root) || return nothing
   pred(root, key)
 end
 
 function pred(root::TN{T}, key::T)::TN{T} where T
-  if root.left != nothing
+  if defined(root.left) # root.left != nothing
     max(root.left)
   else
     ix = 10
@@ -122,7 +114,7 @@ function pred(root::TN{T}, key::T)::TN{T} where T
       ix == 0 && return nothing
 
       # no parent?
-      (root == nothing || root.parent == nothing) && return nothing
+      (is_nothing(root) || is_nothing(root.parent)) && return nothing
 
       # right child (of a parent) => pred is parent
       root.parent.right == root && return root.parent
@@ -136,9 +128,17 @@ function pred(root::TN{T}, key::T)::TN{T} where T
   end
 end
 
+function insert!(bst::BST{T}, input=Tuple{T, Any}) where T
+  data = length(input) < 2 ? nothing : input[2]
+  insert_node(bst.root,
+              TNode{T}(input[1]; data=data))
+  bst.size += 1
+  bst
+end
+
 function delete!(bst::BST{T}, key::T) where T
   croot = search(bst, key)
-  croot == nothing && return          ## 0 - key is not in the tree
+  defined(croot) || return # croot == nothing && return          ## 0 - key is not in the tree
 
   if isleaf(croot)                    ## 1 - no children case
     croot = delete_leaf!(bst, croot)
@@ -154,24 +154,54 @@ function delete!(bst::BST{T}, key::T) where T
   bst.size -= 1
 end
 
+
+"""
+  select(...)
+    Lookup for i-th key in the (extended) BST
+"""
+function select(bst::BST{T}, ith::Integer)::TN{T} where T
+  is_nothing(bst.root) && return nothing
+  (ith ≤ 0 || ith > bst.root.size) && return nothing
+
+  function _select(root::TN{T}, ith::Integer)
+    is_nothing(root) && return nothing
+    sz = defined(root.left) ? root.left.size + 1 : 1
+
+    ith == sz && return root
+    if ith < sz
+      _select(root.left, ith)
+    else
+      _select(root.right, ith - sz)
+    end
+  end
+
+  _select(bst.root, ith)
+end
+
 function iterate(bst::BST, (order, ix)=(dfs(bst), 1))
   ix > bst.size && return nothing
 
   (order[ix], (order, ix+1))
 end
 
-#
+# ######################################################################
 # Internal
+# ######################################################################
 #
+
+defined(node::TN{T}) where T = node != nothing
+is_nothing(node::TN{T}) where T = node == nothing
+
 function insert_node(root::TN{T}, node::TNode{T}) where T
 
   function _insert(parent::TN{T}, root::TN{T}; d=:left)
-    if root == nothing
+    if is_nothing(root)
       d == :left ? parent.left = node : parent.right = node
       node.parent = parent
       return
     end
 
+    root.size += 1
     if node.key < root.key
       _insert(root, root.left)
 
@@ -200,8 +230,7 @@ function dfs(bst::BST{T}, reverse=false) where T
   λ!(cnode) = (ary[ix] = (key=cnode.key, data=cnode.data); ix += incr)
 
   function _dfs(cnode::TN{T})
-    cnode == nothing && return
-
+    is_nothing(cnode) && return
     isleaf(cnode) && (return λ!(cnode))
 
     _dfs(cnode.left)
@@ -234,7 +263,7 @@ function delete_when_one_child!(bst::BST{T}, croot::TN{T}) where T
   if croot.left != nothing
     ## croot has 1 left child
     croot.left.parent = croot.parent  ## set parent
-    if croot.parent != nothing
+    if defined(croot.parent)
       croot.parent.right == croot ? croot.parent.right = croot.left :
       croot.parent.left = croot.left
     else
@@ -243,7 +272,7 @@ function delete_when_one_child!(bst::BST{T}, croot::TN{T}) where T
   else
     ## croot has 1 right child
     croot.right.parent = croot.parent  ## set parent
-    if croot.parent != nothing
+    if defined(croot.parent)
       croot.parent.right == croot ? croot.parent.right = croot.right :
       croot.parent.left = croot.right
     else
@@ -261,11 +290,11 @@ function delete_when_two_children!(bst::BST{T}, croot::TN{T}) where T
   croot.key, croot.data = rnode.key, rnode.data
 
   # update rnode which may have a left child, but NOT a right child
-  @assert rnode.right == nothing
+  @assert is_nothing(rnode.right)
   if rnode.parent != croot
     rnode.parent.right = rnode.left
 
-    if rnode.left != nothing
+    if defined(rnode.left)
       rnode.left.parent = rnode.parent
       rnode.left = nothing
     end

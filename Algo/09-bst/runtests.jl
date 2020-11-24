@@ -20,18 +20,37 @@ end
   @test size(bst) == 3
 end
 
+@testset "bst subtree (treenode size)" begin
+  bst = BST{Int}([(5, 5.), (3, 3.), (9, .9)])
+  @test size(bst) == 3
+  @test size(bst.root) == 1 + size(bst.root.left) + size(bst.root.right)
+
+  bst = BST{Int}([(15,), (19,), (13,), (30,), (10,), (16,), (12,), (14,), (17,), (18,), (21,), (25,)])
+  @test size(bst) == length(bst) == 12
+  @test size(bst.root) == 1 + size(bst.root.left) + size(bst.root.right)
+  @test size(bst.root.left) == 4
+  @test size(bst.root.right) == 7
+end
+
 @testset "four node bst with insert!" begin
   bst = BST{Int}([(5, 5.), (3, 3.), (9, .9)])
   @test size(bst) == 3
+  @test size(bst.root) == 3
 
   insert!(bst, (1, 1.))
   @test size(bst) == length(bst) == 4
+  @test size(bst.root) == 4
 
   @test key(bst) == 5
   @test left(bst) |> key == 3
   @test left(bst) |> left |> key == 1
   @test right(bst) |> key == 9
 
+  insert!(bst, (7,))
+  insert!(bst, (8,))
+  @test size(bst.root) == 6
+  @test size(bst.root.right) == 3
+  @test size(bst.root.left) == 2
 end
 
 @testset "search" begin
@@ -64,6 +83,19 @@ end
 
   bst = BST{Int}([(5, 5.), (3, .3) ])
   @test max(bst) |> to_tuple == (5, 5.0) # returns a tuple
+end
+
+@testset "select" begin
+  bst = BST{Int}([(30,), (10,), (50,), (20,), (40,)])
+  @test size(bst) == 5
+
+  @test select(bst, 2) |> to_tuple == (20, nothing)
+  @test select(bst, 1) |> to_tuple == (10, nothing)
+  @test select(bst, 5) |> to_tuple == (50, nothing)
+  @test select(bst, 4) |> to_tuple == (40, nothing)
+  @test select(bst, 3) |> to_tuple == (30, nothing)
+
+  @test select(bst, 7) |> to_tuple == nothing
 end
 
 @testset "pred" begin
@@ -231,7 +263,7 @@ end
 end
 
 @testset "insert/delete" begin
-  bst = BST{Int}([(15,), (19,), (13,), (30,), (10,), (16,), (12,), (14,), (17,), (18,), (21,), (25,) ])
+  bst = BST{Int}([(15,), (19,), (13,), (30,), (10,), (16,), (12,), (14,), (17,), (18,), (21,), (25,)])
   @test size(bst) == length(bst) == 12
   @test map(nt -> nt.key, bst) == [10, 12, 13, 14, 15, 16, 17, 18, 19, 21, 25, 30]
 

@@ -8,7 +8,8 @@ module YAB
   export isleaf, parent, left, right, key
   export ==, to_tuple, has_one_child
   export insert!, search, min, max, pred
-  export delete!
+  export delete!, size, length
+  export select
 
   include("./tnode.jl")
   include("./bst.jl")
