@@ -85,7 +85,7 @@ end
   @test max(bst) |> to_tuple == (5, 5.0) # returns a tuple
 end
 
-@testset "select" begin
+@testset "select n-th key node" begin
   bst = BST{Int}([(30,), (10,), (50,), (20,), (40,)])
   @test size(bst) == 5
 
@@ -98,7 +98,7 @@ end
   @test select(bst, 7) |> to_tuple == nothing
 end
 
-@testset "pred" begin
+@testset "BST node pred" begin
   bst = BST{Int}([(9,), (5,), (15,), (7,), (12,), (17,)])
   @test size(bst) == 6
 
@@ -127,6 +127,36 @@ end
   @test pred(bst, 4) |> to_tuple == (3, nothing)
   @test pred(bst, 5) |> to_tuple == (4, nothing)
   @test pred(bst, 2) |> to_tuple == (1, nothing)
+end
+
+@testset "BST node succ" begin
+  bst = BST{Int}([(9,), (5,), (15,), (7,), (12,), (17,)])
+  @test size(bst) == 6
+
+  @test succ(bst, 5) |> to_tuple == (7, nothing)
+  @test succ(bst, 17) |> to_tuple == nothing    # because maximum
+  @test succ(bst, 7) |> to_tuple == (9, nothing)
+  @test succ(bst, 9) |> to_tuple == (12, nothing)
+  @test succ(bst, 12) |> to_tuple == (15, nothing)
+  @test succ(bst, 15) |> to_tuple == (17, nothing)
+
+  insert!(bst, (10,))
+  @test size(bst) == length(bst) == 7
+  @test succ(bst, 9) |> to_tuple == (10, nothing)
+  @test succ(bst, 10) |> to_tuple == (12, nothing)
+  @test succ(bst, 15) |> to_tuple == (17, nothing)
+
+  insert!(bst, (3,))
+  @test size(bst) == length(bst) == 8
+  @test succ(bst, 3) |> to_tuple == (5, nothing)
+
+  bst = BST{Int}([(3,), (1,), (2,), (5,), (4,)])
+  @test size(bst) == length(bst) == 5
+  @test succ(bst, 2) |> to_tuple == (3, nothing)
+  @test succ(bst, 5) |> to_tuple == nothing    # because maximum
+  @test succ(bst, 3) |> to_tuple == (4, nothing)
+  @test succ(bst, 4) |> to_tuple == (5, nothing)
+  @test succ(bst, 1) |> to_tuple == (2, nothing)
 end
 
 @testset "delete /1" begin
