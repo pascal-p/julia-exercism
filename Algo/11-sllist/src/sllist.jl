@@ -17,8 +17,8 @@ end
 
 cons(h, t::SLList{T}) where {T} = Cons{T}(h, t)
 
-nil(T) = Nil{T}()
 nil() = nil(Any)
+nil(T) = Nil{T}()
 
 car(x::Cons) = x.car
 cdr(x::Cons) = x.cdr
@@ -132,4 +132,10 @@ function cat(lst::SLList, lsts::SLList...)
   end
 
   reverse(nlst)
+end
+
+function delete(lst::SLList{T}, elt::T) where T
+  isempty(lst) && return
+
+  filter(x -> x != elt, lst)
 end

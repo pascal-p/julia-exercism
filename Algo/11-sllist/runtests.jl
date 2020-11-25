@@ -86,4 +86,15 @@ using YASLL
 
     @test collect(map(x -> x, l)) == collect(l)
   end
+
+  @testset "test delete" begin
+    lst = list(collect(1:2:25)...)
+    @test length(lst) == 13  # [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25]
+
+    for elt ∈ filter(x -> x ≥ 15, lst)
+      lst = delete(lst, elt)
+    end
+    @test length(lst) == 7
+  end
+
 end
