@@ -1,8 +1,5 @@
 ## hash chaining
 
-push!(LOAD_PATH, "../11-sllist/src")
-using YASLL
-
 import Base: isempty, show, get, size
 
 const A = (√5 - 1) / 2
