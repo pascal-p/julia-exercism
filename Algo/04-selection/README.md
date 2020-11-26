@@ -4,9 +4,9 @@
     
 ## Work
 
-  - Test case #1: This [file](https://github.com/pascal-p/julia-exercism/blob/master/04-randomized-selection/problem6.5test_10.txt) contains 10 integers, representing a 10-element array. What is the median (i.e., the 5th-smallest element)? (Solution: 5469.)
+  - Test case #1: This [file](https://github.com/pascal-p/julia-exercism/blob/master/Algo/04-selection/testfiles/problem6.5test_10.txt) contains 10 integers, representing a 10-element array. What is the median (i.e., the 5th-smallest element)? (Solution: 5469.)
     
-  - Test case #2: This [file](https://github.com/pascal-p/julia-exercism/blob/master/04-randomized-selection/problem6.5test_100.txt) contains 100 integers, representing a 100-element array. What is the median (i.e., the 50th order statistic)? (Solution: 4715.)
+  - Test case #2: This [file](https://github.com/pascal-p/julia-exercism/blob/master/Algo/04-selection/testfiles/problem6.5test_100.txt) contains 100 integers, representing a 100-element array. What is the median (i.e., the 50th order statistic)? (Solution: 4715.)
     
   - Challenge data set: Form an array in which the first element is the first 10 digits of pi, the second element is the next 10 digits of pi, and so on. (The digits of pi are available [here](https://www.angio.net/pi/digits.html).) Make the array as big as you can (perhaps 100,000 elements, or 1 million elements, or ...). What is the median of the array?
     [Aside: do you think this array has any duplicate elements?]

@@ -1,7 +1,9 @@
-include("file_utils.jl")
-include("rselect.jl")
+include("./utils/file.jl")
+include("src/rselect.jl")
 
-str = open("pi_first_100000.txt") do f
+const TF_DIR = "./testfiles"
+
+str = open("$(TF_DIR)/pi_first_100000.txt") do f
   readlines(f)[1]
 end
 

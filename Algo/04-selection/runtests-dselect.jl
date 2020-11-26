@@ -1,8 +1,11 @@
 using Test
 using Random
 
-include("file_utils.jl")
-include("dselect.jl")
+include("./utils/file.jl")
+include("./src/dselect.jl")
+
+const TF_DIR = "./testfiles"
+
 
 @testset "dselect basics" begin
   @test dselect([], 2) == nothing
@@ -48,17 +51,17 @@ end
 end
 
 @testset "challenge 1 / 10 num" begin
-  x = slurp("problem6.5test_10.txt")
+  x = slurp("$(TF_DIR)/problem6.5test_10.txt")
   @test dselect(x, 5) == 5469
 end
 
 @testset "challenge 2 / 100 num" begin
-  x = slurp("problem6.5test_100.txt")
+  x = slurp("$(TF_DIR)/problem6.5test_100.txt")
   @test dselect(x, 50) == 4715
 end
 
 @testset "challenge 3 / π digits" begin
-  str = open("pi_first_100000.txt") do f
+  str = open("$(TF_DIR)/pi_first_100000.txt") do f
     readlines(f)[1]
   end
 
