@@ -1,4 +1,4 @@
-## Algorithms Specialization - Standford / Coursera
+## Algorithms Specialization - Stanford / Coursera
 Instructor: [Tim Roughgarden](https://www.coursera.org/instructor/~768)  
 
 Julia Programming Implementation.
