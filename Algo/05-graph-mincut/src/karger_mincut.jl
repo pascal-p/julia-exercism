@@ -1,3 +1,5 @@
+using Random
+
 """
    Graph: Vertices = {1, 2, 3, 4}
           5 edges
@@ -78,8 +80,8 @@ function update_edges!(graph::UnGraph{T}, nv::Int, eo::T, ed::T) where T
 
   ## add renamed edges
   for (x, y) in sa; push!(graph.edges, (x, y)); end
-  graph.m = length(graph.edges)
 
+  graph.m = length(graph.edges)
   return
 end
 
@@ -93,9 +95,14 @@ function cons_graph(graph)
 end
 
 # -------------------------------------------------------------------
+##
+## Client portion
+##
+# -------------------------------------------------------------------
 
-function mincut!(graph::UnGraph{T}) where T
+function mincut!(graph::UnGraph{T}; seed=9977) where T
   nv = graph.n
+  Random.seed!(seed)
 
   while graph.n > 2
     (eo, ed) = rand(graph.edges)                   ## edge orig, edge dest / eo == 1, ed == 3

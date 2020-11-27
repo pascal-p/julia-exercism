@@ -1,5 +1,5 @@
 using Test
-using Random
+# using Random
 
 include("./src/karger_mincut.jl")
 include("./utils/file.jl")
@@ -14,12 +14,14 @@ end
 
 @testset "mincut file - 200 nodes" begin
 
-  @testset "10_000 runs" begin
+  @testset "20_000 runs" begin
     adjl = gen_adj()
     gr = UnGraph{Int}(adjl)
 
-    @time (k, ) = runner(gr; n=10_000)
+    @time (k, res) = runner(gr; n=20_000, seed=42)
     @test k == 17
+
+    println("Stats run: $(res)")
   end
 
 end
