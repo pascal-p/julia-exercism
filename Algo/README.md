@@ -11,7 +11,7 @@ The primary topics in this part of the specialization are: asymptotic ("Big-oh")
  - [X] [week 1 - Assignment - Karatsuba’s integer multiplication](https://github.com/pascal-p/julia-exercism/blob/master/Algo/01-karatsuba-int-mult/README.md)  
  - [X] [week 2 - Assignment - Counting Inversions](https://github.com/pascal-p/julia-exercism/blob/master/Algo/02-counting-inversions/README.md)  
  - [X] [week 3 - Assignment - Quick Sort](https://github.com/pascal-p/julia-exercism/blob/master/Algo/03-quick-sort/README.md)  
- - [X] [week 4 - Assignment - Randomized Selection](https://github.com/pascal-p/julia-exercism/blob/master/Algo/04-selection/README.md)  
+ - [X] [week 4 - Assignment - Graph Mincut](https://github.com/pascal-p/julia-exercism/blob/master/Algo/05-graph-mincut/README.md)  
 
 ### C02 - Graph Search, Shortest Paths, and Data Structures
  - [ ] [Graph Search, Shortest Paths, and Data Structures](https://www.coursera.org/learn/algorithms-graphs-data-structures)

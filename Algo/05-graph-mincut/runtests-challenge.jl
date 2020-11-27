@@ -14,11 +14,11 @@ end
 
 @testset "mincut file - 200 nodes" begin
 
-  @testset "7_000 runs" begin
+  @testset "10_000 runs" begin
     adjl = gen_adj()
     gr = UnGraph{Int}(adjl)
 
-    @time (k, ) = runner(gr; n=7_000)
+    @time (k, ) = runner(gr; n=10_000)
     @test k == 17
   end
 
