@@ -1,24 +1,11 @@
 using Test
 using Random
 
-include("karger_mincut.jl")
-include("file_utils.jl")
+include("./src/karger_mincut.jl")
+include("./utils/file.jl")
+include("./utils/runner.jl")
 
-function runner(gr; n=100)
-  res = Dict{Integer, Real}()
-
-  for _ in 1:n
-    c_gr = copy(gr)
-    mc = mincut!(c_gr)
-    res[mc] = mc ∈ keys(res) ? res[mc] + 1. : 1.
-  end
-
-  for k ∈ keys(res)
-    res[k] /= Real(n)
-  end
-
-  return (min(keys(res)...), res)
-end
+const TF_DIR = "./testfiles"
 
 
 @testset "100 samples on a simple graph" begin
@@ -60,17 +47,6 @@ end
   (k, ) = runner(gr; n=1_000)
 
   @test k == 2  # min == 2
-end
-
-## can take a while
-@testset "mincut file - 200 nodes / 1000 samples" begin
-  a = slurp("./karger_mincut.txt")
-  adjl = Dict([x[1] => x[2:end] for x in a])
-
-  gr = UnGraph{Int}(adjl)
-  @time (k, ) = runner(gr; n=100)
-
-  @test k == 20  # min == 20 / 17 minutes run?
 end
 
 #  10 runs => 9s

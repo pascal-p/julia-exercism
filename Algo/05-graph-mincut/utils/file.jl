@@ -1,7 +1,15 @@
 function slurp(ifile)
   open(ifile) do f
     readlines(f)
-  end |> a -> map(s -> split(s, "\t")[1:end - 1], a) |> a -> map(xa -> map(s -> parse(Int, s), xa), a)
+  end |> a -> map(s -> split(strip(s), r"\s+"), a) |> a -> map(xa -> map(s -> parse(Int, s), xa), a)
+end
+
+function read_sol(ifile)
+  input = open(ifile) do f
+    readlines(f)
+  end
+
+  parse(Int, input[1])
 end
 
 # karger_mincut.txt
