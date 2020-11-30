@@ -1,6 +1,6 @@
 using Test
 
-include("./ug_prim.jl")
+include("./ug_prim_pq.jl")
 
 const TF_DIR = "./testfiles"
 
@@ -29,11 +29,7 @@ for file in filter((fs) -> occursin(r"\Ainput_random_\d+_\d+", fs),
   exp_value = read_sol("$(TF_DIR)/$(ifile)")
   ug = from_file("$(TF_DIR)/$(file)", UnGraph{Int, Int}; T1=Int, T2=Int)
 
-  #@testset "(vanilla) prim MST on: $(file)" begin
-  #  @time @test mst_vanilla(ug)[1] == exp_value
-  #end
-
-  @testset "(heap based) prim MST on: $(file)" begin
+  @testset "(PQ/heap based) prim MST on: $(file)" begin
     @time @test mst(ug)[1] == exp_value
   end
 end

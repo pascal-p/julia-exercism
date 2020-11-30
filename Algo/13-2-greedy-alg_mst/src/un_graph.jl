@@ -1,6 +1,6 @@
-#
-# Undirected graph with edges with cost
-#
+##
+## Undirected graph with edges with cost
+##
 
 mutable struct UnGraph{T1, T2}
   v::Int   # num. of vertices
@@ -22,9 +22,72 @@ v(ug::UnGraph) = ug.v
 e(ug::UnGraph) = ug.e
 
 function add_edge!(ug::UnGraph{T1, T2}, x::T1, y::T1, c::T2) where {T1, T2}
-  push!(ug.adj[x], (y, c))
-  x != y && push!(ug.adj[y], (x, c))
-  ug.e += 1
+  if x != y
+    push!(ug.adj[x], (y, c))
+    push!(ug.adj[y], (x, c))
+    ug.e += 1
+  end
+end
+
+# ------------------------------------------------------------------------
+# function add_edge!(ug::UnGraph{T1, T2}, x::T1, y::T1, c::T2) where {T1, T2}
+#   ## deal with possible parallel edge - with different cost => keep the cheapest
+#   (ix, _c) = find(ug.adj[x], y)
+
+#   if ix == -1
+#     push!(ug.adj[x], (y, c))
+#     x != y && push!(ug.adj[y], (x, c))
+#     ug.e += 1
+#   else
+#      if c < _c
+#        ug.adj[x][ix] = (y, c)
+#        x != y && replace!(ug.adj[y], x, c)
+#     end
+#   end
+# end
+
+# function find(adj, v)
+#   local ix, c
+#   found = false
+
+#   for (jx, (x, c_)) in enumerate(adj)
+#     if x == v
+#       ix, c = jx, c_
+#       println("Found parallel edge for v: $(v) in $(adj) with cost $(c_)")
+#       found = true
+#       break
+#     end
+#   end
+
+#   found ? (ix, c) : (-1, nothing)
+# end
+
+# function replace!(adj, x, c)
+#   (ix, _c) = find(adj, x)
+#   adj[ix] = (x, c)
+# end
+# ------------------------------------------------------------------------
+
+"""
+  (x, y) is an edge of graph g (specify by its adjacency list) iff
+  - y ∈ adj. list of vertex x or
+  - x ∈ adj. list of vertex y
+"""
+function is_edge(ug::UnGraph{T1, T2}, x::T1, y::T1) where {T1, T2}
+  any(t -> t[1] == y, ug.adj[x]) ||
+    any(t -> t[1] == x, ug.adj[y])
+end
+
+function edge_with_cost(ug::UnGraph{T1, T2}, x::T1, y::T1) where {T1, T2}
+  a = filter(t -> t[1] == y, ug.adj[x])   ## t == tuple(vertex, cost), t[1] == vertex
+
+  ## returns (vertex, cost) - if several candidates, return the one with lowest cost
+  if isempty(a)
+    (nothing, typemax(T1))
+  else
+    length(a) > 1 ? foldl((cmin, x) -> (cmin = x[2] < cmin[2] ? x : cmin; cmin), a[2:end]; init=a[1]) :
+      a[1]
+  end
 end
 
 function find_mincost_edge(ug::UnGraph{T1, T2}, s::Set{T1})::Tuple{T1, T1, T2} where {T1, T2}
@@ -100,11 +163,11 @@ function from_file(infile::String, T::DataType; T1::DataType=Int, T2::DataType=I
         add_edge!(g, u, v, c)     ## also add edge in the other direction
       end
 
-      @assert act_ne == ne "Expecting actual number of vertices $(act_ne) to be $(ne)"
+      @assert act_ne == ne "Expecting actual number of vertices $(act_ne) to be ≤ $(ne)"
     end
 
     @assert length(g.adj) == g.v " 2 Expecting actual number of vertices $(act_nv) to be $(g.v)" # defer message to catch block
-    @assert act_ne == g.e " 2 Expecting actual number of vertices $(act_ne) to be $(g.e)" # defer message to catch block
+    @assert act_ne == g.e " 2 Expecting actual number of vertices $(act_ne) to be ≤ $(g.e)" # defer message to catch block
     return g
 
   catch err
