@@ -4,9 +4,9 @@ module YAH
 
   export Heap, MinHeap, MaxHeap
 
-  export size, isempty, peek
-  export insert!, delete!, heapify!
-  export extract_min!, extract_max!
+  export size, isempty, peek, map_ix,
+    insert!, delete!, heapify!, extract_min!,
+    extract_max!
 
   include("./heap.jl")
 end

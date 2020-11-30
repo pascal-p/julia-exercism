@@ -33,13 +33,14 @@ function median_maint(infile::String; with_medians=false)
 
   catch err
     println("Error: $(typeof(err))...")
+    exit(1)
   end
 end
 
 function median_maint(v::Vector{Int}; with_medians=false)
   n = 10  ## pre-alloc
-  min_heap = Heap{Int}(n)
-  max_heap = Heap{Int}(n; klass=MaxHeap)
+  min_heap = Heap{Int, Nothing}(n)
+  max_heap = Heap{Int, Nothing}(n; klass=MaxHeap)
   median_calc(v, min_heap, max_heap; with_medians=with_medians)
 end
 
@@ -52,13 +53,15 @@ function median_calc(v::Vector{Int}, min_heap, max_heap; with_medians=false)
   for (ix, x) in enumerate(v[3:end])
     min, max = peek(min_heap), peek(max_heap)
 
-    if x < max
-      insert!(max_heap, x)
-    elseif x > min
-      insert!(min_heap, x)
+    if x < max.key
+      insert!(max_heap, make_pair(x))
+
+    elseif x > min.key
+      insert!(min_heap, make_pair(x))
+
     else
-      length(min_heap) < length(max_heap) ? insert!(min_heap, x) :
-        insert!(max_heap, x)
+      length(min_heap) < length(max_heap) ? insert!(min_heap, (key=x,value=nothing)) :
+        insert!(max_heap, make_pair(x))
     end
 
     ix % 2 == 0 && rebalance!(min_heap, max_heap)
@@ -73,15 +76,19 @@ function median_calc(v::Vector{Int}, min_heap, max_heap; with_medians=false)
   with_medians ? (last4digits, sort(collect(medians))) : (last4digits, )
 end
 
+function make_pair(x::Int)::NamedTuple{(:key, :value), Tuple{Int, Nothing}}
+  (key=x, value=nothing)
+end
+
 function init_median(v, min_heap, max_heap)
   x, y = v[1], v[2]
   if x > y
-    insert!(min_heap, x)
-    insert!(max_heap, y)
+    insert!(min_heap, make_pair(x))
+    insert!(max_heap, make_pair(y))
     x + y
   else                    ## x ≤ y
-    insert!(max_heap, x)
-    insert!(min_heap, y)
+    insert!(max_heap, make_pair(x))
+    insert!(min_heap, make_pair(y))
     2x
   end
 end
@@ -89,14 +96,14 @@ end
 function init_median(v, min_heap, max_heap, medians)
   x, y = v[1], v[2]
   if x > y
-    insert!(min_heap, x)
-    insert!(max_heap, y)
+    insert!(min_heap, make_pair(x))
+    insert!(max_heap, make_pair(y))
     medians[x] = 1
     medians[y] = 1
     x + y
   else                    ## x ≤ y
-    insert!(max_heap, x)
-    insert!(min_heap, y)
+    insert!(max_heap, make_pair(x))
+    insert!(min_heap, make_pair(y))
     medians[x] = 2        ## same median...
     2x
   end
@@ -114,7 +121,9 @@ function rebalance!(min_heap, max_heap)
 end
 
 function fetch_median(ix, min_heap, max_heap)
-  ix % 2 == 1 ?
+  med = ix % 2 == 1 ?
     (length(min_heap) < length(max_heap) ? peek(max_heap) : peek(min_heap)) :
     peek(max_heap)
+
+  med.key
 end
