@@ -26,7 +26,7 @@ function convert(infile::String, outfile::String, nv::Int)
   try
     write(fho, string(nv, "\n"))
     nwl += 1
-    
+
     p_orig, lst = 0, []
 
     open(infile, "r") do fhi
@@ -54,7 +54,7 @@ function convert(infile::String, outfile::String, nv::Int)
 
     # flush last line
     length(lst) > 0 && ((nwl, lst) = writeto(fho, p_orig, lst, nwl))
-    
+
     println("$(infile) was converted to $(outfile) / $(nrl) lines read / $(nwl) lines written")
 
   catch err
