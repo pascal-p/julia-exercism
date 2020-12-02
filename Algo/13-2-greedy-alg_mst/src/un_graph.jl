@@ -22,11 +22,11 @@ v(ug::UnGraph) = ug.v
 e(ug::UnGraph) = ug.e
 
 function add_edge!(ug::UnGraph{T1, T2}, x::T1, y::T1, c::T2) where {T1, T2}
-  if x != y
-    push!(ug.adj[x], (y, c))
-    push!(ug.adj[y], (x, c))
-    ug.e += 1
-  end
+  x == y && return # self loop - ignore
+  
+  push!(ug.adj[x], (y, c))
+  x != y && push!(ug.adj[y], (x, c))
+  ug.e += 1
 end
 
 # ------------------------------------------------------------------------
@@ -158,16 +158,18 @@ function from_file(infile::String, T::DataType; T1::DataType=Int, T2::DataType=I
         ## thus the following two lines are more general
         ##
         u, v = map(x -> parse(T1, strip(x)), ary[1:2])
-        c = parse(T2, strip(ary[end]))  ## overkill: (c,) = map(x -> parse(T2, strip(x)), [ary[end]])
-        act_ne += 1
+        c = parse(T2, strip(ary[end]))
+        
+        _n = g.e
         add_edge!(g, u, v, c)     ## also add edge in the other direction
+        g.e > _n && (act_ne += 1)
       end
 
-      @assert act_ne == ne "Expecting actual number of vertices $(act_ne) to be ≤ $(ne)"
+      @assert act_ne ≤ ne "Expecting actual number of vertices $(act_ne) to be ≤ $(ne)"
     end
 
-    @assert length(g.adj) == g.v " 2 Expecting actual number of vertices $(act_nv) to be $(g.v)" # defer message to catch block
-    @assert act_ne == g.e " 2 Expecting actual number of vertices $(act_ne) to be ≤ $(g.e)" # defer message to catch block
+    @assert length(g.adj) ≤ g.v "Expecting actual number of vertices $(act_nv) to be ≤ $(g.v)" # defer message to catch block
+    @assert act_ne ≤ g.e "Expecting actual number of edges $(act_ne) to be ≤  $(g.e)" # defer message to catch block
     return g
 
   catch err
@@ -176,7 +178,8 @@ function from_file(infile::String, T::DataType; T1::DataType=Int, T2::DataType=I
     elseif isa(err, SystemError)
       println("! Problem opening $(infile) in read mode... Exit")
     elseif isa(err, AssertionError)
-      println("! Expected $(g.v) vertices, got: $(act_nv)")
+      # println("! Expected $(g.v) vertices, got: $(act_nv)")
+      println("! Failed expectation: $(err)")
     else
       println("! other error: $(typeof(err))...")
     end
