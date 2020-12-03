@@ -14,7 +14,7 @@ The primary topics in this part of the specialization are: asymptotic ("Big-oh")
  - [X] [week 4 - Assignment - Graph Mincut](https://github.com/pascal-p/julia-exercism/blob/master/Algo/05-graph-mincut/README.md)  
 
 ### C02 - Graph Search, Shortest Paths, and Data Structures
- - [ ] [Graph Search, Shortest Paths, and Data Structures](https://www.coursera.org/learn/algorithms-graphs-data-structures)
+ - [X] [Graph Search, Shortest Paths, and Data Structures](https://www.coursera.org/learn/algorithms-graphs-data-structures)
 
 The primary topics in this part of the specialization are: data structures (heaps, balanced search trees, hash tables, bloom filters), graph primitives (applications of breadth-first and depth-first search, connectivity, shortest paths), and their applications (ranging from deduplication to social network analysis).
     
@@ -28,7 +28,8 @@ The primary topics in this part of the specialization are: data structures (heap
 
 The primary topics in this part of the specialization are: greedy algorithms (scheduling, minimum spanning trees, clustering, Huffman codes) and dynamic programming (knapsack, sequence alignment, optimal search trees).
 
-  - [ ] TODO
+  - [X] [week 1 - Assignment - Scheduling](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-1-greedy-alg_scheduling/README.md) and [week 1 - Assignment - Prim's MST](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-2-greedy-alg_mst/README.md)
+  - [ ] TODO  
 
 ### C04 - Shortest Paths Revisited, NP-Complete Problems and What To Do About Them
  - [ ] [Shortest Paths Revisited, NP-Complete Problems and What To Do About Them](https://www.coursera.org/learn/algorithms-npcomplete)
@@ -36,6 +37,7 @@ The primary topics in this part of the specialization are: greedy algorithms (sc
 The primary topics in this part of the specialization are: shortest paths (Bellman-Ford, Floyd-Warshall, Johnson), NP-completeness and what it means for the algorithm designer, and strategies for coping with computationally intractable problems (analysis of heuristics, local search).
 
   - [ ] TODO
-    
 
-Nov. 2020
+
+<hr />
+<p style="font-size:0.25em">Nov.-Dec. 2020, Corto Inc</p>
