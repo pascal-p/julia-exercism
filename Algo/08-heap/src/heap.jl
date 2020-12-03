@@ -3,6 +3,8 @@
 # maxheap property: a key at a parent level is ≥ the keys at children level
 #
 
+# const CHECK_FOR_CORRECTNESS = true
+
 import Base: isempty, size, length, eltype, iterate,
   insert!, peek, delete!
 
@@ -52,8 +54,8 @@ end
 # map_ix(self::Heap{T1, T2}) where {T1, T2} = isdefined(self, :map_ix) ? self.map_ix : nothing
 map_ix(self::Heap{T1, T2}) where {T1, T2} = self.map_ix
 
-extract_min!(self::Heap{T1, T2}) where {T1, T2} = _extract(self; cmp=(>))
-extract_max!(self::Heap{T1, T2}) where {T1, T2} = _extract(self; cmp=(<))
+extract_min!(self::Heap{T1, T2}) where {T1, T2} = _extract!(self)
+extract_max!(self::Heap{T1, T2}) where {T1, T2} = _extract!(self)
 
 function heapify!(self::Heap{T1, T2}, a::Vector{KV{T1, T2}}) where {T1, T2}
   n = length(a)                 ## a ≡ vector of pair (key / value)
@@ -61,15 +63,10 @@ function heapify!(self::Heap{T1, T2}, a::Vector{KV{T1, T2}}) where {T1, T2}
   copyto!(ca, a)
 
   self.h, self.last = ca, n + 1
+  ## update index-
+  for (ix, pair) in enumerate(ca); self.map_ix[pair] = ix; end
 
-  ## update index
-  for (ix, pair) in enumerate(ca)
-    self.map_ix[pair] = ix
-  end
-
-  for k in n ÷ 2:-1:1
-    _buble_down!(self.klass, self, k)
-  end
+  for k in n ÷ 2:-1:1; _buble_down!(self.klass, self, k); end
 end
 
 """
@@ -89,12 +86,14 @@ function insert!(self::Heap{T1, T2}, kv::KV{T1, T2}; ignore_presence=false) wher
   end
 
   self.h[self.last] = kv
-
   self.map_ix[kv] = self.last  ## update index
-  self.last += 1
+  self.last += 1               ## for next insert
 
   ## 2 - Buble-up (swap) repeatedly until heap property is restored
   _buble_up!(self.klass, self)
+
+  ## 3 - CORRECTNESS test heap property invariant
+  # CHECK_FOR_CORRECTNESS && heap_prop_inv(self)
 end
 
 """
@@ -108,7 +107,6 @@ function delete!(self::Heap{T1, T2}, ix::Int; ignore_absence=false)::Union{KV{T1
 
   if ix < 1 || ix > self.last - 1
     ignore_absence && (return nothing)
-
     throw(ArgumentError("no such element in the heap! index: $(ix) outside range[1, $(self.last - 1)]"))
   end
 
@@ -155,7 +153,7 @@ end
 # -------------------------------------------------------------------------------------------------
 #
 
-function _extract(self::Heap{T1, T2}; cmp=self.klass == MinHeap ? (>) : (<))::KV{T1, T2} where {T1, T2}
+function _extract!(self::Heap{T1, T2})::KV{T1, T2} where {T1, T2}
   ## 0. check
   self.last ≤ 1 && throw(ArgumentError("empty heap!"))
   self.last < (size(self) ÷ 2) && _resize!(self; incr=false)
@@ -166,12 +164,15 @@ function _extract(self::Heap{T1, T2}; cmp=self.klass == MinHeap ? (>) : (<))::KV
   ## 1 - Overwrite the root with the last object x in the heap, and decrement the heap size.
   pair = self.h[self.last - 1]
   self.h[1] = pair
-  self.map_ix[pair] = 1   ## update index accordingly
+  self.map_ix[pair] = 1       ## update index accordingly
   self.last -= 1
 
   ## 2 - Buble-down (swap) x repeatedly with its smaller child until the
   ## heap property is restored.
   _buble_down!(self.klass, self, 1)
+
+  ## 3 - CORRECTNESS - heap property invariant
+  # CHECK_FOR_CORRECTNESS && heap_prop_inv(self)
 
   return root
 end
@@ -182,19 +183,17 @@ end
 for (klass, op, nop) in ((MaxHeap, <, ≥), (MinHeap, >, ≤))
 
   @eval begin
-    function _buble_up!(::Type{$(klass)}, self::Heap{T1, T2}) where {T1, T2}
-      k = self.last - 1
-
+    function _buble_up!(::Type{$(klass)}, self::Heap{T1, T2}; k=self.last - 1) where {T1, T2}
       while k > 1
         j = k ÷ 2
-        ($(op))(self.h[k].key, self.h[j].key) && break
+        ($(op))(self.h[k].key, self.h[j].key) && break  ## heap property holding => done
         _swap!(self, k, j, "_buble_up!")
         k = j
       end
     end
 
     function _buble_down!(::Type{$(klass)}, self::Heap{T1, T2}, k::Int) where {T1, T2}
-      n = self.last - 1
+      n = self.last - 1 # limit
 
       while 2k ≤ n
         j = 2k                                                 ## first child position
@@ -205,7 +204,6 @@ for (klass, op, nop) in ((MaxHeap, <, ≥), (MinHeap, >, ≤))
         k = j
       end
     end
-
   end # end of @eval
 
 end
@@ -215,8 +213,10 @@ function _swap!(self::Heap{T1, T2}, k::Int, j::Int, lab::String) where {T1, T2}
 
   ## update index
   pk, pj = self.h[k], self.h[j]
-  self.map_ix[pk] = j # @assert j < self.last "_swap[$(lab)]!: violated assertion j=$(j)/k:$(k) must be < $(self.last - 1) / pj:$(pj) / pk:$(pk) / $(self)"
-  self.map_ix[pj] = k # @assert k < self.last "_swap[$(lab)]!: violated assertion k=$(k)/j:$(j) must be < $(self.last - 1) / pj:$(pj) / pk:$(pk) / $(self)"
+  self.map_ix[pk] = j
+  # CHECK_FOR_CORRECTNESS && @assert j < self.last "_swap[$(lab)]!: violated assertion j=$(j)/k:$(k) must be < $(self.last - 1) / pj:$(pj) / pk:$(pk) / $(self)"
+  self.map_ix[pj] = k
+  # CHECK_FOR_CORRECTNESS && @assert k < self.last "_swap[$(lab)]!: violated assertion k=$(k)/j:$(j) must be < $(self.last - 1) / pj:$(pj) / pk:$(pk) / $(self)"
 
   ## and swap
   self.h[k], self.h[j] = self.h[j], self.h[k]
@@ -246,26 +246,53 @@ end
 
 function _delete!(self::Heap{T1, T2}, ix::Int)::KV{T1, T2} where {T1, T2}
   pair = self.h[ix]
-  if ix == self.last - 1
-    delete!(self.map_ix, pair)
+
+  if ix == self.last - 1             ## no replacement to provide as we delete last elemt from heap
+    delete!(self.map_ix, pair)       ## no update of any index in map_ix required
     self.last -= 1
     return pair
   end
 
-  repl_pair = self.h[self.last - 1]
-  self.h[ix] = repl_pair
+  repl_pair = self.h[self.last - 1]  ## select replacement pair (from last pos)
+  self.h[ix] = repl_pair             ## overwrite at pos. ix [where pair was]
+  delete!(self.map_ix, pair)         ## update index by deleting pair from it(index)
 
-  ## update index now
-  jx = self.map_ix[pair]
-  delete!(self.map_ix, pair)       ## delete from index
-
-  jx == self.last - 1 && (jx -= 1)
-  self.map_ix[repl_pair] = jx      ## update this index
-  # @assert jx < (self.last - 1) "_delete!: violated assertion jx $(jx) must be < $(self.last - 1)"
-
+  self.map_ix[repl_pair] = ix        ## update this index
   self.last -= 1
+  # CHECK_FOR_CORRECTNESS && @assert ix < self.last "_delete!: violated assertion ix $(ix) must be < $(self.last)"
 
-  _buble_down!(self.klass, self, ix)
+  ## check heap property against parent if possible
+  lt = self.klass == MinHeap ? (>) : (<)
+  jx = ix ÷ 2
+
+  if jx ≥ 1
+    if lt(self.h[jx].key, self.h[ix].key)
+      _buble_up!(self.klass, self; k=ix)
+    else
+      ## check heap property against children if possible
+      jx = 2 * ix
+
+      if jx ≤ self.last - 1
+        jx < self.last - 1 && lt(self.h[jx].key, self.h[jx + 1].key) && (jx += 1)
+        lt(self.h[ix].key, self.h[jx].key) && _buble_down!(self.klass, self, ix)
+      end
+    end
+  else
+    _buble_down!(self.klass, self, ix)
+  end
 
   return pair
+end
+
+function heap_prop_inv(self::Heap{T1, T2}) where {T1, T2}
+  lt = self.klass == MinHeap ? (≤) : (≥)
+
+  n = (self.last - 1) ÷ 2
+  for ix in 1:n
+    jx = ix << 1
+    @assert lt(self.h[ix].key, self.h[jx].key) "- HEAP Error(1) at ix:$(ix) key:$(self.h[ix]) $(lt) $(self.h[jx]) at jx:$(jx)\n$(self.h[1:(self.last-1)])"
+    if jx + 1 < (self.last - 1)
+      @assert lt(self.h[ix].key, self.h[jx + 1].key) "- HEAP Error(2) at ix:$(ix)  key:$(self.h[ix]) $(lt) $(self.h[jx + 1]) at jx:$(jx+1)\n$(self.h[1:(self.last-1)])"
+    end
+  end
 end

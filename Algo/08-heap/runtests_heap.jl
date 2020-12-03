@@ -5,6 +5,34 @@ push!(LOAD_PATH, "./src")
 using YAH
 
 
+function check_inv(mheap)
+  n = (mheap.last - 1) ÷ 2
+  for ix in 1:n
+    jx = ix << 1
+    @assert mheap.h[ix].key ≤  mheap.h[jx].key "- HEAP Error(1) at ix:$(ix)  key:$(mheap.h[ix]) ≤ $(mheap.h[jx]) at jx:$(jx)\n$(mheap.h[1:(mheap.last-1)])"
+
+    if jx + 1 < (mheap.last - 1)
+      @assert mheap.h[ix].key ≤  mheap.h[jx + 1].key "- HEAP Error(2) at ix:$(ix)  key:$(mheap.h[ix]) ≤ $(mheap.h[jx + 1]) at jx:$(jx+1)\n$(mheap.h[1:(mheap.last-1)])"
+    end
+  end
+end
+
+function make_heap()
+  n = 32
+  mheap = Heap{Int, Nothing}(n)
+
+  # manufacture specific heap
+  mheap.h = [(key=10, value=nothing), (key=70, value=nothing), (key=30, value=nothing), (key=80, value=nothing), (key=100, value=nothing), (key=40, value=nothing), (key=51, value=nothing), (key=90, value=nothing), (key=85, value=nothing), (key=110, value=nothing), (key=120, value=nothing), (key=50, value=nothing), (key=55, value=nothing), (key=71, value=nothing), (key=77, value=nothing), (key=200, value=nothing), (key=300, value=nothing), (key=91, value=nothing), (key=94, value=nothing), (key=117, value=nothing), (key=118, value=nothing), (key=122, value=nothing), (key=124, value=nothing), (key=92, value=nothing)]
+
+  mheap.last = length(mheap.h) + 1
+
+  mheap.map_ix = Dict{NamedTuple{(:key, :value),Tuple{Int64,Nothing}},Int64}((key=10, value=nothing) => 1, (key=70, value=nothing) => 2, (key=30, value=nothing) => 3, (key=80, value=nothing) => 4, (key=100, value=nothing) => 5, (key=40, value=nothing) => 6, (key=51, value=nothing) => 7, (key=90, value=nothing) => 8, (key=85, value=nothing) => 9, (key=110, value=nothing) => 10, (key=120, value=nothing) => 11, (key=50, value=nothing) => 12, (key=55, value=nothing) => 13, (key=71, value=nothing) => 14, (key=77, value=nothing) => 15, (key=200, value=nothing) => 16, (key=300, value=nothing) => 17, (key=91, value=nothing) => 18, (key=94, value=nothing) => 19, (key=117, value=nothing) => 20, (key=118, value=nothing) => 21, (key=122, value=nothing) => 22, (key=124, value=nothing) => 23, (key=92, value=nothing) => 24)
+
+  return mheap
+end
+
+
+
 @testset "min heap basics" begin
   n = 10
   mheap = Heap{Int, Float64}(n) ## MinHeap default
@@ -14,6 +42,64 @@ using YAH
 
   insert!(mheap, (key=21, value=1.1))
   @test mheap.last == 2         ## next free position
+end
+
+@testset "min heap - deletions at any pos." begin
+  ## OK 1:
+  mheap = make_heap()
+  check_inv(mheap)
+
+  delete!(mheap, 2) # == 70
+  check_inv(mheap)
+  @test mheap.h[2].key == 80
+  @test mheap.h[4].key == 85
+  @test mheap.h[9].key == 91
+  @test mheap.h[18].key == 92
+
+  ## OK 2:
+  mheap = make_heap()
+  check_inv(mheap)
+
+  delete!(mheap, 10) # == 110
+  check_inv(mheap)
+  @test mheap.h[5].key == 92
+  @test mheap.h[10].key == 100
+
+  ## OK 3:
+  mheap = make_heap()
+  check_inv(mheap)
+  delete!(mheap, 4)  # == 80
+  check_inv(mheap)
+  @test mheap.h[4].key == 85
+  @test mheap.h[9].key == 91
+  @test mheap.h[18].key == 92
+
+  ## OK 4: delete the root
+  mheap = make_heap()
+  check_inv(mheap)
+  delete!(mheap, 1)  # == 10
+  check_inv(mheap)
+  @test mheap.h[1].key == 30
+  @test mheap.h[3].key == 40
+  @test mheap.h[6].key == 50
+  @test mheap.h[12].key == 92
+
+  # OK: 5
+  mheap = make_heap()
+  check_inv(mheap)
+  delete!(mheap, 11)  # == 120
+  check_inv(mheap)
+  @test mheap.h[11].key == 100
+  @test mheap.h[5].key == 92
+
+  # OK 6:
+  mheap = make_heap()
+  check_inv(mheap)
+  delete!(mheap, 22)  # == 122
+  check_inv(mheap)
+  @test mheap.h[22].key == 120
+  @test mheap.h[11].key == 100
+  @test mheap.h[5].key == 92
 end
 
 @testset "min heap insert" begin
