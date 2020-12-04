@@ -4,8 +4,9 @@ module YAUG
   export UnGraph
   export UnBFS
 
-export v, e, adj, add_edge!, is_edge, edges,
-  edge_with_cost, from_file, find_mincost_edge
+export v, e, adj, add_edge!, is_edge,
+  sort_edges!, edges, edge_with_cost,
+  from_file, find_mincost_edge
 
   export has_path_to, path_to, path_builder
 

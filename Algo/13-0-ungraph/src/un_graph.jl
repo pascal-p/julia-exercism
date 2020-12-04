@@ -2,6 +2,8 @@
   Undirected graph with edges with cost
 """
 
+import Base: Ordering, Forward
+
 mutable struct UnGraph{T1, T2}
   _v::Int                              ## num. of vertices
   _e::Int                              ## num. of edges
@@ -10,10 +12,10 @@ mutable struct UnGraph{T1, T2}
   _cache_edges::Bool
   _edges::Vector{Tuple{T1, T1, T2}}    ## keep list of all edges(3-tuple) (x, y, c)
 
-  function UnGraph{T1, T2}(v::Int) where {T1, T2}
+  function UnGraph{T1, T2}(v::Int; cache_edges=false) where {T1, T2}
     adj = [Vector{Tuple{T1, T2}}() for _ in 1:v]
     edges = Vector{Tuple{T1, T1, T2}}()
-    self = new(v, 0, adj, false, edges)
+    self = new(v, 0, adj, cache_edges, edges)
     return self
   end
 
@@ -26,6 +28,9 @@ v(ug::UnGraph) = ug._v
 e(ug::UnGraph) = ug._e
 adj(ug::UnGraph, u::T1) where T1 = ug._adj[u]  ### no check to ensure ug.adj[u] is defined!
 edges(ug::UnGraph) = ug._edges
+sort_edges!(ug::UnGraph; lt=isless, by=((_x, _y, c)=t) -> c,
+            rev=false, order::Ordering=Forward) = sort!(ug._edges; lt, by, rev, order)
+# Forward or Reverse ordering
 
 function add_edge!(ug::UnGraph{T1, T2}, x::T1, y::T1, c::T2;
                    cache_edges=false) where {T1, T2}
@@ -35,7 +40,7 @@ function add_edge!(ug::UnGraph{T1, T2}, x::T1, y::T1, c::T2;
   push!(ug._adj[x], (y, c))
   x != y && push!(ug._adj[y], (x, c))
   ug._e += 1
-  if cache_edges
+  if cache_edges || ug._cache_edges
     !ug._cache_edges && (ug._cache_edges = true)
     push!(ug._edges, (x, y, c))
   end

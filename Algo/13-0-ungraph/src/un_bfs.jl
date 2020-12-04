@@ -7,7 +7,7 @@ using DataStructures  ## for Stack and Queue
 const INFINITY = typemax(Int)
 
 struct UnBFS{T}
-  _marked::Vector{Bool}
+  _marked::Vector{Bool} 
   _edge_to::Vector{T}
   _s::T
   _dist_to::Vector{Int}
@@ -26,16 +26,19 @@ struct UnBFS{T}
   """
   Multiple sources
   """
-  function UnBFS{T}(ug::UnGraph{T, T2}, ss::Vector{T}) where {T, T2}
-    marked, edge_to, dist_to = bfs_init(ug)
+  # function UnBFS{T}(ug::UnGraph{T, T2}, ss::Vector{T}) where {T, T2}
+  #   @assert length(ss) > 0
+    
+  #   marked, edge_to, dist_to = bfs_init(ug)
 
-    for s in ss
-      if check_vertex(marked, s) && !marked[s]
-        (marked, edge_to, dist_to) = bfs(ug, s, marked, edge_to, dist_to)
-      end
-    end
-    return new(marked, edge_to, s, dist_to)
-  end
+  #   for s in ss
+  #     if check_vertex(marked, s) && !marked[s]
+  #       (marked, edge_to, dist_to) = bfs(ug, s, marked, edge_to, dist_to)
+  #     end
+  #   end
+    
+  #   return new(marked, edge_to, ss[1], dist_to) 
+  # end
 end
 
 has_path_to(bfs::UnBFS{T}, v::T) where T = check_vertex(bfs, v) && return bfs._marked[v]
