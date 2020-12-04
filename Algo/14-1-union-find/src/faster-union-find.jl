@@ -1,15 +1,15 @@
 mutable struct UnionFind
-  id::Vector{Int}
-  sz::Vector{Int}
+  parent::Vector{Int}
+  rank::Vector{UInt8}
   count::Int
 
   function UnionFind(n::Int)
     @assert n > 0
     count = n
-    id = zeros(Int, n)
-    sz = ones(Int, n)
-    for ix in 1:n; id[ix] = ix; end
-    new(id, sz, count)
+    parent = zeros(Int, n)
+    rank = zeros(UInt8, n)
+    for ix in 1:n; parent[ix] = ix; end
+    new(parent, rank, count)
   end
 
   function UnionFind(file::String)
@@ -22,23 +22,31 @@ count(uf::UnionFind) = uf.count
 connected(uf::UnionFind, p::Int, q::Int) = find(uf, p) == find(uf, q)
 
 function find(uf::UnionFind, p::Int)::Int
-  while p != uf.id[p]; p = uf.id[p]; end
+  validate(uf, p)
+
+  while p ≠ uf.parent[p]
+    uf.parent[p] = uf.parent[uf.parent[p]]   ## path compression
+    p = uf.parent[p]
+  end
   return p
 end
 
 function union(uf::UnionFind, p::Int, q::Int)
-  ix, jx = find(uf, p), find(uf, q)
+  root_p, root_q = find(uf, p), find(uf, q)
 
   ## already in same component - we are done
-  ix == jx && return   
+  root_p == root_q && return
 
-  ## otherwise, merge smaller root into larger one
-  if uf.sz[ix] < uf.sz[jx]
-    uf.id[ix] = jx
-    uf.sz[jx] += uf.sz[ix]
-  else
-    uf.id[jx] = ix
-    uf.sz[ix] += uf.sz[jx]
+  ## otherwise, merge smaller rank pointer to root of larger rank
+  if uf.rank[root_p] < uf.rank[root_q]
+    uf.parent[root_p] = root_q
+
+  elseif uf.rank[root_p] > uf.rank[root_q]
+    uf.parent[root_q] = root_p
+
+  else  ## tie
+    uf.parent[root_q] = root_p
+    uf.rank[root_p] += 1
   end
 
   uf.count -= 1
@@ -48,6 +56,12 @@ end
 #
 # Internals
 #
+
+function validate(uf::UnionFind, p::Int)
+  n = length(uf.parent)
+  !(1 ≤ p ≤ n) && throw(ArgumentError("index p must be such that 1 ≤ p:$(p) ≤ n"))
+  return
+end
 
 function from_file(file::String)::UnionFind
   local uf

@@ -20,3 +20,10 @@ This implementation uses <em>weighted quick union by size</em> (without path com
 - Constructor takes &Theta;(<em>n</em>), where <em>n</em> is the number of elements.
 - <em>union</em> and <em>find</em> operations  take &Theta;(ln <em>n</em>) time in the worst case.
 - <em>count</em> operation takes &Theta;(1) time.
+
+The implementation of <em>weighted quick union by rank</em>  with <em>path compression by halving</em> has the following properties:
+- Constructor takes &Theta;(<em>n</em>) time, where <em>n</em> is the number of elements.
+- <em>union</em> and <em>find</em> operations take &Theta;(log <em>n</em>) time in the worst case.
+- The <em>count</em> operation takes &Theta;(1) time.
+
+Moreover, starting from an empty data structure with <em>n</em> sites any intermixed sequence of <em>m</em> <em>union</em> and <em>find</em> operations takes <em>O</em>(<em>m</em> &alpha;(<em>n</em>)) time, where &alpha;(<em>n</em>) is the inverse of [Ackermann's function](https://en.wikipedia.org/wiki/Ackermann_function#Inverse).
