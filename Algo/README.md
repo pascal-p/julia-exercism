@@ -28,7 +28,7 @@ The primary topics in this part of the specialization are: data structures (heap
 
 The primary topics in this part of the specialization are: greedy algorithms (scheduling, minimum spanning trees, clustering, Huffman codes) and dynamic programming (knapsack, sequence alignment, optimal search trees).
 
-  - [X] [week 1 - Assignment - Scheduling](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-1-greedy-alg_scheduling/README.md) and [week 1 - Assignment - Prim's MST](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-2-greedy-alg_mst/README.md)
+  - [X] [week 1 - Assignment - Scheduling](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-1-greedy-alg_scheduling/README.md) and [week 1 - Assignment - Prim's MST](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-2-greedy-prim_mst/README.md)
   - [ ] TODO  
 
 ### C04 - Shortest Paths Revisited, NP-Complete Problems and What To Do About Them

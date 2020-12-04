@@ -10,5 +10,5 @@ Algo/*/tests/875714v_5105043e_tc.txt
 Algo/12-2-sum/testfiles/input_random_[56]*txt
 Algo/12-2-sum/testfiles/output_random_[56]*txt
 
-Algo/13-2-greedy-alg_mst/testfiles/large_ewg-challenge.txt
+Algo/13-2-greedy-prim_mst/testfiles/large_ewg-challenge.txt
 Algo/14-1-union-find/testfiles/input_large_uf.txt
