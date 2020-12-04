@@ -16,21 +16,21 @@ using Random
 
 ## Expecting a file of edge (as Int) and cost (as Int)
 function mst_vanilla(infile::String; T1::DataType=Int, T2::DataType=Int)
-  g = UnGraph{T1, T2}(infile)   ## instanciate the graph from innput file
-  mst_vanilla(g)
+  ug = UnGraph{T1, T2}(infile)   ## instanciate the graph from innput file
+  mst_vanilla(ug)
 end
 
-function mst_vanilla(g::UnGraph{T1, T2}) where {T1, T2}
+function mst_vanilla(ug::UnGraph{T1, T2}) where {T1, T2}
   ## 1 - Pick a vertex at random
-  s = rand(1:g.v);
+  s = rand(1:v(ug))
   xs = Set{T1}(s)              ## set of vertices that forms the MST
   ts = Set{Tuple{T1, T1}}()    ## a set of edges that forms the MST
 
   ## 2 - Loop over all vertices...
   tot_cost = 0
-  while length(xs) < g.v
+  while length(xs) < v(ug)
     # !all(v -> v, marked)  ## there is still a vertice to visit...
-    u, v, c = find_mincost_edge(g, xs)
+    u, v, c = find_mincost_edge(ug, xs)
     @assert u ∈ xs
     @assert v ∉ xs
     tot_cost += c
@@ -40,7 +40,7 @@ function mst_vanilla(g::UnGraph{T1, T2}) where {T1, T2}
     push!(ts, (u, v))
   end
 
-  @assert length(xs) == g.v
+  @assert length(xs) == v(ug)
   return (tot_cost, ts)
 end
 
@@ -49,17 +49,16 @@ end
 ##
 function mst(infile::String; T1::DataType=Int, T2::DataType=Int)
   ## 0 - instanciate the graph
-  g = UnGraph{T1, T2}(infile)
-
-  mst(g)
+  ug = UnGraph{T1, T2}(infile)
+  mst(ug)
 end
 
-function mst(g::UnGraph{T1, T2}) where {T1, T2}
+function mst(ug::UnGraph{T1, T2}) where {T1, T2}
   ## 1 - Pick a vertex at random
-  s = rand(1:g.v)
+  s = rand(1:v(ug))
   xs = Set{T1}(s)              ## set of vertices that forms the MST
   ts = Set{Tuple{T1, T1}}()    ## a set of edges that forms the MST
-  min_heap = Heap{Int, Int}(g.v; klass=MinHeap)
+  min_heap = Heap{Int, Int}(v(ug); klass=MinHeap)
 
   ## 2 - heapify (or tournament)
   ## for each not yet processed vertex v, record cost and identity of
@@ -69,8 +68,8 @@ function mst(g::UnGraph{T1, T2}) where {T1, T2}
   key    = Dict{T1, T2}()                   ## key: vertex, value: cost
   winner = Dict{T1, Tuple{T1, T2}}()        ## winner key:vertex, value: edge
 
-  for v in filter(x -> x != s, 1:g.v)
-    xv, c_sv = edge_with_cost(g, s, v);
+  for v in filter(x -> x != s, 1:v(ug))
+    xv, c_sv = edge_with_cost(ug, s, v)
     # @assert v == xv || xv == nothing      ## safety check - can be removed later
     key[v] = c_sv
     xv != nothing && (winner[v] = (s, v))
@@ -87,7 +86,7 @@ function mst(g::UnGraph{T1, T2}) where {T1, T2}
     tot_cost += c # or key[w]
 
     ## update keys in heap
-    for (y, c_wy) in filter(((x, c)=t) -> x ∉ xs, g.adj[w]) ## ug.adj[w] vector of (vertex, cost)
+    for (y, c_wy) in filter(((x, c)=t) -> x ∉ xs, adj(ug, w)) ## ug.adj[w] vector of (vertex, cost)
       if c_wy < key[y]
         ix = get(map_ix(min_heap), (key=key[y], value=y), 0)
         @assert ix > 0

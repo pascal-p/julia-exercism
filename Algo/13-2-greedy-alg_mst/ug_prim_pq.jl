@@ -23,13 +23,12 @@ end
 
 function mst(infile::String; T1::DataType=Int, T2::DataType=Int)
   ## 0 - instanciate the graph
-  g = UnGraph{T1, T2}(infile)
-
-  mst(g)
+  ug = UnGraph{T1, T2}(infile)
+  mst(ug)
 end
 
-function mst(g::UnGraph{T1, T2}) where {T1, T2<:Integer}
-  st = ST{T1, T2}(g.v)
+function mst(ug::UnGraph{T1, T2}) where {T1, T2<:Integer}
+  st = ST{T1, T2}(v(ug))
   #
   # Multiple identical keys are NOT permitted. Ah!
   #
@@ -39,15 +38,15 @@ function mst(g::UnGraph{T1, T2}) where {T1, T2<:Integer}
   while !isempty(st.pq)
     (_c, v) = extract_min!(st.pq)                # dequeue_pair!(st.pq)
     st.marked[v] = ix
-    visit(g, v, st)
+    visit(ug, v, st)
     ix += 1
   end
 
   return (sum(st.cost_to), st.edge_to[2:end], st.marked, st.cost_to)
 end
 
-function visit(g::UnGraph{T1, T2}, v::T1, st::ST{T1, T2}) where {T1, T2<:Integer}
-  for (u, c) in g.adj[v]
+function visit(ug::UnGraph{T1, T2}, v::T1, st::ST{T1, T2}) where {T1, T2<:Integer}
+  for (u, c) in adj(ug, v)
     st.marked[u] > 0 && continue
 
     if c < st.cost_to[u]

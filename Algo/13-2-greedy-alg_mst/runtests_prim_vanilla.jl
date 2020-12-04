@@ -12,17 +12,17 @@ end
 
 
 @testset "basics" begin
-  g = UnGraph{Int, Int}("$(TF_DIR)/input_random_1_10.txt")
+  ug = UnGraph{Int, Int}("$(TF_DIR)/input_random_1_10.txt")
 
-  @test v(g) == 10
-  @test e(g) == 9 # self-loop edge ignore
+  @test v(ug) == 10
+  @test e(ug) == 9 # self-loop edge ignore
 
-  @test length(g.adj[1]) == 1
-  @test length(g.adj[2]) == 2 # self-loop edge ignore
-  @test length(g.adj[3]) == 2
+  @test length(adj(ug, 1)) == 1
+  @test length(adj(ug, 2)) == 2 # self-loop edge ignore
+  @test length(adj(ug, 3)) == 2
 end
 
-for file in filter((fs) -> occursin(r"\Ainput_random_1[89]_100", fs),
+for file in filter((fs) -> occursin(r"\Ainput_random_\d+_\d+", fs),
                    cd(readdir, "$(TF_DIR)"))
 
   ifile = replace(file, r"\Ainput_" => s"output_")
