@@ -6,7 +6,7 @@ push!(LOAD_PATH, "./src")
 push!(LOAD_PATH, "../14-1-union-find/src")
 
 using YAUG      ## for undirected graph
-using YAUF      # union-find data struct.
+using YAFUF     ## (faster) union-find data struct.
 
 include("./utils/common.jl")
 

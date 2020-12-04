@@ -46,12 +46,22 @@ for file in filter((fs) -> occursin(r".+_ewg-challenge.txt", fs),
   end
 end
 
-# julia runtests_ug_kruskal_uf.jl
+## julia runtests_ug_kruskal_uf.jl
 
 #   1.738447 seconds (2.00 M allocations: 461.425 MiB, 1.59% gc time)
 # Test Summary:                                | Pass  Total
 # (uf) kruskal MST on: large_ewg-challenge.txt |    1      1
 
 # 0.000128 seconds (532 allocations: 103.562 KiB)
+# Test Summary:                                 | Pass  Total
+# (uf) kruskal MST on: medium_ewg-challenge.txt |    1      1
+
+## julia runtests_ug_kruskal_uf.jl  - (faster) uf
+
+# 1.587868 seconds (2.00 M allocations: 454.749 MiB, 2.34% gc time)
+# Test Summary:                                | Pass  Total
+# (uf) kruskal MST on: large_ewg-challenge.txt |    1      1
+
+# 0.000127 seconds (532 allocations: 101.766 KiB)
 # Test Summary:                                 | Pass  Total
 # (uf) kruskal MST on: medium_ewg-challenge.txt |    1      1
