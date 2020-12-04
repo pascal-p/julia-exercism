@@ -1,6 +1,6 @@
 module YAUF
   # Yet Another Union Find ADT
-  import Base: count
+  import Base: count, union
 
   export UnionFind
 
