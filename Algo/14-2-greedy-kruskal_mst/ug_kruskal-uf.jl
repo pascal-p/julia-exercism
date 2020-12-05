@@ -1,5 +1,5 @@
 """
-  UnionFind powered Kruskal (greedy) MST Algorithm
+  Kruskal (greedy) MST Algorithm powered by Union-Find
 """
 
 push!(LOAD_PATH, "./src")
