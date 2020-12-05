@@ -133,8 +133,17 @@ function from_file(infile::String, T::DataType;
   try
     open(infile, "r") do fh
       local nv, ne
-      for line in eachline(fh)    ## read only first line, where we expect 2 Integers
-        nv, ne = map(x -> parse(Int, strip(x)), split(line, r"\s+"))
+      for line in eachline(fh)    ## read only first line, where we expect at lest 1 Int (at most 2)
+        a = split(line, r"\s+")
+        if length(a) == 2
+          nv, ne = map(x -> parse(Int, strip(x)), a)
+        elseif length(a) == 1
+          nv = parse(Int, strip(a[1]))
+          ne = nothing
+        else
+          throw(ArgumentError("Expecting 1 or 2 arguments of type Integer - got $(length(a))"))
+        end
+
         break
       end
 
@@ -156,11 +165,11 @@ function from_file(infile::String, T::DataType;
         ug._e > _n && (act_ne += 1)
       end
 
-      @assert act_ne ≤ ne "Expecting actual number of vertices $(act_ne) to be ≤ $(ne)"
+      ne != nothing && (@assert act_ne ≤ ne "Expecting actual number of vertices $(act_ne) to be ≤ $(ne)")
     end
 
-    @assert length(ug._adj) ≤ ug._v "Expecting actual number of vertices $(act_nv) to be ≤ $(ug._v)" # defer message to catch block
-    @assert act_ne ≤ ug._e "Expecting actual number of edges $(act_ne) to be ≤  $(ug._e)" # defer message to catch block
+    @assert length(ug._adj) ≤ ug._v "Expecting actual number of vertices $(act_nv) to be ≤ $(ug._v)"  ## defer message to catch block
+    @assert act_ne ≤ ug._e "Expecting actual number of edges $(act_ne) to be ≤  $(ug._e)"             ## defer message to catch block
     return ug
 
   catch err
