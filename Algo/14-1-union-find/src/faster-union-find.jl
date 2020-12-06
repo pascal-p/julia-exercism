@@ -1,13 +1,16 @@
+const TRank = UInt8      # typemax(UInt16) = 0xff, typemax(UInt16) = 0xffff ≡ 65536
+#                        # max rank of 255
+
 mutable struct UnionFind
   parent::Vector{Int}
-  rank::Vector{UInt8}
+  rank::Vector{TRank}
   count::Int
 
   function UnionFind(n::Int)
     @assert n > 0
     count = n
     parent = zeros(Int, n)
-    rank = zeros(UInt8, n)
+    rank = zeros(TRank, n)
     for ix in 1:n; parent[ix] = ix; end
     new(parent, rank, count)
   end
@@ -34,8 +37,7 @@ end
 function union(uf::UnionFind, p::Int, q::Int)
   root_p, root_q = find(uf, p), find(uf, q)
 
-  ## already in same component - we are done
-  root_p == root_q && return
+  root_p == root_q && return    ## already in same component - we are done
 
   ## otherwise, merge smaller rank pointer to root of larger rank
   if uf.rank[root_p] < uf.rank[root_q]
@@ -44,7 +46,7 @@ function union(uf::UnionFind, p::Int, q::Int)
   elseif uf.rank[root_p] > uf.rank[root_q]
     uf.parent[root_q] = root_p
 
-  else  ## tie
+  else ## tie
     uf.parent[root_q] = root_p
     uf.rank[root_p] += 1
   end

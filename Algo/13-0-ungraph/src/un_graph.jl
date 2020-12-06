@@ -133,7 +133,7 @@ function from_file(infile::String, T::DataType;
   try
     open(infile, "r") do fh
       local nv, ne
-      for line in eachline(fh)    ## read only first line, where we expect at lest 1 Int (at most 2)
+      for line in eachline(fh)    ## read only first line, where we expect at least 1 Int (at most 2)
         a = split(line, r"\s+")
         if length(a) == 2
           nv, ne = map(x -> parse(Int, strip(x)), a)

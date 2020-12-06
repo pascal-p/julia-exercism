@@ -36,3 +36,11 @@ for file in filter((fs) -> occursin(r"\Ainput_complete_random_\d+_\d+", fs),
     @test calc_clusters(ug, K) == exp_value
   end
 end
+
+#
+# include("./single_link_clustering.jl")
+# const TF_DIR = "./testfiles"
+# const K = 3
+# ug = from_file("$(TF_DIR)/input_6.txt", UnGraph{Int, Int}; T1=Int, T2=Int, cache_edges=true)
+# calc_clusters(ug, K) # => 50  / output_6.txt
+#
