@@ -20,7 +20,7 @@ The primary topics in this part of the specialization are: data structures (heap
     
  - [X] [week 1/PA - Digraph Strongly Connected Components](https://github.com/pascal-p/julia-exercism/blob/master/Algo/06-digraph-scc/)
  - [X] [week 2/PA - Dijkstra Shortest Path](https://github.com/pascal-p/julia-exercism/blob/master/Algo/07-dijkstra-sp/)
- - [X] [week 3/PA - Median Maintenance](https://github.com/pascal-p/julia-exercism/tree/master/Algo/08-median-maintenance/)
+ - [X] [week 3/PA - Median Maintenance - heap](https://github.com/pascal-p/julia-exercism/tree/master/Algo/08-median-maintenance-heap) and [week 3/PA - Median Maintenance - bst](https://github.com/pascal-p/julia-exercism/tree/master/Algo/10-median-maintenance-bst)
  - [X] [week 4/PA - 2-Sum Problem](https://github.com/pascal-p/julia-exercism/tree/master/Algo/12-2-sum/)
 
 ### C03 - Greedy Algorithms, Minimum Spanning Trees, and Dynamic Programming

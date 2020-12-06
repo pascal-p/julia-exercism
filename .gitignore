@@ -15,3 +15,7 @@ Algo/14-1-union-find/testfiles/input_large_uf.txt
 
 Algo/14-3-greedy-single-link-clustering/testfiles/input_complete_random_*_1024.txt
 Algo/14-3-greedy-single-link-clustering/testfiles/output_complete_random_*_1024.txt
+Algo/14-4-greedy-clustering/testfiles/input_clustering_big.txt
+Algo/14-4-greedy-clustering/testfiles/input_random_81_131072_24.txt
+Algo/14-4-greedy-clustering/testfiles/input_random_82_131072_22.txt
+Algo/14-4-greedy-clustering/testfiles/input_random_83_262144_24.txt
