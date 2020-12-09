@@ -14,6 +14,12 @@ struct TrieNode{T<:Number}
     @assert freq > zero(T)
     new(ch, freq, l, r)
   end
+
+  function TrieNode{T}(freq::T; l::Union{TrieNode, Nothing}=nothing,
+                       r::Union{TrieNode, Nothing}=nothing) where T
+    @assert freq > zero(T)
+    new('\0', freq, l, r)
+  end
 end
 
 isleaf(tn::TrieNode{T}) where T = tn._left == nothing && tn._right == nothing

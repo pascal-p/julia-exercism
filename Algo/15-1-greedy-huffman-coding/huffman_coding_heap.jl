@@ -3,6 +3,8 @@ push!(LOAD_PATH, "./src")
 using YAH
 using YATRIE
 
+include("./utils/common.jl")
+
 """
   Insert the symbols into a min heap (using their frequency as keys)
 
@@ -15,37 +17,6 @@ using YATRIE
 
   The total running time of the n - 1 iterations of the main loop is O(n × ln(n)).
 """
-
-function from_file(infile::String, DT::DataType)
-  # from a file each line is symbol, freq or only symbol
-  try
-    local nsymb, ix, tfreq
-
-    open(infile, "r") do fh
-      for line in eachline(fh)
-        ## read only first line, where we expect 1 Integer ≡ num. of symbols
-        a = split(line, r"\s+")
-        nsymb = parse(Int, strip(a[1]))
-        break
-      end
-
-      tfreq = Dict{UCS, DT}()
-      ix = 1
-      for line in eachline(fh)
-        a = split(line, r"\s+")
-        f = parse(DT, strip(a[1]))
-        tfreq["s_$(ix)"] = f
-        ix += 1
-      end
-    end
-    @assert ix - 1 == nsymb "ix: $(ix) == nsymb: $(nsymb)"
-    return tfreq
-
-  catch err
-    pritnln("Intercepted error: $(err)")
-    exit(1)
-  end
-end
 
 
 """
@@ -77,14 +48,12 @@ function build_trie(tfreq::Dict{T1, T}) where {T1 <: UCS, T}
     end
 
     nfreq = freq(x) + freq(y)
-    pnode = TrieNode{T}('\0', nfreq; l=x, r=y)  ## Create parent node form x, y
+    pnode = TrieNode{T}(nfreq; l=x, r=y)  ## Create (internal) parent node form x, y
     insert!(min_heap, make_pair(nfreq, pnode))
   end
 
   return extract_min!(min_heap).value
 end
-
-make_pair(k::T, v::TrieNode{T}) where T = (key=k, value=v)
 
 ##
 ## for challenge
@@ -108,16 +77,8 @@ function huffman(infile::String, DT::DataType)
   return (min_len_cw, max_len_cw)
 end
 
-#
-# include("./huffman_coding.jl");
-# str = "ABRACADABRA!"
-# tfreq = Dict('B' => 2, 'C' => 1, 'A' => 5, 'D' => 1, 'R' => 2, '!' => 1)
-#
-# trie = build_trie(tfreq)
-# st = build_code(trie)
-#
-# enc = encode(str, st)
-# == "0101111011010110001011110100"
-#
-# dec = expand(trie, enc)
-#
+## Challenge:
+##   0.016192 seconds (16.18 k allocations: 1.123 MiB)
+## Test Summary:                    | Pass  Total
+## clustering on: input_huffman.txt |    1      1
+##
