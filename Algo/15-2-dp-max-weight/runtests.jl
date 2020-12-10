@@ -1,6 +1,6 @@
 using Test
 
-include("./mwis.jl")
+include("./mwis_dp.jl")
 
 const TF_DIR = "./testfiles"
 const A = [1, 2, 3, 4, 17, 117, 517, 997]
