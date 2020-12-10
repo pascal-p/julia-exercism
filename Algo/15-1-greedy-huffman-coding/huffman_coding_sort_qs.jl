@@ -109,7 +109,7 @@ function from_file(infile::String, DT::DataType)::Vector{DT}
     return tfreq
 
   catch err
-    pritnln("Intercepted error: $(err)")
+    println("Intercepted error: $(err)")
     exit(1)
   end
 end
