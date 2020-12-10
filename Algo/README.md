@@ -30,7 +30,8 @@ The primary topics in this part of the specialization are: greedy algorithms (sc
 
   - [X] [week 1/PA - Scheduling](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-1-greedy-alg_scheduling/) and [week 1/PA - Prim's MST](https://github.com/pascal-p/julia-exercism/blob/master/Algo/13-2-greedy-prim_mst/)
   - [X] [week 2/PA - k-clustering max-spacing](https://github.com/pascal-p/julia-exercism/tree/master/Algo/14-3-greedy-single-link-clustering/) and [week 2/PA - Clustering and Hamming distance](https://github.com/pascal-p/julia-exercism/blob/master/Algo/14-4-greedy-clustering/)
-  - [ ] [week 3/PA - Huffman coding/Heap](https://github.com/pascal-p/julia-exercism/tree/master/Algo/15-1-greedy-huffman-coding), [Huffman coding/Qs](https://github.com/pascal-p/julia-exercism/tree/master/Algo/15-1-greedy-huffman-coding) and TODO...
+  - [X] [week 3/PA - Huffman coding/Heap](https://github.com/pascal-p/julia-exercism/tree/master/Algo/15-1-greedy-huffman-coding), [Huffman coding/Qs](https://github.com/pascal-p/julia-exercism/tree/master/Algo/15-1-greedy-huffman-coding) and [week 3/PA - MWIS Dynamic Programming](https://github.com/pascal-p/julia-exercism/tree/master/Algo/15-2-dp-max-weight)
+  - [ ] TBC: week 4/PA
 
 ### C04 - Shortest Paths Revisited, NP-Complete Problems and What To Do About Them
  - [ ] [Shortest Paths Revisited, NP-Complete Problems and What To Do About Them](https://www.coursera.org/learn/algorithms-npcomplete)
