@@ -1,5 +1,5 @@
 """
-  TODO: description...
+  Solving 0/1 knsapsak problem with DP
 
 """
 
@@ -20,7 +20,7 @@ value(item::TItem{T1, T2}) where {T1, T2} = item._val
 size(item::TItem{T1, T2}) where {T1, T2} = item._sz
 
 """
-  Bottom-Up iterative approach...
+  Bottom-Up iterative approach... Keeping enough info. for reconnstruction
 
 """
 function knapsack_iter(items::Vector{TItem{T1, T2}}, capa::T2) where {T1, T2 <: Integer}
@@ -48,7 +48,38 @@ end
 
 
 """
-  Top-Down recursive memoization approach...
+  Bottom-Up iterative approach... Keeping only minimum info
+  no reconstruction
+
+"""
+function knapsack_iter_opt(items::Vector{TItem{T1, T2}}, capa::T2) where {T1, T2 <: Integer}
+  @assert capa > 0 "Capacity must be strictly positive"
+
+  kx, n = 2, length(items)
+  mat = Matrix{T2}(undef, capa + 1, 2)  ## only need 2 columns (previous and current)
+
+  for c in 1:capa + 1; mat[c, 1] = 0; end
+
+  for ix in 2:(n + 1)
+    for c in 1:(capa + 1)
+      sz = size(items[ix - 1])
+
+      if sz ≥ c
+        mat[c, kx] = mat[c, kx - 1]
+      else
+        mat[c, kx] = max(mat[c, kx - 1], mat[c - sz, kx - 1] + value(items[ix - 1]))
+      end
+    end
+    ## copy mat[c, 2] => mat[c, 1]
+    for c in 1:capa + 1; mat[c, 1] = mat[c, kx]; end
+  end
+
+  mat[capa + 1, kx]
+end
+
+
+"""
+  Top-Down recursive + memoization approach...
 
 """
 function knapsack_rec_memo(items::Vector{TItem{T1, T2}}, capa::T2) where {T1, T2 <: Integer}
@@ -60,12 +91,17 @@ function knapsack_rec_memo(items::Vector{TItem{T1, T2}}, capa::T2) where {T1, T2
     (n ≤ zero(T_Int) || c ≤ zero(T_Int)) && return zero(T_Int)
 
     if !haskey(hsh, (n, c))
-      k₁ = _knapsack(T_Int(n - 1), c)
+      ## Addition
+      n₁ = T_Int(n - 1)
+      k₁ = _knapsack(n₁, c)    # get(hsh, (n₁, c), _knapsack(n₁, c))
 
       hsh[(n, c)] = if size(items[n]) > c
         k₁
       else
-        k₂ = _knapsack(T_Int(n - 1), T_Int(c - size(items[n]))) + value(items[n])
+        nc = T_Int(c - size(items[n]))
+        k₂ = _knapsack(n₁, nc) + value(items[n])
+        # k₂ = get(hsh, (n₁, nc), _knapsack(n₁, nc))
+        # k₂ += value(items[n])
         max(k₁, k₂)
       end
     end
@@ -80,7 +116,7 @@ end
 function knapsack_rec(items::Vector{TItem{T1, T2}}, capa::T2) where {T1, T2 <: Integer}
   @assert capa > 0 "Capacity must be strictly positive"
 
-  function _knapsack(n::T_Int, c::T_Int) # , v::T_Int)
+  function _knapsack(n::T_Int, c::T_Int)
     (n ≤ zero(T_Int) || c ≤ zero(T_Int)) && return zero(T_Int)
 
     k₁ = _knapsack(T_Int(n - 1), c)

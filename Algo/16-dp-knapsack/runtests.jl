@@ -23,6 +23,7 @@ end
 
   # expect items == [3, 4]
   @test knapsack_iter(items, capa) == ([3, 4], exp_value)
+  @test knapsack_iter_opt(items, capa) == exp_value
 end
 
 @testset "basics of knapsack recursive version" begin
@@ -47,7 +48,7 @@ for file in filter((fs) -> occursin(r"\Ainput_random_\d+_\d+_\d+.txt", fs),
   # sort!(items, by=(itm) -> size(itm))
 
   @testset "iter version: $(file)" begin
-    @test knapsack_iter(items, capa)[2] == exp_value
+    @test knapsack_iter_opt(items, capa) == exp_value
   end
 
   @testset "recursion-memo version: $(file)" begin
