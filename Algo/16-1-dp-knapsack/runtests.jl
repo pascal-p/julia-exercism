@@ -38,7 +38,6 @@ end
   @test knapsack_rec_memo(items, capa) == exp_value
 end
 
-
 for file in filter((fs) -> occursin(r"\Ainput_random_\d+_\d+_\d+.txt", fs),
                    cd(readdir, "$(TF_DIR)"))
 
@@ -50,6 +49,10 @@ for file in filter((fs) -> occursin(r"\Ainput_random_\d+_\d+_\d+.txt", fs),
   @testset "iter version: $(file)" begin
     @test knapsack_iter_opt(items, capa) == exp_value
   end
+
+  #@testset "iter version: $(file)" begin
+  #  @test knapsack_iter(items, capa)[2] == exp_value
+  #end
 
   @testset "recursion-memo version: $(file)" begin
     @test knapsack_rec_memo(items, capa) == exp_value

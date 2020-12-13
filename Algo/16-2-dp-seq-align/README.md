@@ -1,4 +1,4 @@
-# Programming Problem 17.8: Sequence Alignment 
+# Programming Problem 16.2: Sequence Alignment
 
 ## Work
 
