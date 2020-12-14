@@ -47,6 +47,15 @@ end
   @test st['F'] == "01"   # "11"
 end
 
+@testset "basics huffamn coding: ABCDE" begin
+  tfreq = Dict{UCS, Float32}('A' => 0.28, 'B' => 0.27, 'C' =>0.2, 'D' => 0.15, 'E' => 0.1)
+
+  trie = build_trie(tfreq)
+  st = build_code(trie)
+
+  @test sum([length(st[k]) * tfreq[k] for k ∈ keys(tfreq)]) * 1000.0 == 2250.0
+end
+
 
 for file in filter((fs) -> occursin(r"\Ainput_random_\d+_\d+\.txt", fs),
                    cd(readdir, "$(TF_DIR)"))

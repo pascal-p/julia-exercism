@@ -29,6 +29,33 @@ end
   @test opt_bst(n, freq)[2] == exp_val
 end
 
+@testset "basics / 3" begin
+  freq = [0, .2, .05, .17, .1, .2, .03, .25]
+  n = length(freq) - 1
+  exp_val = 2.23
+
+  @test opt_bst(n, freq)[2] == exp_val
+end
+
+@testset "Problem 17.4" begin
+  freq = [0, 20, 5, 17, 10, 20, 3, 25]
+  n = length(freq) - 1
+  exp_val = 223
+
+  m, act_val = opt_bst(n, freq)
+
+  @test act_val == exp_val
+  @test m == [0 0 0 0 0 0 0 0;
+              0 20 30 69 92 142 151 223;
+              0 0 5 27 47 97 105 158;
+              0 0 0 17 37 84 90 143;
+              0 0 0 0 10 40 46 99;
+              0 0 0 0 0 20 26 74;
+              0 0 0 0 0 0 3 31;
+              0 0 0 0 0 0 0 25;
+              0 0 0 0 0 0 0 0]
+end
+
 for file in filter((fs) -> occursin(r"\Ainput_problem.+.txt", fs),
                    cd(readdir, "$(TF_DIR)"))
   ifile = replace(file, r"\Ainput_" => s"output_")
