@@ -6,7 +6,7 @@
 
 ## Work
 
- - Challenge data set: This [file](https://github.com/pascal-p/julia-exercism/blob/master/Algo/.../clustering1.txt)
+ - Challenge data set: This [file](https://github.com/pascal-p/julia-exercism/blob/master/Algo/14-3-greedy-single-link-clustering/testfiles/input_clustering1.txt)
 
 This file describes a distance function (equivalently, a complete graph with edge costs). It has the following format:
 
