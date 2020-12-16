@@ -90,7 +90,7 @@ function convert_ewg(infile::String, outfile::String)
   nrl, nwl = 0, 0  # read lines / written lines
   local fho
 
-  try
+  #try
     fho = open(outfile, "w")
 
     p_orig, lst, nv = 0, [], 0
@@ -130,13 +130,13 @@ function convert_ewg(infile::String, outfile::String)
     length(lst) > 0 && (nwl = writeto_ewg(fho, p_orig, lst, nwl))
     println("$(infile) was converted to $(outfile) / $(nrl) lines read / $(nwl) lines written")
 
-  catch err
-    println("Intercepted error: $(err)")
-    exit(1)
+  #catch err
+  #  println("Intercepted error: $(err)")
+  #  exit(1)
 
-  finally
-    close(fho)
-  end
+  #finally
+  #  close(fho)
+  #end
 end
 
 

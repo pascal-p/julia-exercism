@@ -30,15 +30,30 @@ end
 
 v(g::EWDiGraph) = g._v
 e(g::EWDiGraph) = g._e
+
 adj(g::EWDiGraph, v::T) where T = g._adj[v]
+
+function has_edge(g::EWDiGraph, u::T, v::T) where T
+  ## if there is an edge u -> v, then adj(g, u) must contain v
+
+  v ∈ map(t -> t[1], adj(g, u)) ## adj(g, u) ≡ list of tuple (vertex, weight)
+end
+
 
 """
   Convention about the file structure:
 
-  Start with an integer denoting the number of vertices (or nodes) followed by
-  a sequence of lines describing edges:
+  Start with an integer denoting the number of vertices (or nodes) followed
+  optionally by expected number of edges.
+
+  Then a sequence of lines describing edges:
   - starting with the vertex origin (unique) and
   - an enumeration of pair (destination vertex comma edge weight w/o space)
+
+  Or
+  - origin vertex
+  - destination vertex
+  - weight/cost
 
   Note weight/cost can be Int or Float
 
@@ -49,6 +64,13 @@ adj(g::EWDiGraph, v::T) where T = g._adj[v]
   3 4,3
   4
 
+  Or:
+  1000 47978
+  1 14 6
+  1 25 47
+  1 70 22
+  1 82 31
+
 """
 function from_file(infile::String, graph_cons, VType;
                    WType=Int, positive_weight=true)
@@ -57,43 +79,55 @@ function from_file(infile::String, graph_cons, VType;
   g = graph_cons(0)
   act_nv = 0
 
-  try
+  #try
     open(infile, "r") do fh
       nv = 0
       for line in eachline(fh)     ## read only first line
-        nv = parse(Int, line)      ## expected number of vertices
+        (nv, ) = map(s -> parse(Int, strip(s)),
+                     split(line, r"\s+"))  ## expected number of vertices [opt. num. of edges)
         break
       end
       g = graph_cons(nv)
 
+      prev_u = -1
       for line in eachline(fh)
         length(line) == 0 && continue
+
         ary = split(line)
         u = parse(VType, ary[1])
-        act_nv += 1
-        for v_w in ary[2:end]      ## v_w == "vertex,weight"
-          sv, sw = split(v_w, ",")
-          v, w = parse(VType, sv), parse(WType, sw)
+        if u ≠ prev_u            ## change of vertex?
+          act_nv += 1
+          prev_u = u
+        end
 
-          add_edge(g, u, v, w;     ## weigths are Integers
-                   positive_weight)
+        if occursin(",", line)   ## do we have comma... assume following format:
+          for v_w in ary[2:end]  ## v_w == "vertex,weight"
+            sv, sw = split(v_w, r",")
+            v, w = parse(VType, sv), parse(WType, sw)
+
+            add_edge(g, u, v, w; positive_weight)
+          end
+        else
+          sv, sw = ary[2:end]
+          v, w = parse(VType, sv), parse(WType, sw)
+          add_edge(g, u, v, w; positive_weight)
         end
       end
     end
 
-    @assert act_nv == v(g)         ## defer message to catch block
+    @assert act_nv == v(g) "Expected $(act_nv) vertices, got $(v(g))"   ## defer message to catch block
     return g
 
-  catch err
-    if isa(err, ArgumentError)
-      println("! Problem with content of file $(infile)")
-    elseif isa(err, SystemError)
-      println("! Problem opening $(infile) in read mode... Exit")
-    elseif isa(err, AssertionError)
-      println("! Expected $(g.v) vertices, got: $(act_nv)")
-    else
-      println("! Other error: $(typeof(err))...")
-    end
-    exit(1)
-  end
+  # catch err
+  #   if isa(err, ArgumentError)
+  #     println("! Problem with content of file $(infile)")
+  #   elseif isa(err, SystemError)
+  #     println("! Problem opening $(infile) in read mode... Exit")
+  #   elseif isa(err, AssertionError)
+  #     println("! Expected $(g.v) vertices, got: $(act_nv)")
+  #   else
+  #     println("! Other error: $(typeof(err))...")
+  #   end
+  #   exit(1)
+  # end
 end
