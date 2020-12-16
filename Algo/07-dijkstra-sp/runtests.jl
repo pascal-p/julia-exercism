@@ -6,13 +6,12 @@ const FILEDIR = "./tests"
 
 function sum_w(g, path)
   ## summing weigths on path from path[1] to path[end] == dist_to(path[1], path[end])
-
   prev_p, sum_w = path[1], 0
 
   for p in path[2:end]
-    ix = findfirst(t -> t[1] == p, g.adj[prev_p])
-    (_, w) = g.adj[prev_p][ix]
-    sum_w += w                  # sum_w is the distance!
+    ix = findfirst(t -> t[1] == p, adj(g, prev_p))
+    (_, w) = adj(g, prev_p)[ix] ## g.adj[prev_p][ix]
+    sum_w += w                  ## sum_w is the distance
     prev_p = p
   end
 

@@ -4,29 +4,33 @@
   Note: weigths are assumed to be positive integer
 """
 
-mutable struct EWDiGraph{T}
-  v::Int                             # num. of vertices 1..v
-  e::Int                             # num. of edges
-  adj::Vector{Vector{Tuple{T, Int}}} # for adjacency list (of tuples/pairs vertx, weight(Int)
+mutable struct EWDiGraph{T, T1 <: Real}
+  _v::Int                             # num. of vertices 1..v
+  _e::Int                             # num. of edges
+  _adj::Vector{Vector{Tuple{T, T1}}}  # for adjacency list (of tuples/pairs vertex(T), weight(T1)
 
-  function EWDiGraph{T}(v::Int) where T
-    adj = [ Vector{T}() for _ in 1:v ]
+  function EWDiGraph{T, T1}(v::Int) where {T, T1 <: Real}
+    adj = [ Vector{Tuple{T, T1}}() for _ in 1:v ]
     self = new(v, 0, adj)
     return self
   end
 
-  function EWDiGraph{T}(infile::String) where T
-    from_file(infile, EWDiGraph{T}, T)
+  function EWDiGraph{T, T1}(infile::String; positive_weight=true) where {T, T1 <: Real}
+    from_file(infile, EWDiGraph{T, T1}, T; WType=T1, positive_weight)
   end
 end
 
-function add_edge(self::EWDiGraph{T}, x::T, y::T, w::Int) where T
-  push!(self.adj[x], (y, w)) # tuple
-  self.e += 1
+function add_edge(self::EWDiGraph{T, T1}, x::T, y::T, w::T1;
+                  positive_weight=true) where {T, T1 <: Real}
+  positive_weight && (@assert w >= 0)
+
+  push!(self._adj[x], (y, w)) ## tuple
+  self._e += 1
 end
 
-v(g::EWDiGraph) = g.v
-e(g::EWDiGraph) = g.e
+v(g::EWDiGraph) = g._v
+e(g::EWDiGraph) = g._e
+adj(g::EWDiGraph, v::T) where T = g._adj[v]
 
 """
   Convention about the file structure:
@@ -44,16 +48,18 @@ e(g::EWDiGraph) = g.e
   4
 
 """
-function from_file(infile::String, graph_cons, ttype)
-  # ttype => target type for vertices
+function from_file(infile::String, graph_cons, VType;
+                   WType=Int, positive_weight=true)
+  # VType => target type for vertices
+  # WType => target type for weigth
   g = graph_cons(0)
   act_nv = 0
 
   try
     open(infile, "r") do fh
       nv = 0
-      for line in eachline(fh) # read only first line
-        nv = parse(ttype, line)  # SHOULD BE T
+      for line in eachline(fh)     ## read only first line
+        nv = parse(Int, line)      ## expected number of vertices
         break
       end
       g = graph_cons(nv)
@@ -61,16 +67,19 @@ function from_file(infile::String, graph_cons, ttype)
       for line in eachline(fh)
         length(line) == 0 && continue
         ary = split(line)
-        u = parse(ttype, ary[1])
+        u = parse(VType, ary[1])
         act_nv += 1
-        for v_w in ary[2:end]                             # v_w == "vertex,weight"
-          v, w = split(v_w, ",")
-          add_edge(g, u, parse(ttype, v), parse(Int, w))  # weigths are Integers
+        for v_w in ary[2:end]      ## v_w == "vertex,weight"
+          sv, sw = split(v_w, ",")
+          v, w = parse(VType, sv), parse(WType, sw)
+
+          add_edge(g, u, v, w;     ## weigths are Integers
+                   positive_weight)
         end
       end
     end
 
-    @assert act_nv == g.v # defer message to catch block
+    @assert act_nv == v(g)         ## defer message to catch block
     return g
 
   catch err
