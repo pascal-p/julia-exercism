@@ -40,6 +40,8 @@ adj(g::EWDiGraph, v::T) where T = g._adj[v]
   - starting with the vertex origin (unique) and
   - an enumeration of pair (destination vertex comma edge weight w/o space)
 
+  Note weight/cost can be Int or Float
+
   Ex: 4 vertex digraph with 4 edges:
   4
   1 2,1 3,4
