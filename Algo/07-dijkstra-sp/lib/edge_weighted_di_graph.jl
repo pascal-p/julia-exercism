@@ -35,8 +35,16 @@ adj(g::EWDiGraph, v::T) where T = g._adj[v]
 
 function has_edge(g::EWDiGraph, u::T, v::T) where T
   ## if there is an edge u -> v, then adj(g, u) must contain v
-
   v ∈ map(t -> t[1], adj(g, u)) ## adj(g, u) ≡ list of tuple (vertex, weight)
+end
+
+function has_weighted_edge(g::EWDiGraph, u::T, v::T) where T
+  ## if there is an edge u -> v, then adj(g, u) must contain v
+  for (vₒ, w) in adj(g, u)
+    vₒ == v && return (true, w)
+  end
+
+  return (false, nothing)
 end
 
 
