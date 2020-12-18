@@ -24,7 +24,7 @@ The primary topics in this part of the specialization are: data structures (heap
  - [X] [week 4/PA - 2-Sum Problem](https://github.com/pascal-p/julia-exercism/tree/master/Algo/12-2-sum/)
 
 ### C03 - Greedy Algorithms, Minimum Spanning Trees, and Dynamic Programming
- - [ ] [Greedy Algorithms, Minimum Spanning Trees, and Dynamic Programming](https://www.coursera.org/learn/algorithms-greedy)
+ - [X] [Greedy Algorithms, Minimum Spanning Trees, and Dynamic Programming](https://www.coursera.org/learn/algorithms-greedy)
 
 The primary topics in this part of the specialization are: greedy algorithms (scheduling, minimum spanning trees, clustering, Huffman codes) and dynamic programming (knapsack, sequence alignment, optimal search trees).
 
@@ -38,8 +38,8 @@ The primary topics in this part of the specialization are: greedy algorithms (sc
 
 The primary topics in this part of the specialization are: shortest paths (Bellman-Ford, Floyd-Warshall, Johnson), NP-completeness and what it means for the algorithm designer, and strategies for coping with computationally intractable problems (analysis of heuristics, local search).
 
-  - [ ] TODO
+  - [ ] WIP...
 
 
 <hr />
-<p style="font-size:0.25em">Nov.-Dec. 2020, Corto Inc</p>
+<p style="font-size:0.25em">Nov-Dec 2020, Corto Inc</p>
