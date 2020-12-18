@@ -77,9 +77,9 @@ function from_file(infile::String, graph_cons, VType;
   # VType => target type for vertices
   # WType => target type for weigth
   g = graph_cons(0)
-  act_nv = 0
+  local nv = 0
 
-  #try
+  try
     open(infile, "r") do fh
       nv = 0
       for line in eachline(fh)     ## read only first line
@@ -96,7 +96,7 @@ function from_file(infile::String, graph_cons, VType;
         ary = split(line)
         u = parse(VType, ary[1])
         if u ≠ prev_u            ## change of vertex?
-          act_nv += 1
+          # act_nv += 1
           prev_u = u
         end
 
@@ -114,20 +114,19 @@ function from_file(infile::String, graph_cons, VType;
         end
       end
     end
-
-    @assert act_nv == v(g) "Expected $(act_nv) vertices, got $(v(g))"   ## defer message to catch block
+    @assert nv == v(g) "Expected $(act_nv) vertices, got $(v(g))"   ## defer message to catch block
     return g
 
-  # catch err
-  #   if isa(err, ArgumentError)
-  #     println("! Problem with content of file $(infile)")
-  #   elseif isa(err, SystemError)
-  #     println("! Problem opening $(infile) in read mode... Exit")
-  #   elseif isa(err, AssertionError)
-  #     println("! Expected $(g.v) vertices, got: $(act_nv)")
-  #   else
-  #     println("! Other error: $(typeof(err))...")
-  #   end
-  #   exit(1)
-  # end
+  catch err
+    if isa(err, ArgumentError)
+      println("! Problem with content of file $(infile)")
+    elseif isa(err, SystemError)
+      println("! Problem opening $(infile) in read mode... Exit")
+    elseif isa(err, AssertionError)
+      println("! Expected $(g.v) vertices, got: $(act_nv)")
+    else
+      println("! Other error: $(typeof(err))...")
+    end
+    exit(1)
+  end
 end

@@ -1,5 +1,5 @@
 """
-Bellman-Ford Data Structure for Single-Source Shortest Path
+Bellman-Ford Data Structure for Single-Source Shortest Path (src: Algo Princeton)
 
 Dependency on EWDiGraph
 """
@@ -9,9 +9,6 @@ using YAQ
 
 const EPS = 1e-14
 const NULL_EDGE = (-1, -1)
-const INFINITY_INT = typemax(Int)
-const INFINITY_FLOAT32 = typemax(Float32)
-const INFINITY_FLOAT64 = typemax(Float64)
 
 struct BFSP{T, T1}
   dist_to::Vector{T1}
@@ -41,7 +38,7 @@ end
 function has_path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
   check_valid_vertex(bfsp.g, v)
 
-  has_path_to(bfsp, v, T1) # bfsp.dist_to[v] < typemax(T1)
+  bfsp.dist_to[v] < infinity(T1)
 end
 
 function path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
@@ -65,6 +62,20 @@ end
 
 negative_cycle(bfsp::BFSP{T, T1}) where {T, T1} = bfsp.cycle
 
+function min_dist(bfsp::BFSP{T, T1})::T1 where {T, T1}
+  min_dist = infinity(T1)
+
+  for ix in 2:v(bfsp.g)
+    dist_to(bfsp, ix) ≡ infinity(T1) && continue
+
+    if dist_to(bfsp, ix) < min_dist
+      min_dist = dist_to(bfsp, ix)
+    end
+  end
+
+  min_dist
+end
+
 ##
 ## Internal Helpers
 ##
@@ -86,8 +97,9 @@ function bfsp_builder(g::EWDiGraph{T, T1}, s::T) where {T, T1}
   on_q::Vector{Bool} = fill(false, v(g))
   queue = Q{T}(v(g))
 
-  # cycle, cost, dist_to[s], edge_to[s] = Vector{Tuple{T, T}}(), 0, zero(T1), (s, s)
+  ## Init.
   cycle, cost, dist_to[s] = Vector{Tuple{T, T}}(), 0, zero(T1)
+  enque!(queue, on_q, s)
 
   ## Closure
   function _relax(u::T) where T
@@ -107,14 +119,10 @@ function bfsp_builder(g::EWDiGraph{T, T1}, s::T) where {T, T1}
   end
 
   ## Main
-  enque!(queue, on_q, s)
-  ix = 10
   while !isempty(queue) && length(cycle) == 0
     cv = dequeue!(queue)
     on_q[cv] = false
     _relax(cv)
-    ix -= 1
-    ix < 0 && break
   end
 
   (dist_to, edge_to, cycle)
@@ -171,6 +179,6 @@ function find_negative_cycle(nv::Int, T1::DataType, edge_to::Vector{Tuple{T, T}}
   cycle
 end
 
-has_path_to(bfsp::BFSP{T, T1}, v::T, ::Type{Int}) where {T, T1} = bfsp.dist_to[v] < INFINITY_INT
-has_path_to(bfsp::BFSP{T, T1}, v::T, ::Type{Float32}) where {T, T1} = bfsp.dist_to[v] < INFINITY_FLOAT32
-has_path_to(bfsp::BFSP{T, T1}, v::T, ::Type{Float64}) where {T, T1} = bfsp.dist_to[v] < INFINITY_FLOAT64
+infinity(::Type{Int}) = typemax(Int)
+infinity(::Type{Float32}) = typemax(Float32)
+infinity(::Type{Float64}) = typemax(Float64)
