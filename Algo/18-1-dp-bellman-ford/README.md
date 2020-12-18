@@ -5,12 +5,14 @@ Using Bellman-Ford Algorithms
 
 ## Work
 
-  - [This file]() describes an instance of the optimal binary search tree problem. The format of the file is:
+  - [This file](https://github.com/pascal-p/julia-exercism/blob/master/Algo/18-1-dp-bellman-ford/testfiles/tiny_ewdnc.txt) describes an instance of a weighted edge graph. The format of the file is:
 
-  1st line: number specifying the number n of keys
-  2nd line: n frequencies as comma-separated integer values
+  1st line: number of vertices
+  following lines: verte(src) vertex(dst),weight vertex(dst),weight ... 
 
-*(Answer: ?)*
+*For example 2nd line is: 1 3,0.26 5,0.38 which means vertex source 1 is linked to vertex 3 with weight 0.26 and vertex 5 with weight 0.38*
+
+*(Answer: negative cycle detected)*
 
 ref. Coursera/Stanford Algorithms [Shortest Paths Revisited, NP-Complete Problems and What To Do About Them](https://www.coursera.org/learn/algorithms-npcomplete/home/)
 
