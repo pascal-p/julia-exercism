@@ -82,7 +82,7 @@ function from_file(infile::String, graph_cons, VType;
   try
     open(infile, "r") do fh
       nv = 0
-      for line in eachline(fh)     ## read only first line
+      for line in eachline(fh)             ## read only first line
         (nv, ) = map(s -> parse(Int, strip(s)),
                      split(line, r"\s+"))  ## expected number of vertices [opt. num. of edges)
         break
@@ -96,21 +96,24 @@ function from_file(infile::String, graph_cons, VType;
         ary = split(line)
         u = parse(VType, ary[1])
         if u ≠ prev_u            ## change of vertex?
-          # act_nv += 1
           prev_u = u
         end
 
-        if occursin(",", line)   ## do we have comma... assume following format:
+        if occursin(',', line)   ## do we have comma... assume following format:
           for v_w in ary[2:end]  ## v_w == "vertex,weight"
             sv, sw = split(v_w, r",")
             v, w = parse(VType, sv), parse(WType, sw)
 
             add_edge(g, u, v, w; positive_weight)
           end
-        else
+        elseif length(ary) ≥ 2
           sv, sw = ary[2:end]
           v, w = parse(VType, sv), parse(WType, sw)
           add_edge(g, u, v, w; positive_weight)
+        elseif length(ary) == 1
+          # NO-OP - vertex with no incoming edge
+        else
+          throw(ArgumentError("Not dealing with this kind of data: $(ary) yet?"))
         end
       end
     end
