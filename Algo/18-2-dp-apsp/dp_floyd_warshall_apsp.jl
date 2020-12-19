@@ -46,7 +46,8 @@ function shortest_path(g::EWDiGraph{T, T1}) where {T, T1 <: Real}
 
   for k in 2:n, v in 1:n, w in 1:n
     v₁, v₂ = a[k - 1, v, k], a[k - 1, k, w]
-    a[k, v, w] = if v₁ ≠ infinity(T1)  && v₂ ≠ infinity(T1)
+
+    a[k, v, w] = if v₁ ≠ infinity(T1) && v₂ ≠ infinity(T1)
       min(a[k - 1, v, w],  v₁ + v₂)
     else
       a[k - 1, v, w]
@@ -64,3 +65,15 @@ end
 infinity(::Type{Int}) = typemax(Int)
 infinity(::Type{Float32}) = typemax(Float32)
 infinity(::Type{Float64}) = typemax(Float64)
+
+function min_dist()
+end
+
+function dist_to()
+end
+
+function path_to()
+end
+
+function has_path_to()
+end

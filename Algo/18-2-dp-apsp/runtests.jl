@@ -21,12 +21,15 @@ const TF_DIR = "./testfiles"
              infinity(Int) infinity(Int) infinity(Int) 0 infinity(Int);
              infinity(Int) infinity(Int) infinity(Int) 2 0]
 
-  @test shortest_path(g) == exp_mat
+  act_mat = shortest_path(g)
+  @test act_mat == exp_mat
   #  [0 1 2 5 4;
   #   ∞ 0 ∞ 4 ∞;
   #   ∞ -1 0 3 2;
   #   ∞ ∞ ∞ 0 ∞;
   #   ∞ ∞ ∞ 2 0]
+
+  # println(" >> ", typeof(act_mat))
 end
 
 @testset "APSP basics /2" begin
