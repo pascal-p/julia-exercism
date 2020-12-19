@@ -28,25 +28,58 @@ function add_edge(self::EWDiGraph{T, T1}, x::T, y::T, w::T1;
   self._e += 1
 end
 
+##
+## Public API
+##
+
 v(g::EWDiGraph) = g._v
 e(g::EWDiGraph) = g._e
 
-adj(g::EWDiGraph, v::T) where T = g._adj[v]
+adj(g::EWDiGraph, u::T) where T = 1 ≤ u ≤ v(g) ? g._adj[u] : Vector{Tuple{T, T1}}()
 
-function has_edge(g::EWDiGraph, u::T, v::T) where T
+function has_edge(g::EWDiGraph{T, T1}, u::T, v::T) where {T, T1}
+  check_valid_vertices(g, u, v)
+
   ## if there is an edge u -> v, then adj(g, u) must contain v
   v ∈ map(t -> t[1], adj(g, u)) ## adj(g, u) ≡ list of tuple (vertex, weight)
 end
 
-function has_weighted_edge(g::EWDiGraph, u::T, v::T) where T
+function has_weighted_edge(g::EWDiGraph, u::T, v::T) where {T, T1}
+  check_valid_vertices(g, u, v)
+
+  find_weighted_edge(g, u, v)
+end
+
+function weight(g::EWDiGraph{T, T1}, u::T, v::T) where {T, T1}
+  check_valid_vertices(g, u, v)
+
+  if u == v
+    return zero(T1)
+  else
+    res, w = find_weighted_edge(g, u, v)
+    return res ? w : typemax(T1)
+  end
+end
+
+##
+## Internal Helpers
+##
+
+function check_valid_vertices(g::EWDiGraph{T, T1}, v₁::T, v₂::T) where {T, T1}
+  n = v(g)
+  for u in (v₁, v₂)
+    1 ≤ u ≤ n || throw(ArgumentError("vertex $(u) not in current digraph"))
+  end
+end
+
+function find_weighted_edge(g::EWDiGraph{T, T1}, u::T, v::T) where {T, T1}
   ## if there is an edge u -> v, then adj(g, u) must contain v
   for (vₒ, w) in adj(g, u)
     vₒ == v && return (true, w)
   end
 
-  return (false, nothing)
+  (false, nothing)
 end
-
 
 """
   Convention about the file structure:
