@@ -114,3 +114,79 @@ for file in filter((fs) -> occursin(r"\Ainput_random_.+\.txt\z", fs),
     end
   end
 end
+
+
+# Test Summary:  | Pass  Total
+# APSP basics /1 |    4      4
+# Test Summary:  | Pass  Total
+# APSP basics /2 |    4      4
+
+# Test Summary: | Pass  Total
+# on g1.txt     |    1      1
+
+# Test Summary: | Pass  Total
+# on g2.txt     |    1      1
+
+# Test Summary: | Pass  Total
+# on g3.txt     |   18     18
+
+# Test Summary:             | Pass  Total
+# for input_random_12_8.txt |    1      1
+# Test Summary:              | Pass  Total
+# for input_random_13_16.txt |    1      1
+# Test Summary:              | Pass  Total
+# for input_random_16_16.txt |    1      1
+# Test Summary:              | Pass  Total
+# for input_random_17_32.txt |    1      1
+# Test Summary:              | Pass  Total
+# for input_random_18_32.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_1_2.txt |    1      1
+# Test Summary:              | Pass  Total
+# for input_random_21_64.txt |    1      1
+# Test Summary:               | Pass  Total
+# for input_random_27_128.txt |    1      1
+# Test Summary:               | Pass  Total
+# for input_random_28_128.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_2_2.txt |    1      1
+# Test Summary:               | Pass  Total
+# for input_random_32_256.txt |    1      1
+# Test Summary:               | Pass  Total
+# for input_random_36_512.txt |    1      1
+# Test Summary:                | Pass  Total
+# for input_random_37_1024.txt |    1      1
+# Test Summary:                | Pass  Total
+# for input_random_38_1024.txt |    1      1
+# Test Summary:                | Pass  Total
+# for input_random_39_1024.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_3_2.txt |    1      1
+
+# Test Summary:                | Pass  Total
+# for input_random_40_1024.txt |    1      1
+
+# Test Summary:                | Pass  Total
+# for input_random_41_2048.txt |    1      1
+
+# Test Summary:                | Pass  Total
+# for input_random_42_2048.txt |    1      1
+
+# Test Summary:                | Pass  Total
+# for input_random_43_2048.txt |    1      1
+
+# Test Summary:                | Pass  Total
+# for input_random_44_2048.txt |    1      1
+
+# Test Summary:            | Pass  Total
+# for input_random_4_2.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_5_4.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_6_4.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_7_4.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_8_4.txt |    1      1
+# Test Summary:            | Pass  Total
+# for input_random_9_8.txt |    1      1

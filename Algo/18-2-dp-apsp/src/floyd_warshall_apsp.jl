@@ -90,7 +90,7 @@ end
 
 function shortest_path(g::EWDiGraph{T, T1}) where {T <: Integer, T1 <: Real}
   n = T(v(g))
-  a = Array{T1, 3}(undef, n, n, n)
+  a = Array{T1, 3}(undef, 2, n, n) ## current iteration calculation relies only on prev. iteration
   p = Matrix{T1}(undef, n, n)
 
   ## base case k ≡ 1
@@ -105,23 +105,33 @@ function shortest_path(g::EWDiGraph{T, T1}) where {T <: Integer, T1 <: Real}
   end
 
   ## systematically solve all subproblems
-  for k in 2:n, v in one(T):n, w in one(T):n
-    v₁, v₂ = a[k - 1, v, k], a[k - 1, k, w]
-    a[k, v, w], update_p = if v₁ < infinity(T1) && v₂ < infinity(T1)
-      s = v₁ + v₂ + (isa(typeof(v₁), AbstractFloat) ? EPS : zero(T1))
-      a[k - 1, v, w] ≤ s ? (a[k - 1, v, w], false) : (s, true)  # update p matrix
-    else
-      (a[k - 1, v, w], false)
+  pk, ck = 1, 2
+
+  for k in 2:n
+
+    for v in one(T):n, w in one(T):n
+      v₁, v₂ = a[pk, v, k], a[pk, k, w]
+      a[ck, v, w], update_p = if v₁ < infinity(T1) && v₂ < infinity(T1)
+        s = v₁ + v₂ + (isa(typeof(v₁), AbstractFloat) ? EPS : zero(T1))
+        a[pk, v, w] ≤ s ? (a[pk, v, w], false) : (s, true)  # update p matrix
+      else
+        (a[pk, v, w], false)
+      end
+
+      update_p && (p[v, w] = p[v, k])
     end
-    update_p && (p[v, w] = p[v, k])
+
+    pk, ck = 3 - pk, 3 - ck  ## toggle for next iteration
   end
+
+  pk, ck = 3 - pk, 3 - ck    ## toggle back after last iteration
 
   ## Check for negative cycles
   for v in 1:n
-    a[n, v, v] < zero(T1) && (return (:negative_cycle, nothing, nothing))
+    a[ck, v, v] < zero(T1) && (return (:negative_cycle, nothing, nothing))
   end
 
-  return (:ok, a[n, 1:end, 1:end], p)
+  return (:ok, a[ck, 1:end, 1:end], p)
 end
 
 function check_valid_vertex(g::EWDiGraph{T, T1}, v₁::T, v₂::T) where {T <: Integer, T1}
