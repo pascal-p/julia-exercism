@@ -1,11 +1,8 @@
 """
 Bellman-Ford Data Structure for Single-Source Shortest Path (src: Algo Princeton)
 
-Dependency on AEWDiGraph
+Dependency on AEWDiGraph, YAQ (cf. YA_BFSP)
 """
-
-push!(LOAD_PATH, ".")
-using YAQ
 
 const EPS = 1e-14
 const NULL_EDGE = (-1, -1)
@@ -112,7 +109,7 @@ function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
 
       cost += 1
       if cost % v(g) == 0
-        cycle = find_negative_cycle(v(g), T1, edge_to, cycle, typeof(g))
+        cycle = find_negative_cycle(v(g), T1, edge_to, cycle)
         length(cycle) > 0 && return
       end
     end
@@ -120,7 +117,7 @@ function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
 
   ## Main
   while !isempty(queue) && length(cycle) == 0
-    cv = dequeue!(queue)
+    cv = dequeue!(queue) # YAQ.dequeue!(queue)
     on_q[cv] = false
     _relax(cv)
   end
@@ -129,12 +126,12 @@ function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
 end
 
 enque!(queue::Q{T}, on_q::Vector{Bool}, v::T) where T = (enqueue!(queue, v); on_q[v] = true)
+# (YAQ.enqueue!(queue, v); on_q[v] = true)
 
 function find_negative_cycle(nv::Int, T1::DataType,
-                             edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}},
-                             GType::DataType) where T
+                             edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}}) where T
   ## 1 - build new graph based on edge_to
-  g = GType(nv)
+  g = EWDiGraph{T, T1}(nv) # GType(nv)
   for v in 1:nv
     if edge_to[v] ≠ NULL_EDGE
       (u, w) = edge_to[v]
