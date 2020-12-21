@@ -9,23 +9,25 @@ struct DSP{T, T1 <: Real}
   dist_to::Vector{T1}              ## as edge weight are of type T1, so are distance
   pq::PriorityQueue{T, T1}
   _g::EWDiGraph{T, T1}
-  src:: T
+  src::T                           ## source vertex
 
   function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T) where {T, T1}  ## s == source vertex
-    pq = PriorityQueue{T, T1}()
-    edge_to = zeros(T, v(g))
-    dist_to = fill(typemax(T1), v(g))
-    dist_to[s] = 0
-    enqueue!(pq, s, 0)
-
-    self = new(edge_to, dist_to, pq, g, s)
+    self = new(init(g, s)..., g, s)
     while !isempty(self.pq)
-      relax(self, dequeue!(self.pq))
+      relax!(self, dequeue!(self.pq))
     end
+    self
+  end
 
+  function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T, wm::Matrix{T1}) where {T, T1}
+    self = new(init(g, s)..., g, s)
+    while !isempty(self.pq)
+      relax!(self, dequeue!(self.pq), wm)
+    end
     self
   end
 end
+
 
 ##
 ## Public API
@@ -49,18 +51,40 @@ dist_to(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real} = (check_vertex_valid(dsp, 
 ##
 ## Internal Helpers
 ##
-function relax(dsp::DSP{T, T1}, u::T) where {T, T1  <: Real}
+function init(g::EWDiGraph{T, T1}, s::T) where {T, T1}
+  pq = PriorityQueue{T, T1}()
+  edge_to = zeros(T, v(g))
+  dist_to = fill(typemax(T1), v(g))
+  dist_to[s] = 0
+  enqueue!(pq, s, 0)
+
+  (edge_to, dist_to, pq)
+end
+
+function relax!(dsp::DSP{T, T1}, u::T) where {T, T1  <: Real}
   for (v, w) in adj(dsp._g, u)
-    du_w = dsp.dist_to[u] + w
+    relax!(dsp, (u, v, w))
+  end
+end
 
-    if dsp.dist_to[v] > du_w
-      dsp.dist_to[v], dsp.edge_to[v] = du_w, u
+"""
+  Ignore defined weight, use given wm (weight matrix)
+"""
+function relax!(dsp::DSP{T, T1}, u::T, wm::Matrix{T1}) where {T, T1  <: Real}
+  for (v, _) in adj(dsp._g, u)
+    relax!(dsp, (u, v, wm[u, v]))
+  end
+end
 
-      if v ∈ keys(dsp.pq)
-        dsp.pq[v] = dsp.dist_to[v]
-      else
-        enqueue!(dsp.pq, v, w) # v => w
-      end
+function relax!(dsp::DSP{T, T1}, (u, v, w) ::Tuple{T, T, T1}) where {T, T1  <: Real}
+  du_w = dsp.dist_to[u] + w
+
+  if dsp.dist_to[v] > du_w
+    dsp.dist_to[v], dsp.edge_to[v] = du_w, u
+    if v ∈ keys(dsp.pq)
+      dsp.pq[v] = dsp.dist_to[v]
+    else
+      enqueue!(dsp.pq, v, w) # v => w
     end
   end
 end
