@@ -1,0 +1,94 @@
+"""
+  Extended EWDiGraph for Johnson Algo
+"""
+
+# abstract type AEWDiGraph{T <: Integer, T1 <: Real}; end
+
+struct EEWDiGraph{T, T1} <: AEWDiGraph{T, T1}
+  _v::Integer                         # num. of vertices 1..v
+  _e::Integer                         # num. of edges
+  _adj::Array{AbstractArray{T,1} where T,1}
+  _g::EWDiGraph{T, T1}                # origin DiGraph
+
+  function EEWDiGraph{T, T1}(g::EWDiGraph{T, T1}) where {T <: Integer, T1 <: Real}
+    nv, w = v(g) + one(T), zero(T)
+    ne = e(g)
+
+    # Using a view
+    adj_g = view(adj(g), :)
+    adj_nv = Vector{Tuple{T, T1}}()
+
+    ## Making a copy!
+    # nadj = Vector{Tuple{T, T1}}}(undef, nv)
+    # nadj[nv] = Vector{Tuple{T, T1}}()
+    # copyto!(nadj, adj(g))
+
+    for vₒ in 1:v(g)
+      # push!(nadj[nv], (vₒ, w))
+      push!(adj_nv, (vₒ, w))
+      ne += 1
+    end
+
+    adj_ng = [adj_g, adj_nv]
+    new(nv, ne, adj_ng, g)
+  end
+end
+
+v(g::EEWDiGraph) = g._v
+e(g::EEWDiGraph) = g._e
+
+function adj(g::EEWDiGraph{T, T1}, u::T) where {T <: Integer, T1 <: Real}
+  if 1 ≤ u ≤ v(g)
+    if u == v(g)   ## last vertex is the "extended" vertex
+      return g._adj[2]
+    else
+      return g._adj[1][u]
+    end
+  else
+    Vector{Tuple{T, T1}}()
+  end
+end
+
+function has_edge(g::EEWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1 <: Real}
+  check_valid_vertices(g, u, v)
+
+  ## if there is an edge u -> v, then adj(g, u) must contain v
+  v ∈ map(t -> t[1], adj(g, u)) ## adj(g, u) ≡ list of tuple (vertex, weight)
+end
+
+function has_weighted_edge(g::EEWDiGraph, u::T, v::T) where {T <: Integer, T1 <: Real}
+  check_valid_vertices(g, u, v)
+
+  find_weighted_edge(g, u, v)
+end
+
+function weight(g::EEWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1 <: Real}
+  check_valid_vertices(g, u, v)
+
+  if u == v
+    return zero(T1)
+  else
+    res, w = find_weighted_edge(g, u, v)
+    return res ? w : typemax(T1)
+  end
+end
+
+##
+## Internal Helpers
+##
+
+function check_valid_vertices(g::EEWDiGraph{T, T1}, v₁::T, v₂::T) where {T <: Integer, T1 <: Real}
+  n = v(g)
+  for u in (v₁, v₂)
+    1 ≤ u ≤ n || throw(ArgumentError("vertex $(u) not in current digraph"))
+  end
+end
+
+function find_weighted_edge(g::EEWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1 <: Real}
+  ## if there is an edge u -> v, then adj(g, u) must contain v
+  for (ix, (vₒ, w)) in enumerate(adj(g, u))
+    vₒ == v && return (true, w, ix)
+  end
+
+  (false, nothing, nothing)
+end
