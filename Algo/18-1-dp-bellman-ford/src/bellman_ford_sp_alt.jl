@@ -1,7 +1,7 @@
 """
 Bellman-Ford Data Structure for Single-Source Shortest Path (src: Algo Stanford)
 
-Dependency on EWDiGraph
+Dependency on AEWDiGraph
 """
 
 const NULL_VERTEX = -1
@@ -9,16 +9,16 @@ const NULL_VERTEX = -1
 struct BFSP{T, T1}
   dist_to::Vector{T1}
   path_to::Vector{T}
-  g::EWDiGraph{T, T1}
+  g::AEWDiGraph{T, T1}
   src::T
 
-  function BFSP{T, T1}(g::EWDiGraph{T, T1}, s::T) where {T, T1}
+  function BFSP{T, T1}(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
     dist_to, path_to = shortest_path(g, s)
     new(dist_to, path_to, g, s)
   end
 
-  function BFSP{T, T1}(infile::String, s::T; positive_weight=true) where {T, T1}
-    g = EWDiGraph{T, T1}(infile; positive_weight)
+  function BFSP{T, T1}(infile::String, s::T, GType::DataType; positive_weight=true) where {T, T1}
+    g = GType(infile; positive_weight)
     BFSP{T, T1}(g, s)
   end
 end
@@ -85,7 +85,7 @@ infinity(::Type{Int}) = typemax(Int)
 infinity(::Type{Float32}) = typemax(Float32)
 infinity(::Type{Float64}) = typemax(Float64)
 
-function incoming_edge(g::EWDiGraph{T, T1}) where {T, T1 <: Real}
+function incoming_edge(g::AEWDiGraph{T, T1}) where {T, T1 <: Real}
   in_edges = Dict{Int, Vector{Tuple{T, T1}}}()
 
   for vₒ ∈ 1:v(g)
@@ -99,7 +99,7 @@ function incoming_edge(g::EWDiGraph{T, T1}) where {T, T1 <: Real}
   in_edges
 end
 
-function shortest_path(g::EWDiGraph{T, T1}, s::T) where {T, T1 <: Real}
+function shortest_path(g::AEWDiGraph{T, T1}, s::T) where {T, T1 <: Real}
   @assert s ∈ 1:v(g) "Expecting vertex source to be in the graph"
   in_edges = incoming_edge(g)
   n = v(g)

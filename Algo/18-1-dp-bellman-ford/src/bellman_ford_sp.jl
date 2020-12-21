@@ -1,7 +1,7 @@
 """
 Bellman-Ford Data Structure for Single-Source Shortest Path (src: Algo Princeton)
 
-Dependency on EWDiGraph
+Dependency on AEWDiGraph
 """
 
 push!(LOAD_PATH, ".")
@@ -13,17 +13,17 @@ const NULL_EDGE = (-1, -1)
 struct BFSP{T, T1}
   dist_to::Vector{T1}
   edge_to::Vector{Tuple{T, T}}
-  g::EWDiGraph{T, T1}
+  g::AEWDiGraph{T, T1}
   cycle::Vector{Tuple{T, T}}
   src::T
 
-  function BFSP{T, T1}(g::EWDiGraph{T, T1}, s::T) where {T, T1}
+  function BFSP{T, T1}(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
     dist_to, edge_to, cycle = bfsp_builder(g, s)
     new(dist_to, edge_to, g, cycle, s)
   end
 
-  function BFSP{T, T1}(infile::String, s::T; positive_weight=true) where {T, T1}
-    g = EWDiGraph{T, T1}(infile; positive_weight)
+  function BFSP{T, T1}(infile::String, s::T, GType::DataType; positive_weight=true) where {T, T1}
+    g = GType(infile; positive_weight)
     BFSP{T, T1}(g, s)
   end
 end
@@ -80,7 +80,7 @@ end
 ## Internal Helpers
 ##
 
-function check_valid_vertex(g::EWDiGraph{T, T1}, u::T) where {T, T1}
+function check_valid_vertex(g::AEWDiGraph{T, T1}, u::T) where {T, T1}
   1 ≤ u ≤ v(g) ||
     throw(ArgumentError("the given vertex $(u) is not defined in current digraph"))
 end
@@ -90,7 +90,7 @@ function check_negative_cycle(bfsp::BFSP{T, T1}) where {T, T1}
     throw(ArgumentError("a negative weight/cost exists in this graph"))
 end
 
-function bfsp_builder(g::EWDiGraph{T, T1}, s::T) where {T, T1}
+function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
   ## Prep.
   dist_to::Vector{T1} = fill(typemax(T1), v(g))
   edge_to::Vector{Tuple{T, T}} = fill(NULL_EDGE, v(g))
@@ -112,7 +112,7 @@ function bfsp_builder(g::EWDiGraph{T, T1}, s::T) where {T, T1}
 
       cost += 1
       if cost % v(g) == 0
-        cycle = find_negative_cycle(v(g), T1, edge_to, cycle)
+        cycle = find_negative_cycle(v(g), T1, edge_to, cycle, typeof(g))
         length(cycle) > 0 && return
       end
     end
@@ -130,10 +130,11 @@ end
 
 enque!(queue::Q{T}, on_q::Vector{Bool}, v::T) where T = (enqueue!(queue, v); on_q[v] = true)
 
-function find_negative_cycle(nv::Int, T1::DataType, edge_to::Vector{Tuple{T, T}},
-                             cycle::Vector{Tuple{T, T}}) where T
+function find_negative_cycle(nv::Int, T1::DataType,
+                             edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}},
+                             GType::DataType) where T
   ## 1 - build new graph based on edge_to
-  g = EWDiGraph{T, T1}(nv)
+  g = GType(nv)
   for v in 1:nv
     if edge_to[v] ≠ NULL_EDGE
       (u, w) = edge_to[v]
