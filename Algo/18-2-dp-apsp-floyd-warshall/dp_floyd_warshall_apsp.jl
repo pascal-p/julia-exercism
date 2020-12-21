@@ -1,4 +1,4 @@
-push!(LOAD_PATH, "./src")
+push!(LOAD_PATH, "../18-0-ewd/src")
 using YA_EWD
 
 """
@@ -65,6 +65,10 @@ end
 infinity(::Type{Int}) = typemax(Int)
 infinity(::Type{Float32}) = typemax(Float32)
 infinity(::Type{Float64}) = typemax(Float64)
+
+#
+# Possible API - cf. src/floyd_warshall_apsp.jl
+#
 
 function min_dist()
 end
