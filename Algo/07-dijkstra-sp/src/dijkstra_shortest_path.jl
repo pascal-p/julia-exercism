@@ -4,12 +4,12 @@
   Using a Priority Queue
 """
 
-using DataStructures
-
 struct DSP{T, T1 <: Real}
   edge_to::Vector{T}
-  dist_to::Vector{T1}                            ## as edge weigth are of type T1, so are distance
+  dist_to::Vector{T1}              ## as edge weight are of type T1, so are distance
   pq::PriorityQueue{T, T1}
+  _g::EWDiGraph{T, T1}
+  src:: T
 
   function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T) where {T, T1}  ## s == source vertex
     pq = PriorityQueue{T, T1}()
@@ -18,68 +18,65 @@ struct DSP{T, T1 <: Real}
     dist_to[s] = 0
     enqueue!(pq, s, 0)
 
-    self = new(edge_to, dist_to, pq)
+    self = new(edge_to, dist_to, pq, g, s)
     while !isempty(self.pq)
-      relax(self, g, dequeue!(self.pq))
+      relax(self, dequeue!(self.pq))
     end
 
     self
   end
 end
 
-# internal function
-function relax(self::DSP{T, T1}, g::EWDiGraph{T, T1}, u::T) where {T, T1  <: Real}
-  for (v, w) in adj(g, u)
-    if self.dist_to[v] > self.dist_to[u] + w
-      self.dist_to[v] = self.dist_to[u] + w
-      self.edge_to[v] = u
+##
+## Public API
+##
 
-      if v ∈ keys(self.pq)
-        self.pq[v] = self.dist_to[v]
+g(dsp::DSP{T, T1}) where {T, T1 <: Real} = dsp._g
+
+function path_to(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real}
+  check_vertex_valid(dsp, u)
+
+  has_path, path = follow_path(dsp, u)
+  !has_path && throw(ArgumentError("No path from $(dsp.src) to $(u)"))
+  path
+end
+
+has_path(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real} = (check_vertex_valid(dsp, u) ; follow_path(dsp, u)[1])
+
+dist_to(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real} = (check_vertex_valid(dsp, u); dsp.dist_to[u])
+
+
+##
+## Internal Helpers
+##
+function relax(dsp::DSP{T, T1}, u::T) where {T, T1  <: Real}
+  for (v, w) in adj(dsp._g, u)
+    du_w = dsp.dist_to[u] + w
+
+    if dsp.dist_to[v] > du_w
+      dsp.dist_to[v], dsp.edge_to[v] = du_w, u
+
+      if v ∈ keys(dsp.pq)
+        dsp.pq[v] = dsp.dist_to[v]
       else
-        enqueue!(self.pq, v, w) # v => w
+        enqueue!(dsp.pq, v, w) # v => w
       end
     end
   end
-
 end
 
-function path_to(self::DSP{T, T1}, g::EWDiGraph{T, T1}, u::T) where {T, T1 <: Real}
-  path, has_path = Stack{T}(), true
+check_vertex_valid(dsp::DSP{T, T1}, u::T) where {T, T1  <: Real} = 1 ≤ u ≤ v(dsp._g) ||
+  throw(ArgumentError("Expected vertex $(u) to be in [1..#{v(dsp._g)}]"))
+
+function follow_path(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real}
+  path, has_path = Vector{T}(), true
 
   while has_path
-    push!(path, u)
-    x = self.edge_to[u]
-    x == 0 && break
-    x ∉ 1:v(g) && (has_path = false)
-    u = x
+    pushfirst!(path, u)
+    u = dsp.edge_to[u]
+    u == 0 && break
+    u ∉ 1:v(dsp._g) && (has_path = false)
   end
 
-  !has_path && throw(ArgumentError("No path"))
-
-  ary, ix = Vector{T}(undef, length(path)), 1
-  while !isempty(path)
-    ary[ix] = pop!(path)
-    ix += 1
-  end
-  ary
-end
-
-function has_path(self::DSP{T, T1}, g::EWDiGraph{T, T1}, u::T) where {T, T1 <: Real}
-  @assert u ∈ 1:v(g) "Expected vertex $(u) to be in [1..#{v(g)}]"
-  has_path = true
-
-  while has_path
-    x = self.edge_to[u]
-    x == 0 && break
-    x ∉ 1:v(g) && (has_path = false)
-    u = x
-  end
-
-  has_path
-end
-
-function dist_to(self::DSP{T, T1}, g::EWDiGraph{T, T1}, u::T) where {T, T1 <: Real}
-  @assert u ∈ 1:v(g) "Expected vertex $(u) to be in [1..#{v(g)}]"
-  self.dist_to[u]
+  (has_path, path)
 end
