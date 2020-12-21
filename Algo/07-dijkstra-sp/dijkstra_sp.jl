@@ -1,4 +1,4 @@
-push!(LOAD_PATH, "./lib")
+push!(LOAD_PATH, "./src")
 
 using YAG_DSP
 
