@@ -13,22 +13,13 @@ struct EEWDiGraph{T, T1} <: AEWDiGraph{T, T1}
   function EEWDiGraph{T, T1}(g::EWDiGraph{T, T1}) where {T <: Integer, T1 <: Real}
     nv, w = v(g) + one(T), zero(T)
     ne = e(g)
-
-    # Using a view
-    adj_g = view(adj(g), :)
+    adj_g = view(adj(g), :)         # Using a view, instead of a copy
     adj_nv = Vector{Tuple{T, T1}}()
 
-    ## Making a copy!
-    # nadj = Vector{Tuple{T, T1}}}(undef, nv)
-    # nadj[nv] = Vector{Tuple{T, T1}}()
-    # copyto!(nadj, adj(g))
-
     for vₒ in 1:v(g)
-      # push!(nadj[nv], (vₒ, w))
       push!(adj_nv, (vₒ, w))
       ne += 1
     end
-
     adj_ng = [adj_g, adj_nv]
     new(nv, ne, adj_ng, g)
   end

@@ -12,15 +12,24 @@ mutable struct EWDiGraph{T, T1} <: AEWDiGraph{T, T1}
   _adj::Vector{Vector{Tuple{T, T1}}}  # for adjacency list (of tuples/pairs vertex(T), weight(T1)
 
   function EWDiGraph{T, T1}(v::T) where {T <: Integer, T1 <: Real}
-    adj = [ Vector{Tuple{T, T1}}() for _ in 1:v ]
-    self = new(v, 0, adj)
-    return self
+    adj = [Vector{Tuple{T, T1}}() for _ in 1:v]
+    new(v, 0, adj)
   end
 
   function EWDiGraph{T, T1}(infile::String; positive_weight=true) where {T <: Integer, T1 <: Real}
     from_file(infile, EWDiGraph{T, T1}, T; WType=T1, positive_weight)
   end
 end
+
+##
+## Public API
+##
+
+v(g::EWDiGraph) = g._v
+e(g::EWDiGraph) = g._e
+
+adj(g::EWDiGraph{T, T1}) where {T <: Integer, T1 <: Real} = g._adj
+adj(g::EWDiGraph{T, T1}, u::T) where {T <: Integer, T1 <: Real} = 1 ≤ u ≤ v(g) ? g._adj[u] : Vector{Tuple{T, T1}}()
 
 function add_edge(g::EWDiGraph{T, T1}, x::T, y::T, w::T1;
                   positive_weight=true) where {T <: Integer, T1 <: Real}
@@ -36,16 +45,6 @@ function add_edge(g::EWDiGraph{T, T1}, x::T, y::T, w::T1;
     g._e += 1
   end
 end
-
-##
-## Public API
-##
-
-v(g::EWDiGraph) = g._v
-e(g::EWDiGraph) = g._e
-
-adj(g::EWDiGraph{T, T1}) where {T <: Integer, T1 <: Real} = g._adj
-adj(g::EWDiGraph{T, T1}, u::T) where {T <: Integer, T1 <: Real} = 1 ≤ u ≤ v(g) ? g._adj[u] : Vector{Tuple{T, T1}}()
 
 function has_edge(g::EWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1}
   check_valid_vertices(g, u, v)
