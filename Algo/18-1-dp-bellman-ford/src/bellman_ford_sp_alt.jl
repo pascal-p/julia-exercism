@@ -23,50 +23,54 @@ struct BFSP{T, T1}
   end
 end
 
+##
+## Public API
+##
 
 function has_negative_cycle(bfsp::BFSP{T, T1}) where {T, T1}
   return length(bfsp.dist_to) == 0 && length(bfsp.path_to) == 0
 end
 
-## Shortest path form src --> dst
-function has_path_to(bfsp::BFSP{T, T1}, dst::T) where {T, T1}
-  @assert 1 ≤ dst ≤ v(bfsp.g)
+function has_path_to(bfsp::BFSP{T, T1}, dst::T) where {T, T1}  ## Shortest path form src --> dst
+  check_valid_vertex(bfsp, dst)
   has_negative_cycle(bfsp) && (return false)
 
   bfsp.dist_to[dst] < infinity(T1)
 end
 
-function dist_to(bfsp::BFSP{T, T1}, dst::T) where {T, T1 <: Real}
-  """
+"""
   Returns distance to vertex source (as calculated by shortest_path)
-  """
-  @assert 1 ≤ dst ≤ v(bfsp.g)
-  has_negative_cycle(bfsp) && throw(ArgumentError("Negative cycle detected"))
+"""
+function dist_to(bfsp::BFSP{T, T1}, dst::T) where {T, T1 <: Real}
+  check_valid_vertex(bfsp, dst)
+  check_negative_cycle(bfsp)
 
   bfsp.dist_to[dst]
 end
 
 function path_to(bfsp::BFSP{T, T1}, dst::T) where {T, T1 <: Real}
-  @assert 1 ≤ dst ≤ v(bfsp.g)
-  has_negative_cycle(bfsp) && throw(ArgumentError("Negative cycle detected"))
+  check_valid_vertex(bfsp, dst)
+  check_negative_cycle(bfsp)
+
   !has_path_to(bfsp, dst) && (return nothing)
 
   x, path = dst, Vector{T}()
-  n = v(bfsp.g)
-  while x ≠ NULL_VERTEX
+  while x ≠ bfsp.src
+    x ∈ path && break  ## Loop ?
     pushfirst!(path, x)
     x = bfsp.path_to[x]
-    n -= 1
-    n == 0 && break
   end
 
-  x ≠ NULL_VERTEX && throw(ArgumentError("Problem with path: $(bfsp.src) --> $(dst) - FOUND path: $(path) / dump: $(bfsp.path_to)"))
+  x ≠ bfsp.src &&
+    throw(ArgumentError("Problem with path: $(bfsp.src) -> $(dst) / FOUND path: $(path)\n\n$(bfsp.path_to)"))
+  pushfirst!(path, x) ## origin/src
+
   path
 end
 
 function min_dist(bfsp::BFSP{T, T1}) where {T, T1 <: Real}
+  check_negative_cycle(bfsp)
   min_dist = infinity(T1)
-  has_negative_cycle(bfsp) && throw(ArgumentError("Negative cycle detected"))
 
   for ix in 2:v(bfsp.g)
     bfsp.dist_to[ix] ≡ infinity(T1) && continue
@@ -82,15 +86,26 @@ end
 ##
 
 infinity(::Type{Int}) = typemax(Int)
+infinity(::Type{Int32}) = typemax(Int32)
 infinity(::Type{Float32}) = typemax(Float32)
 infinity(::Type{Float64}) = typemax(Float64)
+
+function check_valid_vertex(bfsp::BFSP{T, T1}, u::T) where {T, T1}
+  1 ≤ u ≤ v(bfsp.g) ||
+    throw(ArgumentError("the given vertex $(u) is not defined in current digraph"))
+end
+
+function check_negative_cycle(bfsp::BFSP{T, T1}) where {T, T1}
+  has_negative_cycle(bfsp) &&
+    throw(ArgumentError("a negative weight/cost exists in this digraph"))
+end
 
 function incoming_edge(g::AEWDiGraph{T, T1}) where {T, T1 <: Real}
   in_edges = Dict{Int, Vector{Tuple{T, T1}}}()
 
   for vₒ ∈ 1:v(g)
     for (u, w) ∈ adj(g, vₒ)
-      l_u = get(in_edges, u, [])
+      l_u = get(in_edges, u, Vector{Tuple{T, T1}}())
       push!(l_u, (vₒ, w))          ## vertex origin, weight
       in_edges[u] = l_u
     end
@@ -105,37 +120,41 @@ function shortest_path(g::AEWDiGraph{T, T1}, s::T) where {T, T1 <: Real}
   n = v(g)
 
   ## base case (ix = 1)
-  a::Matrix{T1} = fill(infinity(T1), n + 1, n)
+  a::Matrix{T1} = fill(infinity(T1), 2, n)  ## Only need the a[ix - 1, v]’s to compute the a[ix, v]’s
   path_to::Vector{T} = fill(NULL_VERTEX, n)
   a[1, s] = zero(T1)
-  path_to[s] = NULL_VERTEX # s
 
   ## systematically solve all sub-problems
-  for ix in 2:n+1
+  pk, ck = 1, 2
+  for _ix in 1:n
     stable = true
-    for vₒ ∈ 1:v(g)
-      # vₒ == s && continue
-      min_uw, min_u = infinity(T1), NULL_VERTEX
 
-      for (u, l_wv) ∈ get(in_edges, vₒ, Vector{Tuple{T, T1}}())
+    for vₒ ∈ 1:v(g)
+      min_uvₒ, min_u = infinity(T1), NULL_VERTEX
+
+      for (u, wv) ∈ get(in_edges, vₒ, Vector{Tuple{T, T1}}())
         ## edge "relaxation"
-        if a[ix - 1, u] ≠ infinity(T1) && a[ix - 1, u] + l_wv < min_uw
-          min_uw = a[ix - 1, u] + l_wv
-          min_u = u
+        if a[pk, u] < infinity(T1)
+          d_uv₀ = a[pk, u] + wv
+
+          if  d_uv₀ < min_uvₒ
+            min_uvₒ, min_u = d_uv₀, u
+          end
         end
       end
 
-      if a[ix - 1, vₒ] < min_uw
-        a[ix, vₒ] = a[ix - 1, vₒ]
+      a[ck, vₒ] = if a[pk, vₒ] < min_uvₒ
+        a[pk, vₒ]
       else
-        a[ix, vₒ] = min_uw
         path_to[vₒ] = min_u
+        min_uvₒ
       end
 
-      a[ix, vₒ] ≠ a[ix - 1, vₒ] && (stable = false)
+      a[ck, vₒ] ≠ a[pk, vₒ] && (stable = false)
     end
 
-    stable && (return (a[ix, 1:end], path_to))  # ∀ v ∈ V
+    stable && (return (a[ck, 1:end], path_to))
+    pk, ck = 3 - pk, 3 - ck  ## toggle for next iteration
   end
 
   return ([], [])

@@ -25,21 +25,25 @@ struct BFSP{T, T1}
   end
 end
 
+##
+## Public API
+##
+
 function dist_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
-  check_valid_vertex(bfsp.g, v)
+  check_valid_vertex(bfsp, v)
   check_negative_cycle(bfsp)
 
   bfsp.dist_to[v]
 end
 
 function has_path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
-  check_valid_vertex(bfsp.g, v)
+  check_valid_vertex(bfsp, v)
 
   bfsp.dist_to[v] < infinity(T1)
 end
 
 function path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
-  check_valid_vertex(bfsp.g, v)
+  check_valid_vertex(bfsp, v)
   check_negative_cycle(bfsp)
 
   !has_path_to(bfsp, v) && (return nothing)
@@ -77,8 +81,8 @@ end
 ## Internal Helpers
 ##
 
-function check_valid_vertex(g::AEWDiGraph{T, T1}, u::T) where {T, T1}
-  1 ≤ u ≤ v(g) ||
+function check_valid_vertex(bfsp::BFSP{T, T1}, u::T) where {T, T1}
+  1 ≤ u ≤ v(bfsp.g) ||
     throw(ArgumentError("the given vertex $(u) is not defined in current digraph"))
 end
 
@@ -131,7 +135,7 @@ enque!(queue::Q{T}, on_q::Vector{Bool}, v::T) where T = (enqueue!(queue, v); on_
 function find_negative_cycle(nv::Int, T1::DataType,
                              edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}}) where T
   ## 1 - build new graph based on edge_to
-  g = EWDiGraph{T, T1}(nv) # GType(nv)
+  g = EWDiGraph{T, T1}(nv)
   for v in 1:nv
     if edge_to[v] ≠ NULL_EDGE
       (u, w) = edge_to[v]
@@ -178,5 +182,6 @@ function find_negative_cycle(nv::Int, T1::DataType,
 end
 
 infinity(::Type{Int}) = typemax(Int)
+infinity(::Type{Int32}) = typemax(Int32)
 infinity(::Type{Float32}) = typemax(Float32)
 infinity(::Type{Float64}) = typemax(Float64)
