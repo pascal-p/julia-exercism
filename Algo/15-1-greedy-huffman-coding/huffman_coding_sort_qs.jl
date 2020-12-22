@@ -1,4 +1,5 @@
 push!(LOAD_PATH, "./src")
+push!(LOAD_PATH, "../11-queue/src")
 
 using YATRIE   ## for trie
 using YARX     ## for radix sort
