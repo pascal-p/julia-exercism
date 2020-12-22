@@ -20,3 +20,5 @@ Algo/14-4-greedy-clustering/testfiles/input_clustering_big.txt
 Algo/14-4-greedy-clustering/testfiles/input_random_81_131072_24.txt
 Algo/14-4-greedy-clustering/testfiles/input_random_82_131072_22.txt
 Algo/14-4-greedy-clustering/testfiles/input_random_83_262144_24.txt
+
+Algo/18-1-dp-bellman-ford/testfiles/large.txt
