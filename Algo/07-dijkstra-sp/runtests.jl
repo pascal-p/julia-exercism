@@ -9,9 +9,9 @@ function sum_w(dsp, path)
   prev_p, sum_w = path[1], 0
 
   for p in path[2:end]
-    ix = findfirst(t -> t[1] == p, adj(g(dsp), prev_p))
-    (_, w) = adj(g(dsp), prev_p)[ix] ## g.adj[prev_p][ix]
-    sum_w += w                       ## sum_w is the distance
+    ix = findfirst(t -> t[1] == p, YA_DSP.adj(g(dsp), prev_p))
+    (_, w) = YA_DSP.adj(g(dsp), prev_p)[ix] ## g.adj[prev_p][ix]
+    sum_w += w                              ## sum_w is the distance
     prev_p = p
   end
 

@@ -1,4 +1,5 @@
 push!(LOAD_PATH, "./src")
+push!(LOAD_PATH, "../18-0-ewd/src")
 using YA_DSP
 
 """
@@ -8,9 +9,9 @@ using YA_DSP
   calculate the single-source shortest path (SSSP)
 """
 function shortest_path(infile::String, s::T; WType::DataType=Int) where T
-  g = EWDiGraph{T, WType}(infile)
+  g = YA_DSP.EWDiGraph{T, WType}(infile)
 
-  @assert s ∈ 1:v(g) "Expecting vertex source to be in the graph"
+  @assert s ∈ 1:YA_DSP.v(g) "Expecting vertex source to be in the graph"
   dsp = DSP{typeof(s), WType}(g, s)
 
   return dsp
