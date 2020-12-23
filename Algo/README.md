@@ -38,8 +38,8 @@ The primary topics in this part of the specialization are: greedy algorithms (sc
 
 The primary topics in this part of the specialization are: shortest paths (Bellman-Ford, Floyd-Warshall, Johnson), NP-completeness and what it means for the algorithm designer, and strategies for coping with computationally intractable problems (analysis of heuristics, local search).
 
+  - [X] [week 1/PA - Floyd-Warshall APSP](https://github.com/pascal-p/julia-exercism/tree/master/Algo/18-2-dp-apsp-floyd-warshall) and [week 1/PA - Johnson APSP](https://github.com/pascal-p/julia-exercism/tree/master/Algo/18-3-dp-apsp-johnson)
   - [ ] WIP...
-
 
 <hr />
 <p style="font-size:0.25em">Nov-Dec 2020, Corto Inc</p>
