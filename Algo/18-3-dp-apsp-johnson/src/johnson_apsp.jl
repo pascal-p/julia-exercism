@@ -36,14 +36,13 @@ struct JAPSP{T, T1}
   distm::Matrix{T1}
   path_to::Vector{Vector{T}}
 
-  function JAPSP{T, T1}(g::AEWDiGraph{T, T1}) where {T, T1 <: Real}
+  function JAPSP{T, T1}(g::AEWDiGraph{T, T1}) where {T <: Integer, T1 <: Real}
     n₀ = v(g)
     ng = YA_EWD.EEWDiGraph{T, T1}(g)                 ## 1 - Build extended graph
     src = v(ng)                                      ## 2 - src is newly added vertex
     bfsp = YA_BFSP.BFSP{T, T1}(ng, src)              ## 3 - Run BF - calc. dist for src to all other vertices
-    distm = Matrix{T1}(undef, 0, 0)
     YA_BFSP.has_negative_cycle(bfsp) &&
-      return new(ng, src, Matrix{T1}(undef, 0, 0), Vector{Vector{T}}())
+      return new(ng, src, Matrix{T1}(undef, zero(T), zero(T)), Vector{Vector{T}}())
 
     weights = reweight(ng, bfsp, v(ng))              ## 4 - Build new weight matrix => reweighting
     distm, pathto = calc_distm(g, weights, bfsp,
@@ -52,7 +51,7 @@ struct JAPSP{T, T1}
     new(ng, src, distm, pathto)
   end
 
-  function JAPSP{T, T1}(infile::String, GType::DataType; positive_weight=true)  where {T, T1<: Real}
+  function JAPSP{T, T1}(infile::String, GType::DataType; positive_weight=true)  where {T <: Integer, T1<: Real}
     g = GType(infile; positive_weight)
     JAPSP{T, T1}(g)
   end
@@ -62,24 +61,24 @@ end
 ## public API
 ##
 
-function has_negative_cycle(japsp::JAPSP{T, T1})::Bool where {T, T1}
+function has_negative_cycle(japsp::JAPSP{T, T1})::Bool where {T <: Integer, T1}
   length(japsp.distm) ≤ 0 && length(japsp.path_to) ≤ 0
 end
 
-function dist_to(japsp::JAPSP{T, T1}, u::T, v::T) where {T, T1 <: Real}
+function dist_to(japsp::JAPSP{T, T1}, u::T, v::T) where {T <: Integer, T1 <: Real}
   check_vertex_valid(japsp, u) && check_vertex_valid(japsp, v)
 
   japsp.distm[u, v] < infinity(T1) && (return japsp.distm[u, v])
   throw(ArgumentError("No path from $(u) to $(v)"))
 end
 
-function has_path(japsp::JAPSP{T, T1}, u::T, v::T)::Bool where {T, T1 <: Real}
+function has_path_to(japsp::JAPSP{T, T1}, u::T, v::T)::Bool where {T <: Integer, T1 <: Real}
   check_vertex_valid(japsp, u) && check_vertex_valid(japsp, v)
 
   japsp.distm[u, v] < infinity(T1)
 end
 
-function path_to(japsp::JAPSP{T, T1}, u::T, v::T) where {T, T1 <: Real}
+function path_to(japsp::JAPSP{T, T1}, u::T, v::T) where {T <: Integer, T1 <: Real}
   check_vertex_valid(japsp, u) && check_vertex_valid(japsp, v)
   japsp.distm[u, v] < infinity(T1) || throw(ArgumentError("No path from $(u) to $(v)"))
 
@@ -93,7 +92,7 @@ function path_to(japsp::JAPSP{T, T1}, u::T, v::T) where {T, T1 <: Real}
   return path
 end
 
-function min_dist(japsp::JAPSP{T, T1}) where {T, T1 <: Real}
+function min_dist(japsp::JAPSP{T, T1}) where {T <: Integer, T1 <: Real}
   check_negative_cycle(japsp)
 
   (n, _n) = size(japsp.distm)
@@ -119,35 +118,35 @@ end
 ## Internal Helpers
 ##
 
-function reweight(ng::AEWDiGraph{T, T1}, bfsp::YA_BFSP.BFSP, n::Int) where {T, T1 <: Real}
+function reweight(ng::AEWDiGraph{T, T1}, bfsp::YA_BFSP.BFSP, n::Integer) where {T <: Integer, T1 <: Real}
   n = v(ng)
   re_weights::Matrix{T1} = fill(typemax(T1), n, n)
 
-  for u in 1:n, (v, w) in adj(ng, u)
+  for u in one(T):n, (v, w) in adj(ng, u)
     re_weights[u, v] = w + YA_BFSP.dist_to(bfsp, u) - YA_BFSP.dist_to(bfsp, v)
   end
 
   re_weights
 end
 
-function init_pathto(T::DataType, n::Int)
+function init_pathto(T::DataType, n::Integer)
   path_to = Vector{Vector{T}}(undef, n)
-  for u in 1:n # ≡ v(g)
+  for u in one(T):n # ≡ v(g)
     path_to[u] = Vector{T}()
   end
   path_to
 end
 
 function calc_distm(g::AEWDiGraph{T, T1}, weights::Matrix{T1}, bfsp::YA_BFSP.BFSP,
-                    pathto::Vector{Vector{T}}) where {T, T1 <: Real}
+                    pathto::Vector{Vector{T}}) where {T <: Integer, T1 <: Real}
   n = v(g)
   distm::Matrix{T1} = fill(typemax(T1), n, n)
 
-  for u in 1:n
+  for u in one(T):n
     dsp = DSP{T, T1}(g, u, weights)
     pathto[u] = dsp.edge_to
 
-    for vₒ in 1:n
+    for vₒ in one(T):n
       if YA_DSP.dist_to(dsp, vₒ) < infinity(T1)
         distm[u, vₒ] = YA_DSP.dist_to(dsp, vₒ) + YA_BFSP.dist_to(bfsp, vₒ) - YA_BFSP.dist_to(bfsp, u)
       end
@@ -157,7 +156,7 @@ function calc_distm(g::AEWDiGraph{T, T1}, weights::Matrix{T1}, bfsp::YA_BFSP.BFS
   (distm, pathto)
 end
 
-check_vertex_valid(japsp::JAPSP{T, T1}, u::T) where {T, T1 <: Real} = 1 ≤ u ≤ v(japsp.ng) ||
+check_vertex_valid(japsp::JAPSP{T, T1}, u::T) where {T <: Integer, T1 <: Real} = 1 ≤ u ≤ v(japsp.ng) ||
   throw(ArgumentError("Expected vertex $(u) to be in [1..#{v(japsp._g)}]"))
 
 function check_negative_cycle(japsp::JAPSP{T, T1}) where {T <: Integer, T1}

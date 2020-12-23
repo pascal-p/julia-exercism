@@ -7,7 +7,7 @@ module YA_JAPSP
 
   export JAPSP
 
-  export has_negative_cycle, dist_to, has_path,
+  export has_negative_cycle, dist_to, has_path_to,
     path_to, min_dist
 
   include("johnson_apsp.jl")

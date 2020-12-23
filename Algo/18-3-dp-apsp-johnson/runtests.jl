@@ -20,8 +20,6 @@ include("./utils/helper_files_fn.jl")
 
   @test path_to(japsp, 1, 4) == [1, 3, 2, 4]
   @test dist_to(japsp, 1, 4) == 3
-
-  println("All dist japsp: $(japsp.distm)")
 end
 
 @testset "JAPSP on tiny_ewdnc.txt - negative cycle" begin
