@@ -64,6 +64,11 @@ function weight(g::EEWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1 <: Rea
   end
 end
 
+function build_graph!(g::EEWDiGraph{T, T1}, ::Vector{Tuple{T, T, T1}}) where {T <: Integer, T1 <: Real}
+  ## identity function as an EEWDiGraph is an extension of EWDiGraph
+  g
+end
+
 ##
 ## Internal Helpers
 ##

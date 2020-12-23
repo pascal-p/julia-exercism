@@ -70,6 +70,14 @@ function weight(g::EWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1}
   end
 end
 
+function build_graph!(g::EWDiGraph{T, T1}, edges::Vector{Tuple{T, T, T1}}) where {T <: Integer, T1 <: Real}
+  for edge in edges
+    (_vo, _vd, w) = edge
+    add_edge(g, edge...; positive_weight=w < zero(T) ? false : true)
+  end  
+end
+
+
 ##
 ## Internal Helpers
 ##
