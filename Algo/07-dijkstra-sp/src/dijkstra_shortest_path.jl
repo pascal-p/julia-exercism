@@ -11,7 +11,7 @@ struct DSP{T, T1 <: Real}
   _g::EWDiGraph{T, T1}
   src::T                           ## source vertex
 
-  function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T) where {T, T1}  ## s == source vertex
+  function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Real}
     self = new(init(g, s)..., g, s)
     while !isempty(self.pq)
       relax!(self, dequeue!(self.pq))
@@ -19,7 +19,7 @@ struct DSP{T, T1 <: Real}
     self
   end
 
-  function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T, wm::Matrix{T1}) where {T, T1}
+  function DSP{T, T1}(g::EWDiGraph{T, T1}, s::T, wm::Matrix{T1}) where {T <: Integer, T1 <: Real}
     self = new(init(g, s)..., g, s)
     while !isempty(self.pq)
       relax!(self, dequeue!(self.pq), wm)
@@ -35,7 +35,7 @@ end
 
 g(dsp::DSP{T, T1}) where {T, T1 <: Real} = dsp._g
 
-function path_to(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real}
+function path_to(dsp::DSP{T, T1}, u::T) where {T <: Integer, T1 <: Real}
   check_vertex_valid(dsp, u)
 
   has_path, path = follow_path(dsp, u)
@@ -43,15 +43,15 @@ function path_to(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real}
   path
 end
 
-has_path(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real} = (check_vertex_valid(dsp, u) ; follow_path(dsp, u)[1])
+has_path(dsp::DSP{T, T1}, u::T) where {T <: Integer, T1 <: Real} = (check_vertex_valid(dsp, u) ; follow_path(dsp, u)[1])
 
-dist_to(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real} = (check_vertex_valid(dsp, u); dsp.dist_to[u])
+dist_to(dsp::DSP{T, T1}, u::T) where {T <: Integer, T1 <: Real} = (check_vertex_valid(dsp, u); dsp.dist_to[u])
 
 
 ##
 ## Internal Helpers
 ##
-function init(g::EWDiGraph{T, T1}, s::T) where {T, T1}
+function init(g::EWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Real}
   pq = PriorityQueue{T, T1}()
   edge_to = zeros(T, v(g))
   dist_to = fill(typemax(T1), v(g))
@@ -61,7 +61,7 @@ function init(g::EWDiGraph{T, T1}, s::T) where {T, T1}
   (edge_to, dist_to, pq)
 end
 
-function relax!(dsp::DSP{T, T1}, u::T) where {T, T1  <: Real}
+function relax!(dsp::DSP{T, T1}, u::T) where {T <: Integer, T1 <: Real}
   for (v, w) in adj(dsp._g, u)
     relax!(dsp, (u, v, w))
   end
@@ -70,15 +70,14 @@ end
 """
   Ignore defined weight, use given wm (weight matrix)
 """
-function relax!(dsp::DSP{T, T1}, u::T, wm::Matrix{T1}) where {T, T1  <: Real}
+function relax!(dsp::DSP{T, T1}, u::T, wm::Matrix{T1}) where {T <: Integer, T1 <: Real}
   for (v, _) in adj(dsp._g, u)
     relax!(dsp, (u, v, wm[u, v]))
   end
 end
 
-function relax!(dsp::DSP{T, T1}, (u, v, w) ::Tuple{T, T, T1}) where {T, T1  <: Real}
+function relax!(dsp::DSP{T, T1}, (u, v, w)::Tuple{T, T, T1}) where {T <: Integer, T1 <: Real}
   du_w = dsp.dist_to[u] + w
-
   if dsp.dist_to[v] > du_w
     dsp.dist_to[v], dsp.edge_to[v] = du_w, u
     if v ∈ keys(dsp.pq)
@@ -89,10 +88,10 @@ function relax!(dsp::DSP{T, T1}, (u, v, w) ::Tuple{T, T, T1}) where {T, T1  <: R
   end
 end
 
-check_vertex_valid(dsp::DSP{T, T1}, u::T) where {T, T1  <: Real} = 1 ≤ u ≤ v(dsp._g) ||
+check_vertex_valid(dsp::DSP{T, T1}, u::T) where {T <: Integer, T1 <: Real} = 1 ≤ u ≤ v(dsp._g) ||
   throw(ArgumentError("Expected vertex $(u) to be in [1..#{v(dsp._g)}]"))
 
-function follow_path(dsp::DSP{T, T1}, u::T) where {T, T1 <: Real}
+function follow_path(dsp::DSP{T, T1}, u::T) where {T <: Integer, T1 <: Real}
   path, has_path = Vector{T}(), true
 
   while has_path

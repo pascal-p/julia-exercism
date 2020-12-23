@@ -14,12 +14,12 @@ struct BFSP{T, T1}
   cycle::Vector{Tuple{T, T}}
   src::T
 
-  function BFSP{T, T1}(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
+  function BFSP{T, T1}(g::AEWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Real}
     dist_to, edge_to, cycle = bfsp_builder(g, s)
     new(dist_to, edge_to, g, cycle, s)
   end
 
-  function BFSP{T, T1}(infile::String, s::T, GType::DataType; positive_weight=true) where {T, T1}
+  function BFSP{T, T1}(infile::String, s::T, GType::DataType; positive_weight=true) where {T <: Integer, T1 <: Real}
     g = GType(infile; positive_weight)
     BFSP{T, T1}(g, s)
   end
@@ -29,20 +29,20 @@ end
 ## Public API
 ##
 
-function dist_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
+function dist_to(bfsp::BFSP{T, T1}, v::T) where {T <: Integer, T1 <: Real}
   check_valid_vertex(bfsp, v)
   check_negative_cycle(bfsp)
 
   bfsp.dist_to[v]
 end
 
-function has_path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
+function has_path_to(bfsp::BFSP{T, T1}, v::T) where {T <: Integer, T1 <: Real}
   check_valid_vertex(bfsp, v)
 
   bfsp.dist_to[v] < infinity(T1)
 end
 
-function path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
+function path_to(bfsp::BFSP{T, T1}, v::T) where {T <: Integer, T1 <: Real}
   check_valid_vertex(bfsp, v)
   check_negative_cycle(bfsp)
 
@@ -57,13 +57,13 @@ function path_to(bfsp::BFSP{T, T1}, v::T) where {T, T1}
   path
 end
 
-function has_negative_cycle(bfsp::BFSP{T, T1})::Bool where {T, T1}
+function has_negative_cycle(bfsp::BFSP{T, T1})::Bool where {T <: Integer, T1 <: Real}
   return length(bfsp.cycle) > 0
 end
 
-negative_cycle(bfsp::BFSP{T, T1}) where {T, T1} = bfsp.cycle
+negative_cycle(bfsp::BFSP{T, T1}) where {T <: Integer, T1 <: Real} = bfsp.cycle
 
-function min_dist(bfsp::BFSP{T, T1})::T1 where {T, T1}
+function min_dist(bfsp::BFSP{T, T1})::T1 where {T <: Integer, T1 <: Real}
   min_dist = infinity(T1)
 
   for ix in 2:v(bfsp.g)
@@ -81,17 +81,17 @@ end
 ## Internal Helpers
 ##
 
-function check_valid_vertex(bfsp::BFSP{T, T1}, u::T) where {T, T1}
+function check_valid_vertex(bfsp::BFSP{T, T1}, u::T) where {T <: Integer, T1 <: Real}
   1 ≤ u ≤ v(bfsp.g) ||
     throw(ArgumentError("the given vertex $(u) is not defined in current digraph"))
 end
 
-function check_negative_cycle(bfsp::BFSP{T, T1}) where {T, T1}
+function check_negative_cycle(bfsp::BFSP{T, T1}) where {T <: Integer, T1 <: Real}
   has_negative_cycle(bfsp) &&
     throw(ArgumentError("a negative weight/cost exists in this graph"))
 end
 
-function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T, T1}
+function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Real}
   ## Prep.
   dist_to::Vector{T1} = fill(typemax(T1), v(g))
   edge_to::Vector{Tuple{T, T}} = fill(NULL_EDGE, v(g))
@@ -132,10 +132,12 @@ end
 enque!(queue::Q{T}, on_q::Vector{Bool}, v::T) where T = (enqueue!(queue, v); on_q[v] = true)
 # (YAQ.enqueue!(queue, v); on_q[v] = true)
 
-function find_negative_cycle(nv::Int, T1::DataType,
-                             edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}}) where T
+function find_negative_cycle(nv::Integer, T1::DataType,
+                             edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}}) where {T <: Integer}
+
   ## 1 - build new graph based on edge_to
   g = EWDiGraph{T, T1}(nv)
+
   for v in 1:nv
     if edge_to[v] ≠ NULL_EDGE
       (u, w) = edge_to[v]
@@ -144,7 +146,7 @@ function find_negative_cycle(nv::Int, T1::DataType,
   end
 
   ## 2 - Prep
-  c_edge_to::Vector{Tuple{T, T}} = fill(NULL_EDGE, nv) # = Vector{Tuple{T, T}}(undef, nv)
+  c_edge_to::Vector{Tuple{T, T}} = fill(NULL_EDGE, nv)
   marked::Vector{Bool} = fill(false, nv)
   on_stack::Vector{Bool} = fill(false, nv)
 
@@ -174,7 +176,7 @@ function find_negative_cycle(nv::Int, T1::DataType,
   end
 
   ## 3 - run detection
-  for u ∈ 1:v(g)
+  for u ∈ one(T):v(g)
     !marked[u] && _dfs(u)
   end
 

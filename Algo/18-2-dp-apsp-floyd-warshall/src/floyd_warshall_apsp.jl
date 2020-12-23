@@ -35,7 +35,7 @@ function min_dist(fwapsp::FWAPSP{T, T1}) where {T <: Integer, T1}
 
   (n, _n) = size(fwapsp.dist_to)
 
-  ## find min in dist_to matrix, then trcae back path in path_to matrix
+  ## find min in dist_to matrix, then trace back path in path_to matrix
   min_val = infinity(T1)
   src, dst = (T(-1), T(-1))
 
