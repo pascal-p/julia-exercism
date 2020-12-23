@@ -6,11 +6,11 @@
 
 mutable struct Q{T}
   _data::Vector{T}
-  _h::Int      ## head
-  _t::Int      ## tail
-  _n::Int      ## number of element in the Q
+  _h::Integer      ## head
+  _t::Integer      ## tail
+  _n::Integer      ## number of element in the Q
 
-  function Q{T}(n::Int) where T
+  function Q{T}(n::Integer) where T
     @assert n > 0 "The size for the Q should be > 0"
 
     data = Vector{T}(undef, n)

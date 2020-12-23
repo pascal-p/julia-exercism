@@ -5,7 +5,7 @@ push!(LOAD_PATH, "./src")
 using YAQ
 
 @testset "empty list" begin
-  q = Q{Int}(10)
+  q = Q{Int32}(Int32(10))
 
   @test length(q) == 0
   @test isempty(q)
