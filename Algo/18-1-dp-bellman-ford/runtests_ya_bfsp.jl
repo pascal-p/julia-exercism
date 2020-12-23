@@ -1,6 +1,9 @@
 using Test
 
 push!(LOAD_PATH, "./src")
+push!(LOAD_PATH, "../11-queue/src")
+push!(LOAD_PATH, "../18-0-ewd/src")
+
 using YA_BFSP
 
 include("./utils/helper_files_fn.jl")
@@ -12,15 +15,9 @@ const TF_DIR = "./testfiles"
   ## build graph
   g = YA_BFSP.EWDiGraph{Int, Int}(5)
 
-  add_edge(g, 1, 2, 4; positive_weight=false)
-  add_edge(g, 1, 3, 2; positive_weight=false)
-  add_edge(g, 2, 4, 4; positive_weight=false)
-
-  add_edge(g, 3, 5, 2; positive_weight=false)
-  add_edge(g, 3, 2, -1; positive_weight=false)
-
-  add_edge(g, 5, 4, 2; positive_weight=false)
-
+  ## (1, 2, 4) - edge from vertex 1 to vertex 2 weight 4
+  YA_BFSP.build_graph!(g, [ (1, 2, 4), (1, 3, 2), (2, 4, 4), (3, 5, 2),
+                            (3, 2, -1), (5, 4, 2), (5, 1, 0) ])
   ##
   src = 1
   bfsp = BFSP{Int, Int}(g, src)
@@ -33,20 +30,10 @@ end
 
 @testset "BFSP basics /2" begin
   ## build graph
-  g =  YA_BFSP.EWDiGraph{Int, Int}(5)
-
-  add_edge(g, 1, 2, -1; positive_weight=false)
-  add_edge(g, 1, 3, 4; positive_weight=false)
-
-  add_edge(g, 2, 3, 3; positive_weight=false)
-  add_edge(g, 2, 5, 2; positive_weight=false)
-  add_edge(g, 2, 4, 2; positive_weight=false)
-
-  add_edge(g, 4, 2, 1; positive_weight=false)
-  add_edge(g, 4, 3, 5; positive_weight=false)
-
-  add_edge(g, 5, 4, -3; positive_weight=false)
-
+  g = YA_BFSP.EWDiGraph{Int, Int}(5)
+  ## (1, 2, -1) - edge from vertex 1 to vertex 2 weight -1
+  YA_BFSP.build_graph!(g, [ (1, 2, -1), (1, 3, 4), (2, 3, 3), (2, 5, 2),
+                            (2, 4, 2), (4, 2, 1), (4, 3, 5), (5, 4, -3) ])
   ##
   src = 1
   bfsp = BFSP{Int, Int}(g, src)
@@ -61,7 +48,7 @@ end
 @testset "BFSP on tiny_ewd.txt" begin
   src = 1
   T, T1 = Int, Float32
-  bfsp = BFSP{T, T1}("$(TF_DIR)/tiny_ewd.txt", src, EWDiGraph{T, T1})
+  bfsp = BFSP{T, T1}("$(TF_DIR)/tiny_ewd.txt", src, YA_BFSP.EWDiGraph{T, T1})
 
   @test dist_to(bfsp, 1) ≈ 0.0    # dist(src==1, 1)
   @test dist_to(bfsp, 2) ≈ 1.05   # dist(src==1, 2)
@@ -75,7 +62,7 @@ end
 @testset "BFSP on tiny_ewdn.txt" begin
   src = 1
   T, T1 = Int, Float32
-  bfsp = BFSP{T, T1}("$(TF_DIR)/tiny_ewdn.txt", src, EWDiGraph{T, T1};
+  bfsp = BFSP{T, T1}("$(TF_DIR)/tiny_ewdn.txt", src, YA_BFSP.EWDiGraph{T, T1};
                      positive_weight=false)
 
   @test dist_to(bfsp, 1) ≈ 0.0    # dist(src==1, 1)
@@ -90,7 +77,7 @@ end
 @testset "BFSP on tiny_ewdnc.txt with negative cycle" begin
   src = 1
   T, T1 = Int, Float32
-  bfsp = BFSP{T, T1}("$(TF_DIR)/tiny_ewdnc.txt", src, EWDiGraph{T, T1};
+  bfsp = BFSP{T, T1}("$(TF_DIR)/tiny_ewdnc.txt", src, YA_BFSP.EWDiGraph{T, T1};
                      positive_weight=false)
 
   @test has_negative_cycle(bfsp)
@@ -111,7 +98,7 @@ for file in filter((fs) -> occursin(r"\Ainput_random_.+\.txt\z", fs),
   @testset "for $(file)" begin
     src = length(path) > 0 ? path[1] : 1
     T = Int
-    bfsp = BFSP{T, T}("$(TF_DIR)/$(file)", src, EWDiGraph{T, T};
+    bfsp = BFSP{T, T}("$(TF_DIR)/$(file)", src, YA_BFSP.EWDiGraph{T, T};
                       positive_weight=false)
 
     if exp_val == nothing
