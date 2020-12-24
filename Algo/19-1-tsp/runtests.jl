@@ -21,7 +21,7 @@ end
   distm[3,1]=2; distm[3,2]=3; distm[3,3]=0; distm[3,4]=5
   distm[4,1]=4; distm[4,2]=6; distm[4,3]=5; distm[4,4]=0
 
-  @test tsp(distm) == 13
+  @test round_dist(tsp_m(distm), Int) == 13
 end
 
 @testset "Basics 4×4 graph / 21" begin
@@ -32,7 +32,7 @@ end
   distm[3,1]=15; distm[3,2]=7; distm[3,3]=0; distm[3,4]=8
   distm[4,1]=6; distm[4,2]=3; distm[4,3]=12; distm[4,4]=0
 
-  @test tsp(distm) == 21
+  @test round_dist(tsp_m(distm), Int) == 21
 end
 
 for file in filter((fs) -> occursin(r"\Ainput_float_.+\.txt\z", fs),
@@ -43,10 +43,9 @@ for file in filter((fs) -> occursin(r"\Ainput_float_.+\.txt\z", fs),
   @testset "for $(file)" begin
     distm = init_distm("$(TF_DIR)/$(file)", Float32)
 
-    @time @test floor(Int, tsp(distm)) == exp_val
+    @time @test round_dist(tsp(distm), Int) == exp_val
   end
 end
-
 
 # Test Summary:         | Pass  Total
 # Basics 4×4 graph / 13 |    1      1
@@ -179,7 +178,7 @@ end
 # for input_float_86_23.txt |    1      1
 
 
-## With hash:
+## With hash / no bookeeping:
 #  32.255611 seconds (661.93 M allocations: 31.955 GiB, 17.25% gc time)
 # Test Summary:             | Pass  Total
 # for input_float_79_21.txt |    1      1
@@ -193,5 +192,22 @@ end
 # for input_float_85_23.txt |    1      1
 
 # 193.815319 seconds (3.09 G allocations: 148.753 GiB, 25.77% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_86_23.txt |    1      1
+
+## With hash and bookeeping (deleting keys from hash whne no longer required):
+#  29.533688 seconds (661.93 M allocations: 31.923 GiB, 14.53% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_79_21.txt |    1      1
+
+#  72.561901 seconds (1.43 G allocations: 68.984 GiB, 14.64% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_81_22.txt |    1      1
+
+# 180.558638 seconds (3.09 G allocations: 148.594 GiB, 14.74% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_85_23.txt |    1      1
+
+# 184.628500 seconds (3.09 G allocations: 148.593 GiB, 14.43% gc time)
 # Test Summary:             | Pass  Total
 # for input_float_86_23.txt |    1      1

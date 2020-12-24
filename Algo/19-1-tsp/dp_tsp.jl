@@ -1,48 +1,75 @@
 """
   TSP - Bellman-Held-Karp Algorithm (DP bottom-up version)
+
+Algorithm (a version of Bellman-Held-Karp)
+
+  Using a a 2d-array (Matrix in Julia), indexed by subsets S ⊆ {1, 2, ..., n}
+  that contains 1 and destination j ∈ {1, 2, ...n}
+
+  Base case: a[S, 1] = 0   if S = {1}
+                     = +∞  otherwise
+
+  Main:
+  for m ∈ 2:n                                          # sub-problem size
+    ∀ subset S ⊆ {1, 2, ..., n} containing 1, |S| = m  # subset of size m containing 1
+      ∀ j ∈ S - {1}
+        a{S, j] = min{a[S - {j}, k] + cₖⱼ} ∀ k ∈ S, k ≠ j
+
+  return min{a[{1, 2, ..., n}, j] + cⱼ₁} ∀ j ∈ {2, ..., n}
 """
 
-##
-## distm is the graph representation in matrixrepresentation
-## assuming starting at first vertex (1)
-##
-function tsp(distm::Matrix{T}) where {T <: Real}
-  (n, _n) = size(distm)
-  a::Matrix{T} = fill(typemax(T), 2^n - 1, n)
-  a[1, 1] = zero(T)
-
-  for m in 2:n, (ix, s) in gen_ix_subset(1, n, m)
-    for j ∈ s
-      j == 1 && continue
-      jx = ix - convert2ix(Int[j], n)
-      a[ix, j] = minimum([(a[jx, k] < typemax(T) ? a[jx, k] + distm[k, j] : a[jx, k])
-                          for k ∈ s if k ≠ j])
-    end
-  end
-
-  minimum([a[2^n - 1, j] + distm[j, 1] for j in 2:n])
+struct Point{T}
+  x::T
+  y::T
 end
 
 ##
-## worst in term of runtime and space
+## distm is the distance matrix
+## assuming starting at first vertex (1)
 ##
+function tsp_m(distm::Matrix{T}) where {T <: Real}
+  (n, _n) = size(distm)
+  nₓ = 2^n - 1
+  a::Matrix{T} = fill(inf(T), nₓ, n)
+  a[1, 1] = zero(T)
+
+  for m in 2:n, (ix, s) in gen_ix_subset(1, n, m), j ∈ s
+    j == 1 && continue
+    jx = ix - convert2ix(Int[j], n)
+    a[ix, j] = minimum([(a[jx, k] < inf(T) ? a[jx, k] + distm[k, j] : a[jx, k])
+                        for k ∈ s if k ≠ j])
+  end
+  minimum([a[nₓ, j] + distm[j, 1] for j in 2:n])
+end
+
 ##
-function tsp_h(distm::Matrix{T}) where {T <: Real}
+## with hash instead of matrix
+##
+function tsp(distm::Matrix{T}) where {T <: Real}
   (n, _n) = size(distm)
 
   a = Dict{Int, Vector{T}}()
-  a[1] = fill(typemax(T), n)
-  a[2^n - 1] = fill(typemax(T), n)
+  a[1] = fill(inf(T), n)
+  a[2^n - 1] = fill(inf(T), n)
   a[1][1] = zero(T)
+  keys2del = Vector{T}() ## bookeeping (1)
 
-  for m in 2:n, (ix, s) in gen_ix_subset(1, n, m)
-    for j ∈ s
-      j == 1 && continue
-      jx = ix - convert2ix(Int[j], n)
+  for m in 2:n
+    for (ix, s) in gen_ix_subset(1, n, m)
+      !haskey(a, ix) && (a[ix] = fill(inf(T), n))
+      for j ∈ s
+        j == 1 && continue
 
-      !haskey(a, ix) && (a[ix] = fill(typemax(T), n))
-      a[ix][j] = minimum([(haskey(a, jx) && a[jx][k] < typemax(T) ? a[jx][k] + distm[k, j] : a[jx][k])
-                          for k ∈ s if k ≠ j])
+        jx = ix - convert2ix(Int[j], n)
+        push!(keys2del, jx)  ## bookeeping (2)
+
+        a[ix][j] = minimum([(a[jx][k] < inf(T) ? a[jx][k] + distm[k, j] : a[jx][k])
+                            for k ∈ s if k ≠ j])
+      end
+    end
+
+    while !isempty(keys2del) ## bookeeping (3)
+      delete!(a, pop!(keys2del))
     end
   end
 
@@ -51,14 +78,24 @@ end
 
 
 """
-  gen_ix_subset
+  gen_ix_subset(low::T, high::T, m::Integer)
 
-  ex.
+Compute all subsets of size m containing low (≡ 1) and up to high
 
-  gen_ix_subset(1, 4, 2)
-  => [(3, [1, 2]), (5, [1, 3]), (9, [1, 4])]
+# Examples:
+```julia
+julia> gen_ix_subset(1, 4, 2)
+3-element Array{Tuple{Int64,Array{Int64,1}},1}:
+ (3, [1, 2])
+ (5, [1, 3])
+ (9, [1, 4])
 
-  gen_subset(1, 4, 3)                                                                                                                                            => [(7, [1, 2, 3]), (11, [1, 2, 4]), (13, [1, 3, 4])]
+julia> gen_ix_subset(1, 4, 3)
+3-element Array{Tuple{Int64,Array{Int64,1}},1}:
+ (7, [1, 2, 3])
+ (11, [1, 2, 4])
+ (13, [1, 3, 4])
+```
 """
 function gen_ix_subset(low::T, high::T, m::Integer) where {T <: Integer}
   @assert 1 ≤ low ≤ high && m > 0
@@ -69,7 +106,7 @@ function gen_ix_subset(low::T, high::T, m::Integer) where {T <: Integer}
   a_t, n = Vector{T1}(undef, length(a)), high
 
   for (ix, da) in enumerate(a)
-    a_t[ix] = (convert2ix(da, n), da) # T1(convert2ix(da, n), da)
+    a_t[ix] = (convert2ix(da, n), da)
   end
   a_t
 end
@@ -93,8 +130,43 @@ function prepend_all!(x::T, v::Vector{Vector{T}}) where {T <: Integer}
 end
 
 """
-  convert2ix([1,3], 4)
-  => 5  # => "0101"
+  convert2ix(v::Vector{T}, n::T)
+
+Convert a given set into its binary representation and return thedecimal value
+...
+# Arguments
+- `n::T`: the size of the set. (T is an Integer)
+- `v`: the vector representing the set of type T element
+...
+
+# Principle
+|                                  | bitmask | decimal                            |
+|----------------------------------+---------+------------------------------------|
+|                                  |    8421 |                                    |
+|                                  |    4321 |                                    |
+|----------------------------------+---------+------------------------------------|
+| Consider subset of 1:4 of size 2 |         |                                    |
+|                                  |         |                                    |
+| Set [1, 2] can be represented as |    0011 | 3 = 0 × 8 + 0 × 4 + 1 × 2 + 1 × 1  |
+| Set [1, 3] can be represented as |    0101 | 5 = 0 × 8 + 1 × 4 + 0 × 2 + 1 × 1  |
+| Set [1, 4] can be represented as |    1001 | 9 = 1 × 8 + 0 × 4 + 0 × 2 + 1 × 1  |
+|                                  |         |                                    |
+|----------------------------------+---------+------------------------------------|
+| Consider subset of 1:4 of size 3 |         |                                    |
+|                                  |         |                                    |
+| Set [1, 2, 3] can be ........    |    0111 | 7  = 0 × 8 + 1 × 4 + 1 × 2 + 1 × 1 |
+| Set [1, 2, 4] can be ........    |    1011 | 11 = 1 × 8 + 0 × 4 + 1 × 2 + 1 × 1 |
+| Set [1, 3, 4] can be ........    |    1101 | 13 = 1 × 8 + 1 × 4 + 0 × 2 + 1 × 1 |
+|                                  |         |                                    |
+
+
+# Examples
+```julia
+julia> convert2ix([1, 3], 4)
+5
+
+julia> convert2ix([1, 3, 4], 4)
+13
 """
 function convert2ix(v::Vector{T}, n::T) where {T <: Integer}
   T1 = UInt8
@@ -110,32 +182,59 @@ end
   Init
 """
 function init_distm(infile::String, DType::DataType)
-  vp = load_data(infile, DType)
+  vp = load_data(infile, DType)  ## Vector of points
   calc_dist(vp)
 end
 
 """
-  Calc. distm from vector of Points
-"""
-function calc_dist(vp::Vector{NamedTuple{(:x, :y),Tuple{T, T}}}) where T
-  n = length(vp)
+For Challenge use specific heuristic.
 
+Plotting the city coordinate shows that the points can be divided into 2 clusters
+  - cluster 1: 1-13
+  - cluster 2: 12-25
+"""
+function distm_challenge(infile::String, DType::DataType)
+  vp = load_data(infile, DType)  ## Vector of points
+
+  vp_clu1 = vp[1:13]
+  d_clu1 = calc_dist(vp_clu1)
+  tsp_clu1 = tsp(d_clu1)      ## compute tsp for 1st cluster
+
+  vp_clu2 = vp[12:25]
+  d_clu2 = calc_dist(vp_clu2)
+  tsp_clu2 = tsp(d_clu2)      ## compute tsp for 2nd cluster
+
+  tsp_clu1 + tsp_clu2 - 2 * euclidean_dist(vp_clu1[end - 1], vp_clu1[end])
+end
+
+
+"""
+Calc. distm from vector of Points
+"""
+function calc_dist(vp::Vector{Point{T}}) where T
+  n = length(vp)
   distm = Matrix{T}(undef, n, n)
+
   for ix in 1:n
     ori = vp[ix]
-    for jx in ix+1:n
-      dst = vp[jx]
-      d = √((ori.x - dst.x)^2 + (ori.y - dst.y)^2)
-      distm[ix, jx] = distm[jx, ix] = d
-    end
     distm[ix, ix] = zero(T)
+    for jx in ix+1:n
+      distm[ix, jx] = distm[jx, ix] = euclidean_dist(ori, vp[jx])
+    end
   end
 
   distm
 end
 
+euclidean_dist(ori::Point{T}, dst::Point{T}) where T = √((ori.x - dst.x)^2 + (ori.y - dst.y)^2)
+
+function round_dist(d::Real, DT::DataType)::Integer
+  @assert DT <: Integer
+  floor(DT, d)
+end
+
 """
-  Load data from file
+Load data from file
 """
 function load_data(infile::String, DType::DataType)
   try
@@ -146,11 +245,10 @@ function load_data(infile::String, DType::DataType)
         break
       end
 
-      v = Vector{NamedTuple{(:x, :y),Tuple{DType, DType}}}(undef, n)
-
+      v = Vector{Point{DType}}(undef, n)
       for (ix, line) in enumerate(eachline(fh))
         (x, y) = map(s -> parse(DType, strip(s)), split(line, r"\s+"))
-        v[ix] = (x=x, y=y)
+        v[ix] = Point(x, y)
       end
     end
     v
@@ -164,5 +262,11 @@ function load_data(infile::String, DType::DataType)
       println("! Other error: $(err)...")
     end
     exit(1)
+  end
+end
+
+for DT in (Int32, Int64, Float64, Float32)
+  @eval begin
+    inf(DT) = typemax(DT)
   end
 end
