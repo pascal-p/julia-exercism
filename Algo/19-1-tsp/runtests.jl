@@ -35,7 +35,6 @@ end
   @test tsp(distm) == 21
 end
 
-
 for file in filter((fs) -> occursin(r"\Ainput_float_.+\.txt\z", fs),
                    cd(readdir, "$(TF_DIR)"))
   ifile = replace(file, r"\Ainput_" => s"output_")
@@ -176,5 +175,23 @@ end
 # for input_float_85_23.txt |    1      1
 
 # 163.555053 seconds (3.09 G allocations: 148.522 GiB, 10.99% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_86_23.txt |    1      1
+
+
+## With hash:
+#  32.255611 seconds (661.93 M allocations: 31.955 GiB, 17.25% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_79_21.txt |    1      1
+
+#  75.344062 seconds (1.43 G allocations: 69.048 GiB, 17.11% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_81_22.txt |    1      1
+
+# 192.834781 seconds (3.09 G allocations: 148.753 GiB, 25.53% gc time)
+# Test Summary:             | Pass  Total
+# for input_float_85_23.txt |    1      1
+
+# 193.815319 seconds (3.09 G allocations: 148.753 GiB, 25.77% gc time)
 # Test Summary:             | Pass  Total
 # for input_float_86_23.txt |    1      1

@@ -23,6 +23,33 @@ function tsp(distm::Matrix{T}) where {T <: Real}
   minimum([a[2^n - 1, j] + distm[j, 1] for j in 2:n])
 end
 
+##
+## worst in term of runtime and space
+##
+##
+function tsp_h(distm::Matrix{T}) where {T <: Real}
+  (n, _n) = size(distm)
+
+  a = Dict{Int, Vector{T}}()
+  a[1] = fill(typemax(T), n)
+  a[2^n - 1] = fill(typemax(T), n)
+  a[1][1] = zero(T)
+
+  for m in 2:n, (ix, s) in gen_ix_subset(1, n, m)
+    for j ∈ s
+      j == 1 && continue
+      jx = ix - convert2ix(Int[j], n)
+
+      !haskey(a, ix) && (a[ix] = fill(typemax(T), n))
+      a[ix][j] = minimum([(haskey(a, jx) && a[jx][k] < typemax(T) ? a[jx][k] + distm[k, j] : a[jx][k])
+                          for k ∈ s if k ≠ j])
+    end
+  end
+
+  minimum([a[2^n - 1][j] + distm[j, 1] for j in 2:n])
+end
+
+
 """
   gen_ix_subset
 
