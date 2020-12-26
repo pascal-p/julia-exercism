@@ -13,7 +13,8 @@ The first line indicates the number of cities.  Each city is a point in the plan
 The distance between two cities is defined as the Euclidean distance, that is, two cities at locations (x,y) and (z,w) have distance  
     √((x - z)² + (y - w)²)​ between them.  
 
-In the box below, type in the minimum cost of a traveling salesman tour for this instance, rounded down to the nearest integer.
+In the box below, type in the minimum cost of a traveling salesman tour for this instance, rounded down to the nearest integer.  
+*Answer: 26442*  
 
 OPTIONAL: If you want bigger data sets to play with, check out the TSP instances from around the world [here](http://www.tsp.gatech.edu/world/countries.html).  The smallest data set (Western Sahara) has 29 cities, and most of the data sets are much bigger than that.  What's the largest of these data sets that you're able to solve --- using dynamic programming or, if you like, a completely different method?
 
