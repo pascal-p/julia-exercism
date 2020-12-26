@@ -16,7 +16,8 @@ mutable struct EWDiGraph{T, T1} <: AEWDiGraph{T, T1}
     new(v, 0, adj)
   end
 
-  function EWDiGraph{T, T1}(infile::String; positive_weight=true) where {T <: Integer, T1 <: Real}
+  function EWDiGraph{T, T1}(infile::String;
+                            positive_weight=true) where {T <: Integer, T1 <: Real}
     from_file(infile, EWDiGraph{T, T1}, T; WType=T1, positive_weight)
   end
 end

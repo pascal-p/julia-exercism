@@ -35,6 +35,6 @@ end
 # challenge tsp.txt / baseline |    1      1
 
 # Using Array
-# 617.176269 seconds (14.28 G allocations: 684.369 GiB, 11.20% gc time)
-# Found: 26442
-#
+# 622.455368 seconds (14.28 G allocations: 684.417 GiB, 11.21% gc time)
+# Test Summary:                         | Pass  Total
+# challenge tsp.txt / baseline - matrix |    1      1
