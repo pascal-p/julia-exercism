@@ -6,17 +6,18 @@ Dependency on AEWDiGraph, YAQ (cf. YA_BFSP)
 
 const EPS = 1e-14
 const NULL_EDGE = (-1, -1)
+const NULL_VERTEX = -1
 
 struct BFSP{T, T1}
   dist_to::Vector{T1}
-  edge_to::Vector{Tuple{T, T}}
+  path_to::Vector{T}
   g::AEWDiGraph{T, T1}
   cycle::Vector{Tuple{T, T}}
   src::T
 
   function BFSP{T, T1}(g::AEWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Real}
-    dist_to, edge_to, cycle = bfsp_builder(g, s)
-    new(dist_to, edge_to, g, cycle, s)
+    dist_to, path_to, cycle = bfsp_builder(g, s)
+    new(dist_to, path_to, g, cycle, s)
   end
 
   function BFSP{T, T1}(infile::String, s::T, GType::DataType; positive_weight=true) where {T <: Integer, T1 <: Real}
@@ -48,10 +49,10 @@ function path_to(bfsp::BFSP{T, T1}, v::T) where {T <: Integer, T1 <: Real}
 
   !has_path_to(bfsp, v) && (return nothing)
 
-  e, path = bfsp.edge_to[v], Vector{Tuple{T, T}}() # e == tuple(e[1] == src, e[2] == dst)
-  while e ≠ NULL_EDGE
-    pushfirst!(path, e)
-    e = bfsp.edge_to[e[1]]
+  x, path = v, Vector{T}() # Vector{Tuple{T, T}}()
+  while x ≠ NULL_VERTEX
+    pushfirst!(path, x)
+    x = bfsp.path_to[x]
   end
 
   path
@@ -94,7 +95,7 @@ end
 function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Real}
   ## Prep.
   dist_to::Vector{T1} = fill(typemax(T1), v(g))
-  edge_to::Vector{Tuple{T, T}} = fill(NULL_EDGE, v(g))
+  path_to::Vector{T} = fill(NULL_VERTEX, v(g))
   on_q::Vector{Bool} = fill(false, v(g))
   queue = Q{T}(v(g))
 
@@ -107,13 +108,13 @@ function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Rea
     for (cv, cw) in adj(g, u)
       if dist_to[cv] > dist_to[u] + cw + (isa(typeof(cw), AbstractFloat) ? EPS : zero(T1))
         dist_to[cv] = dist_to[u] + cw
-        edge_to[cv] = (u, cv)
+        path_to[cv] = u
         !on_q[cv] && enque!(queue, on_q, cv)
       end
 
       cost += 1
       if cost % v(g) == 0
-        cycle = find_negative_cycle(v(g), T1, edge_to, cycle)
+        cycle = find_negative_cycle(v(g), T1, path_to, cycle)
         length(cycle) > 0 && return
       end
     end
@@ -126,22 +127,21 @@ function bfsp_builder(g::AEWDiGraph{T, T1}, s::T) where {T <: Integer, T1 <: Rea
     _relax(cv)
   end
 
-  (dist_to, edge_to, cycle)
+  (dist_to, path_to, cycle)
 end
 
 enque!(queue::Q{T}, on_q::Vector{Bool}, v::T) where T = (enqueue!(queue, v); on_q[v] = true)
 # (YAQ.enqueue!(queue, v); on_q[v] = true)
 
 function find_negative_cycle(nv::Integer, T1::DataType,
-                             edge_to::Vector{Tuple{T, T}}, cycle::Vector{Tuple{T, T}}) where {T <: Integer}
+                             path_to::Vector{T}, cycle::Vector{Tuple{T, T}}) where {T <: Integer}
 
   ## 1 - build new graph based on edge_to
   g = EWDiGraph{T, T1}(nv)
 
-  for v in 1:nv
-    if edge_to[v] ≠ NULL_EDGE
-      (u, w) = edge_to[v]
-      add_edge(g, u, w, one(T1))
+  for v in one(T):nv
+    if path_to[v] ≠ NULL_VERTEX
+      add_edge(g, path_to[v], v, one(T1))
     end
   end
 

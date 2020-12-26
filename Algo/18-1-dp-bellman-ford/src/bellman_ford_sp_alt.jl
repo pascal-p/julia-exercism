@@ -56,7 +56,10 @@ function path_to(bfsp::BFSP{T, T1}, dst::T) where {T, T1 <: Real}
 
   x, path = dst, Vector{T}()
   while x ≠ bfsp.src
-    x ∈ path && break  ## Loop ?
+    if x ∈ path
+      println(" loop for x: $(x) / path so far: $(path)")
+      break # continue  ## Loop ?
+    end
     pushfirst!(path, x)
     x = bfsp.path_to[x]
   end
@@ -120,7 +123,7 @@ function shortest_path(g::AEWDiGraph{T, T1}, s::T) where {T, T1 <: Real}
   n = v(g)
 
   ## base case (ix = 1)
-  a::Matrix{T1} = fill(infinity(T1), 2, n)  ## Only need the a[ix - 1, v]’s to compute the a[ix, v]’s
+  a::Matrix{T1} = fill(infinity(T1), 2, n)  ## Only need a[ix - 1, v]’s to compute the a[ix, v]’s
   path_to::Vector{T} = fill(NULL_VERTEX, n)
   a[1, s] = zero(T1)
 

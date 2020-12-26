@@ -13,13 +13,15 @@ const TF_DIR = "./testfiles"
   T, T1 = Int, Int
   g = YA_BFSP_ALT.EWDiGraph{T, T1}(5)
 
-  add_edge(g, 1, 2, 4; positive_weight=false)
-  add_edge(g, 1, 3, 2; positive_weight=false)
-  add_edge(g, 2, 4, 4; positive_weight=false)
-  add_edge(g, 3, 5, 2; positive_weight=false)
+  add_edge(g, 1, 2, 4)
+  add_edge(g, 1, 3, 2)
+  add_edge(g, 2, 4, 4)
+  add_edge(g, 2, 1, 1)
+  add_edge(g, 3, 5, 2)
   add_edge(g, 3, 2, -1; positive_weight=false)
-  add_edge(g, 5, 4, 2; positive_weight=false)
-  add_edge(g, 5, 1, 0; positive_weight=false)
+  add_edge(g, 5, 4, 2)
+  add_edge(g, 5, 1, 3)
+  add_edge(g, 5, 1, 10) # // edge - should be ignored
 
   ## Calc,
   src = 1
@@ -30,7 +32,7 @@ const TF_DIR = "./testfiles"
   @test path_to(bfsp, 4) == [src, 3, 2, 4]
   @test path_to(bfsp, 5) == [src, 3, 5]
 
-  @test min_dist(bfsp) == 1
+  @test min_dist(bfsp) == 1  ## with vertex origin being src (≡ 1)
 end
 
 @testset "BFSP basics /2" begin
@@ -56,6 +58,28 @@ end
   @test path_to(bfsp, 4) == [src, 2, 5, 4]
   @test path_to(bfsp, 3) == [src, 2, 3]
 end
+
+@testset "BFSP basics /3" begin
+  T, T1 = Int, Int
+  g = YA_BFSP_ALT.EWDiGraph{T, T1}(4)
+
+  add_edge(g, 1, 2, 3)
+  add_edge(g, 1, 4, 2)
+  add_edge(g, 3, 2, 1)
+  add_edge(g, 3, 4, 2)
+  add_edge(g, 4, 2, -1; positive_weight=false)
+  add_edge(g, 4, 3, 2)
+
+  src = 1
+  bfsp = BFSP{T, T1}(g, src)
+
+  @test dist_to(bfsp, 2) == 1  # from src
+  @test dist_to(bfsp, 3) == 4  # from src
+
+  @test path_to(bfsp, 2) == [1, 4, 2]
+  @test path_to(bfsp, 3) == [1, 4, 3]
+end
+
 
 @testset "BFSP on tiny_ewd.txt" begin
   src = 1

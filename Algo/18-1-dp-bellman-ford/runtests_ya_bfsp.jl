@@ -25,7 +25,7 @@ const TF_DIR = "./testfiles"
   @test bfsp.dist_to == [0, 1, 2, 5, 4]
 
   @test has_path_to(bfsp, 4)
-  @test path_to(bfsp, 4) == [(1, 3), (3, 2), (2, 4)]   ## dist(src ≡ 1, 4)
+  @test path_to(bfsp, 4) == [1, 3, 2, 4]   ## dist(src ≡ 1, 4)
 end
 
 @testset "BFSP basics /2" begin
@@ -40,9 +40,9 @@ end
 
   @test bfsp.dist_to == [0, -1, 2, -2, 1]
 
-  @test path_to(bfsp, 5) == [(src, 2), (2, 5)]
-  @test path_to(bfsp, 4) == [(src, 2), (2, 5), (5, 4)]
-  @test path_to(bfsp, 3) == [(src, 2), (2, 3)]
+  @test path_to(bfsp, 5) == [src, 2, 5]
+  @test path_to(bfsp, 4) == [src, 2, 5, 4]
+  @test path_to(bfsp, 3) == [src, 2, 3]
 end
 
 @testset "BFSP on tiny_ewd.txt" begin
@@ -55,8 +55,8 @@ end
   @test dist_to(bfsp, 7) ≈ 1.51   # dist(src==1, 7)
   @test dist_to(bfsp, 8) ≈ 0.6    # dist(src==1, 8)
 
-  @test path_to(bfsp, 4) == [(src, 3), (3, 8), (8, 4)]
-  @test path_to(bfsp, 5) == [(src, 5)]
+  @test path_to(bfsp, 4) == [src, 3, 8, 4]
+  @test path_to(bfsp, 5) == [src, 5]
 end
 
 @testset "BFSP on tiny_ewdn.txt" begin
@@ -69,9 +69,9 @@ end
   @test dist_to(bfsp, 2) ≈ 0.93   # dist(src==1, 2)
   @test dist_to(bfsp, 7) ≈ 1.51   # dist(src==1, 7)
 
-  @test path_to(bfsp, 6) == [(src, 3), (3, 8), (8, 4), (4, 7), (7, 5), (5, 6)]
-  @test path_to(bfsp, 2) == [(src, 3), (3, 8), (8, 4), (4, 7), (7, 5), (5, 6), (6, 2)]
-  @test path_to(bfsp, 8) == [(src, 3), (3, 8)]
+  @test path_to(bfsp, 6) == [src, 3, 8, 4, 7, 5, 6]
+  @test path_to(bfsp, 2) == [src, 3, 8, 4, 7, 5, 6, 2]
+  @test path_to(bfsp, 8) == [src, 3, 8]
 end
 
 @testset "BFSP on tiny_ewdnc.txt with negative cycle" begin
@@ -106,12 +106,8 @@ for file in filter((fs) -> occursin(r"\Ainput_random_.+\.txt\z", fs),
 
     else
       dst = path[end]
-      act_path = path_to(bfsp, dst) |>
-        a -> map(t -> t[1], a)
-      push!(act_path, dst)
-
       @test min_dist(bfsp) == exp_val
-      @test path == act_path
+      @test path_to(bfsp, dst) == path
     end
   end
 end
