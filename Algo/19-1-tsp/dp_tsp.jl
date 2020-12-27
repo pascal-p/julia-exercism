@@ -29,32 +29,46 @@ end
 ##
 function tsp_m(distm::Matrix{T}) where {T <: Real}
   (n, _n) = size(distm)
-  nₓ = 2^n - 1
+  nₓ = 2^(n - 1) - 1
   a::Matrix{T} = fill(inf(T), nₓ, n)
-  a[1, 1] = zero(T)
 
-  for m in 2:n, (ix, s) in gen_ix_subset(1, n, m), j ∈ s
-    j == 1 && continue
-    jx = ix - convert2ix(Int[j], n)
-    a[ix, j] = minimum([(a[jx, k] < inf(T) ? a[jx, k] + distm[k, j] : a[jx, k])
-                        for k ∈ s if k ≠ j])
+  for j ∈ 2:n                         ## All subsets of size 2, containing 1
+    jx = convert2ix(Int[1, j], n)
+    a[jx, j] = distm[1, j]
   end
+
+  for m in 3:n
+    for (ix, s) in gen_ix_subset(1, n, m), j ∈ s
+      j == 1 && continue
+      jx = ix - convert2ix(Int[j], n)
+      a[ix, j] = minimum([(a[jx, k] < inf(T) ? a[jx, k] + distm[k, j] : a[jx, k])
+                          for k ∈ s if k ≠ j])
+    end
+  end
+
   minimum([a[nₓ, j] + distm[j, 1] for j in 2:n])
 end
 
 ##
 ## with hash instead of matrix
 ##
-function tsp(distm::Matrix{T}) where {T <: Real}
+function tsp_h(distm::Matrix{T}) where {T <: Real}
   (n, _n) = size(distm)
 
   a = Dict{Int, Vector{T}}()
   a[1] = fill(inf(T), n)
-  a[2^n - 1] = fill(inf(T), n)
-  a[1][1] = zero(T)
+  a[2^(n - 1) - 1] = fill(inf(T), n)
+
+  for j ∈ 2:n                         ## All subsets of size 2, containing 1
+    jx = convert2ix(Int[1, j], n)
+    a[jx] = fill(inf(T), n)
+
+    a[jx][j] = distm[1, j]
+  end
+
   keys2del = Vector{T}() ## bookeeping (1)
 
-  for m in 2:n
+  for m in 3:n
     for (ix, s) in gen_ix_subset(1, n, m)
       !haskey(a, ix) && (a[ix] = fill(inf(T), n))
       for j ∈ s
@@ -73,7 +87,7 @@ function tsp(distm::Matrix{T}) where {T <: Real}
     end
   end
 
-  minimum([a[2^n - 1][j] + distm[j, 1] for j in 2:n])
+  minimum([a[2^(n - 1) - 1][j] + distm[j, 1] for j in 2:n])
 end
 
 
@@ -81,25 +95,28 @@ end
   gen_ix_subset(low::T, high::T, m::Integer)
 
 Compute all subsets of size m containing low (≡ 1) and up to high
+=> We can omit 1 as it is present in all the subset we generate:
+
 
 # Examples:
 ```julia
 julia> gen_ix_subset(1, 4, 2)
 3-element Array{Tuple{Int64,Array{Int64,1}},1}:
- (3, [1, 2])
- (5, [1, 3])
- (9, [1, 4])
+ (1, [1, 2])
+ (2, [1, 3])
+ (4, [1, 4])
 
 julia> gen_ix_subset(1, 4, 3)
 3-element Array{Tuple{Int64,Array{Int64,1}},1}:
- (7, [1, 2, 3])
- (11, [1, 2, 4])
- (13, [1, 3, 4])
+ (3, [1, 2, 3])
+ (5, [1, 2, 4])
+ (6, [1, 3, 4])
 ```
 """
 function gen_ix_subset(low::T, high::T, m::Integer) where {T <: Integer}
   @assert 1 ≤ low ≤ high && m > 0
-  a = prepend_all!(low, gen_subset_with_1(low+1, high, m-1))
+  # 1 could be made implicit!
+  a = prepend_all!(low, gen_subset_with_1(low + 1, high, m - 1))
 
   ## gen. ix now
   T1 = Tuple{T, Vector{T}}
@@ -117,7 +134,7 @@ function gen_subset_with_1(low::T, high::T, m::Integer) where {T <: Integer}
   a = Vector{T}[]
   for ix in low:high
     ix + 1 > high && continue
-    sa = prepend_all!(ix, gen_subset_with_1(ix+1, high, m - 1))
+    sa = prepend_all!(ix, gen_subset_with_1(ix + 1, high, m - 1))
     for _a in sa; push!(a, _a); end
   end
 
@@ -132,7 +149,7 @@ end
 """
   convert2ix(v::Vector{T}, n::T)
 
-Convert a given set into its binary representation and return thedecimal value
+Convert a given set into its binary representation and return the decimal value
 ...
 # Arguments
 - `n::T`: the size of the set. (T is an Integer)
@@ -140,48 +157,51 @@ Convert a given set into its binary representation and return thedecimal value
 ...
 
 # Principle
-|                                  | bitmask | decimal                            |
-|----------------------------------+---------+------------------------------------|
-|                                  |    8421 |                                    |
-|                                  |    4321 |                                    |
-|----------------------------------+---------+------------------------------------|
-| Consider subset of 1:4 of size 2 |         |                                    |
-|                                  |         |                                    |
-| Set [1, 2] can be represented as |    0011 | 3 = 0 × 8 + 0 × 4 + 1 × 2 + 1 × 1  |
-| Set [1, 3] can be represented as |    0101 | 5 = 0 × 8 + 1 × 4 + 0 × 2 + 1 × 1  |
-| Set [1, 4] can be represented as |    1001 | 9 = 1 × 8 + 0 × 4 + 0 × 2 + 1 × 1  |
-|                                  |         |                                    |
-|----------------------------------+---------+------------------------------------|
-| Consider subset of 1:4 of size 3 |         |                                    |
-|                                  |         |                                    |
-| Set [1, 2, 3] can be ........    |    0111 | 7  = 0 × 8 + 1 × 4 + 1 × 2 + 1 × 1 |
-| Set [1, 2, 4] can be ........    |    1011 | 11 = 1 × 8 + 0 × 4 + 1 × 2 + 1 × 1 |
-| Set [1, 3, 4] can be ........    |    1101 | 13 = 1 × 8 + 1 × 4 + 0 × 2 + 1 × 1 |
-|                                  |         |                                    |
-
+|                                  | bitmask | decimal                    |
+|----------------------------------+---------+----------------------------|
+|                                  |     421 |                            |
+|                                  |     432 |                            |
+|----------------------------------+---------+----------------------------|
+| Consider subset of 1:4 of size 2 |         |                            |
+|                                  |         |                            |
+| Set [1, 2] can be represented as |     001 | 1 = 0 × 4 + 0 × 2 + 1 × 1  |
+| Set [1, 3] can be represented as |     010 | 2 = 0 × 4 + 1 × 2 + 0 × 1  |
+| Set [1, 4] can be represented as |     100 | 4 = 1 × 4 + 0 × 2 + 0 × 1  |
+|                                  |         |                            |
+|----------------------------------+---------+----------------------------|
+| Consider subset of 1:4 of size 3 |         |                            |
+|                                  |         |                            |
+| Set [1, 2, 3] can be ........    |     011 | 3  = 0 × 4 + 1 × 2 + 1 × 1 |
+| Set [1, 2, 4] can be ........    |     101 | 5  = 1 × 4 + 0 × 2 + 1 × 1 |
+| Set [1, 3, 4] can be ........    |     110 | 6  = 1 × 4 + 1 × 2 + 0 × 1 |
+|                                  |         |                            |
 
 # Examples
 ```julia
 julia> convert2ix([1, 3], 4)
-5
+2
 
 julia> convert2ix([1, 3, 4], 4)
-13
+6
 """
 function convert2ix(v::Vector{T}, n::T) where {T <: Integer}
   T1 = UInt8
-  a = fill(zero(T1), n)
-  for d in v
-    a[n - d + 1] = 1
+  a = fill(zero(T1), n - 1)
+
+  if length(v) > 1
+    for d in v[2:end]         ## omit 1, it is implicit
+      a[n - d + 1] = 1
+    end
+  elseif length(v) == 1
+    a[n - v[1] + 1] = 1
   end
   parse(T, join(a, ""), base=2)
 end
 
-
 """
   Init
 """
-function init_distm(infile::String, DType::DataType)
+function init_distm(infile::String, DType::DataType; tsp=tsp_m)
   vp = load_data(infile, DType)  ## Vector of points
   calc_dist(vp)
 end
@@ -193,7 +213,7 @@ Plotting the city coordinate shows that the points can be divided into 2 cluster
   - cluster 1: 1-13
   - cluster 2: 12-25
 """
-function distm_challenge(infile::String, DType::DataType)
+function distm_challenge(infile::String, DType::DataType; tsp=tsp_h)
   vp = load_data(infile, DType)  ## Vector of points
 
   vp_clu1 = vp[1:13]
