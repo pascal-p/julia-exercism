@@ -18,10 +18,7 @@ Algorithm (a version of Bellman-Held-Karp)
   return min{a[{1, 2, ..., n}, j] + cⱼ₁} ∀ j ∈ {2, ..., n}
 """
 
-struct Point{T}
-  x::T
-  y::T
-end
+include("./src/common.jl")
 
 ##
 ## distm is the distance matrix
@@ -228,62 +225,23 @@ function distm_challenge(infile::String, DType::DataType; tsp=tsp_h)
 end
 
 
-"""
-Calc. distm from vector of Points
-"""
-function calc_dist(vp::Vector{Point{T}}) where T
-  n = length(vp)
-  distm = Matrix{T}(undef, n, n)
+# """
+# Calc. distm from vector of Points
+# """
+# function calc_dist(vp::Vector{Point{T}}) where T
+#   n = length(vp)
+#   distm = Matrix{T}(undef, n, n)
 
-  for ix in 1:n
-    ori = vp[ix]
-    distm[ix, ix] = zero(T)
-    for jx in ix+1:n
-      distm[ix, jx] = distm[jx, ix] = euclidean_dist(ori, vp[jx])
-    end
-  end
+#   for ix in 1:n
+#     ori = vp[ix]
+#     distm[ix, ix] = zero(T)
+#     for jx in ix+1:n
+#       distm[ix, jx] = distm[jx, ix] = euclidean_dist(ori, vp[jx])
+#     end
+#   end
 
-  distm
-end
-
-euclidean_dist(ori::Point{T}, dst::Point{T}) where T = √((ori.x - dst.x)^2 + (ori.y - dst.y)^2)
-
-function round_dist(d::Real, DT::DataType)::Integer
-  @assert DT <: Integer
-  floor(DT, d)
-end
-
-"""
-Load data from file
-"""
-function load_data(infile::String, DType::DataType)
-  try
-    local v, n
-    open(infile, "r") do fh
-      for line in eachline(fh)
-        n = parse(Int, strip(line))
-        break
-      end
-
-      v = Vector{Point{DType}}(undef, n)
-      for (ix, line) in enumerate(eachline(fh))
-        (x, y) = map(s -> parse(DType, strip(s)), split(line, r"\s+"))
-        v[ix] = Point(x, y)
-      end
-    end
-    v
-
-  catch err
-    if isa(err, ArgumentError)
-      println("! Problem with content of file $(infile)")
-    elseif isa(err, SystemError)
-      println("! Problem opening $(infile) in read mode... Exit")
-    else
-      println("! Other error: $(err)...")
-    end
-    exit(1)
-  end
-end
+#   distm
+# end
 
 for DT in (Int32, Int64, Float64, Float32)
   @eval begin
