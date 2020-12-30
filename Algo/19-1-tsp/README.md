@@ -23,6 +23,9 @@ HINT: You might experiment with ways to reduce the data set size.  For example, 
 
 ref. Coursera/Stanford Algorithms [Shortest Paths Revisited, NP-Complete Problems and What To Do About Them](https://www.coursera.org/learn/algorithms-npcomplete/home/)
 
+## Testfiles
+Taken from [this github repository github](https://github.com/beaunus/stanford-algs) Beau Dobbin (beaunus)
+
 ## Version compatibility
 This exercise has been tested on Julia versions >=1.0.
 
