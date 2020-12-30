@@ -12,7 +12,7 @@ Load data from file
   with_index=false : file does not have index - we need to enumerate
   with_index=true  : file does have index, no need to enumerate
 """
-function load_data(infile::String, DType::DataType; with_index=false)
+function load_data(infile::String, DType::DataType; no_index=false, with_index=false)
   try
     local v, n
     open(infile, "r") do fh
@@ -21,7 +21,13 @@ function load_data(infile::String, DType::DataType; with_index=false)
         break
       end
 
-      v = with_index ? load_wo_enum(fh, n, DType) : load_with_enum(fh, n, DType)
+      v = if no_index
+        load_no_index(fh, n, DType)
+      elseif with_index
+        load_wo_enum(fh, n, DType)
+      else
+        load_with_enum(fh, n, DType)
+      end
     end
     v
 
@@ -37,23 +43,39 @@ function load_data(infile::String, DType::DataType; with_index=false)
   end
 end
 
-function load_with_enum(fh, n::Int, DType::DataType)
+function load_with_enum(fh, n::Integer, DType::DataType)
   v = Vector{Point{DType}}(undef, n)
   for (ix, line) in enumerate(eachline(fh))
     (x, y) = map(s -> parse(DType, strip(s)), split(line, r"\s+"))
-    v[ix] = Point(x, y)
+    v[Int32(ix)] = Point(x, y)
   end
   v
 end
 
-function load_wo_enum(fh, n::Int, DType::DataType)
+function load_wo_enum(fh, n::Integer, DType::DataType)
   v = Vector{Tuple{Integer, Point{DType}}}(undef, n)
   for line in eachline(fh)
     a =  split(line, r"\s+")
-    (ix, (x, y)) = (parse(Int, a[1]),
+    (ix, (x, y)) = (parse(Int32, a[1]),
                     map(s -> parse(DType, strip(s)), a[2:end]))
     v[ix] = (ix, Point(x, y))
   end
+
+  @assert length(v) == n 
+  v
+end
+
+function load_no_index(fh, n::Integer, DType::DataType)
+  v = Vector{Point{DType}}(undef, n)
+  for line in eachline(fh)
+    
+    a = split(line, r"\s+")
+    (ix, (x, y)) = (parse(Int32, a[1]),
+                    map(s -> parse(DType, strip(s)), a[2:end]))
+    v[ix] = Point(x, y)
+  end
+
+  @assert length(v) == n 
   v
 end
 
