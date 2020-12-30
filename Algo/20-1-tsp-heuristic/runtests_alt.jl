@@ -25,4 +25,3 @@ for file in filter((fs) -> occursin(r"\Ainput_simple_.+\.txt\z", fs),
     end
   end
 end
-

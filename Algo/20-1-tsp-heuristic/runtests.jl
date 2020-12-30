@@ -23,4 +23,3 @@ for file in filter((fs) -> occursin(r"\Ainput_simple_.+\.txt\z", fs),
     @time @test tsp("$(TF_DIR)/$(file)", Float64)[1] == exp_val
   end
 end
-

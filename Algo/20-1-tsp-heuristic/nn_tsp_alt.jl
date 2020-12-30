@@ -11,13 +11,13 @@ include("./src/nn_tsp_common.jl")
 
 
 function calc_tsp_bf(vcities::Vector{Tuple{Integer, Point{T}}}) where T
-  DT, n = Float64, length(vcities)
+  n = length(vcities)
   visited = Vector{Int}(undef, n + 1)
   visited[1] = 1
-  ix, tot_dist = 1, zero(DT)
+  ix, tot_dist = 1, zero(T)
 
   for kx in 2:n
-    m_dist, m_ix = typemax(DT), 0
+    m_dist, m_ix = typemax(T), 0
 
     for jx in 2:n
       (jx ∈ visited[1:kx - 1] || jx == ix) && continue
@@ -38,15 +38,14 @@ function calc_tsp_bf(vcities::Vector{Tuple{Integer, Point{T}}}) where T
 end
 
 
-function calc_tsp(vcities::Vector{Tuple{Integer, Point{T}}}, DT::DataType,
-                  hsh::Dict{T1, T1}) where T
+function calc_tsp(vcities::Vector{Tuple{Integer, Point{T}}}, hsh::Dict{T1, T1}) where T
   visited, hvisited = Vector{T1}(), Dict{T1, Bool}()
   push!(visited, one(T1))
   hvisited[one(T1)] = true
-  ix, n, tot_dist = one(T1), T1(length(vcities)), zero(DT)
+  ix, n, tot_dist = one(T1), T1(length(vcities)), zero(T)
 
   while T1(length(visited)) < n
-    (e_mdist, m_ix) = min_dist(vcities, DT, ix, hvisited, hsh)
+    (e_mdist, m_ix) = min_dist(vcities, ix, hvisited, hsh)
     ix = m_ix
     push!(visited, m_ix)
     hvisited[m_ix] = true
@@ -64,18 +63,18 @@ end
 This version is for the challenge which uses a specification file nn.txt which is
 pre x-sorted already
 """
-function calc_tsp(vcities::Vector{Point{T}}, DT::DataType) where T
+function calc_tsp(vcities::Vector{Point{T}}) where T
   visited, hvisited = Vector{T1}(), Dict{T1, Bool}()
   push!(visited, one(T1))
   ix, n = one(T1), T1(length(vcities))
-  tot_dist = zero(DT)
+  tot_dist = zero(T)
 
   while T1(length(visited)) < n
-    (e_mdist, m_ix) = min_dist(vcities, DT, ix, n, hvisited)
+    (e_mdist, m_ix) = min_dist(vcities, ix, n, hvisited)
     ix = m_ix
     push!(visited, m_ix)
     hvisited[m_ix] = true
-    tot_dist += DT(√(e_mdist))
+    tot_dist += √(e_mdist)
   end
 
   ## Finally
