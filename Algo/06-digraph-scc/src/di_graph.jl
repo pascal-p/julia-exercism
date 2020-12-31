@@ -18,7 +18,7 @@ mutable struct DiGraph{T}
   end
 end
 
-function add_edge(self::DiGraph{T}, x::Int, y::Int) where T
+function add_edge(self::DiGraph{T}, x::T, y::T) where T
   push!(self.adj[x], y)
   self.e += 1
 end
@@ -26,7 +26,7 @@ end
 function reverse(self::DiGraph{T})::DiGraph{T} where T
   rg::DiGraph{T} = DiGraph{T}(self.v)  # copy!
 
-  for v in 1:self.v, w in self.adj[v]
+  for v in one(T):T(self.v), w in self.adj[v]
     add_edge(rg, w, v)
   end
 
@@ -52,7 +52,7 @@ e(g::DiGraph) = g.e
   4
 
 """
-function from_file(infile::String, graph_cons) where T
+function from_file(infile::String, graph_cons; T::DataType=Int)
   g = graph_cons(0)
   act_nv = 0
   try
@@ -67,12 +67,11 @@ function from_file(infile::String, graph_cons) where T
 
       for line in eachline(fh)
         length(line) == 0 && continue
-        # println("==> processing line: $(line)")
         ary = split(line)
-        v = parse(Int, ary[1])
+        v = parse(T, ary[1])
         act_nv += 1
         for w in ary[2:end]
-          add_edge(g, v, parse(Int, w))
+          add_edge(g, v, parse(T, w))
         end
       end
     end
@@ -88,7 +87,7 @@ function from_file(infile::String, graph_cons) where T
     elseif isa(err, AssertionError)
       println("! Expected $(g.v) vertices, got: $(act_nv)")
     else
-      println("! other error: $(typeof(err))...")
+      println("! other error: $(err)...")
     end
     exit(1)
   end

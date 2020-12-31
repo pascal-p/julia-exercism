@@ -13,7 +13,7 @@ struct DFO{T}            # Depth First Order
 
   function DFO{T}(g::DiGraph{T}) where T
     args = dfo_init(g)
-    for v in 1:g.v
+    for v in one(T):T(g.v)
       !args.marked[v] && (args = dfo_dfs(g, v, args))
     end
 

@@ -5,13 +5,13 @@
 
 const NT_BI = NamedTuple{(:marked, :id), Tuple{Vector{Bool}, Vector{Int}}}
 
-struct SCC{T}               # Strongly Connected Components
+struct SCC{T}               ## Strongly Connected Components
   marked::Vector{Bool}
   count::Int
-  id::Vector{Int}           # id[v] = id of strong component containing v
+  id::Vector{T}             ## id[v] = id of strong component containing v
 
   function SCC{T}(g::DiGraph{T}) where T
-    dfo::DFO{T} = DFO{T}(reverse(g))
+    dfo::DFO{T} = DFO{T}(reverse(g))  ## build reverse edges
     count, args = 1, scc_init(g)
 
     for s in rev_post(dfo)
