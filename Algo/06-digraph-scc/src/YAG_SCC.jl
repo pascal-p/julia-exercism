@@ -1,7 +1,7 @@
 module YAG_SCC
   import Base: reverse, count, size
 
-  using DataStructures
+  using YAQ
   using Printf
 
   export DiGraph  # Directed G.

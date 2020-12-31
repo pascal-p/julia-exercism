@@ -2,13 +2,14 @@
   Depth First Search vertex Ordering in a DiGraph
 """
 
-const NT_VQQS = NamedTuple{(:marked, :pre, :post, :rev_post), Tuple{Vector{Bool}, Queue{T}, Queue{T}, Stack{T}}} where T
+const NT_VQQS = NamedTuple{(:marked, :pre, :post, :rev_post),
+  Tuple{Vector{Bool}, Q{T}, Q{T}, Vector{T}}} where T
 
 struct DFO{T}            # Depth First Order
   marked::Vector{Bool}   # Has vertex v been marked?
-  pre::Queue{T}
-  post::Queue{T}
-  rev_post::Stack{T}
+  pre::Q{T}
+  post::Q{T}
+  rev_post::Vector{T}
 
   function DFO{T}(g::DiGraph{T}) where T
     args = dfo_init(g)
@@ -32,16 +33,15 @@ rev_post(self::DFO{T}) where T = self.rev_post
 
 function dfo_init(g::DiGraph{T})::NT_VQQS where T
   n = g.v
-  marked::Vector{Bool} = fill(false, g.v)
-  pre, post = Queue{T}(), Queue{T}()
-  rev_post = Stack{T}()
+  marked::Vector{Bool} = fill(false, n)
+  pre, post = Q{T}(n), Q{T}(n)
+  rev_post = Vector{T}()
 
-  return (marked = marked, pre =  Queue{T}(),
-          post = Queue{T}(), rev_post = Stack{T}())
+  return (marked = marked, pre = pre, post = post,
+          rev_post = rev_post)
 end
 
 function dfo_dfs(g::DiGraph{T}, v::T, args::NT_VQQS)::NT_VQQS where T
-
   function _dfs_(u::T)
     enqueue!(args.pre, u)
     args.marked[u] = true
@@ -51,10 +51,9 @@ function dfo_dfs(g::DiGraph{T}, v::T, args::NT_VQQS)::NT_VQQS where T
     end
 
     enqueue!(args.post, u)
-    push!(args.rev_post, u)
+    pushfirst!(args.rev_post, u)
   end
 
   _dfs_(v)
   return args
-
 end
