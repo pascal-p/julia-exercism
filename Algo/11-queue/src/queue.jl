@@ -25,11 +25,16 @@ mutable struct Q{T}
     h, t = 1, n
     new(data, h, t, n)
   end
+
+  ## TODO dynamically sized Qs
+  # function Q{T}() where T
+  #   new(Vector{T}(), 1, 0, 0)
+  # end
 end
 
 ## immutable
 struct QIter{T}
-    q::Q{T}
+  q::Q{T}
 end
 
 
