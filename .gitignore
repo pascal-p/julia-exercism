@@ -5,8 +5,13 @@
 *.org
 sum/*
 
-Algo/*/tests/problem8.10.txt
-Algo/*/tests/875714v_5105043e_tc.txt
+Algo/*/testfiles/problem8.10.txt
+Algo/*/testfiles/875714v_5105043e_tc.txt
+Algo/*/testfiles/*put_scc_66_320000.txt
+Algo/*/testfiles/*put_scc_67_320000.txt
+Algo/*/testfiles/*put_scc_68_320000.txt
+Algo/*/testfiles/*put_scc_65_320000.txt
+
 Algo/07-dijkstra-sp/tests/large_ewd.txt
 Algo/12-2-sum/testfiles/input_random_[56]*txt
 Algo/12-2-sum/testfiles/output_random_[56]*txt

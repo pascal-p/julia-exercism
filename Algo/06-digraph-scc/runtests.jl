@@ -2,10 +2,20 @@ using Test
 
 include("di_graph_scc.jl")
 
-const FILEDIR = "./tests"
+const TF_DIR = "./testfiles/"
+
+function read_sol(ifile)
+  line = open(ifile) do f
+    readline(f)
+  end
+
+  map(x -> parse(Int, strip(x)),
+                 split(line, ","))
+end
+
 
 @testset "loading a DiGraph from file 11v_17e" begin
-  g = DiGraph{Int}("$(FILEDIR)/11v_17e.txt")
+  g = DiGraph{Int}("$(TF_DIR)/11v_17e.txt")
   gᵣ = reverse(g)
 
   @test v(g) == 11   # num. of vertices
@@ -20,7 +30,7 @@ end
 
 
 @testset "reverse post order on DiGraph 11v_17e" begin
-  g = DiGraph{Int}("$(FILEDIR)/11v_17e.txt")
+  g = DiGraph{Int}("$(TF_DIR)/11v_17e.txt")
   ord_g = DFO{Int}(g)
 
   @test collect(rev_post(ord_g)) == [1, 3, 11, 5, 7, 9, 2, 10, 8, 6, 4]
@@ -28,7 +38,7 @@ end
 end
 
 @testset "SCC 11v_17e " begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/11v_17e.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/11v_17e.txt")
 
   @test count(scc_g) == 4  #  4 SCC in DiGraph g
 
@@ -40,7 +50,7 @@ end
 end
 
 @testset "SCC 13v_21e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/13v_21e.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/13v_21e.txt")
 
   @test count(scc_g) == 5  #  5 SCC in DiGraph g
 
@@ -54,7 +64,7 @@ end
 
 # Test case #1: A 9-vertex 11-edge graph. Top 5 SCC sizes: 3,3,3,0,0
 @testset "SCC 9v_11e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/9v_11e_tc.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/9v_11e_tc.txt")
   # [1, 3, 2, 1, 3, 2, 1, 3, 2]
 
   @test count(scc_g) == 3
@@ -68,7 +78,7 @@ end
 
 # Test case #2: An 8-vertex 14-edge graph. Top 5 SCC sizes: 3,3,2,0,0
 @testset "SCC 8v_14e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/8v_14e_tc.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/8v_14e_tc.txt")
   # [3, 3, 3, 1, 1, 2, 2, 2]
 
   @test count(scc_g) == 3
@@ -82,7 +92,7 @@ end
 
 # Test case #3: An 8-vertex 9-edge graph. Top 5 SCC sizes: 3,3,1,1,0
 @testset "SCC 8v_9e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/8v_9e_tc.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/8v_9e_tc.txt")
   # [4, 4, 4, 1, 3, 2, 2, 2]
 
   @test count(scc_g) == 4
@@ -97,7 +107,7 @@ end
 
 # Test case #4: An 8-vertex 11-edge graph. Top 5 SCC sizes: 7,1,0,0,0
 @testset "SCC 8v_11e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/8v_11e_tc.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/8v_11e_tc.txt")
   # [1, 1, 1, 1, 2, 1, 1, 1]
 
   @test count(scc_g) == 2
@@ -110,7 +120,7 @@ end
 
 # Test case #5: A 12-vertex 20-edge graph. Top 5 SCC sizes: 6,3,2,1,0
 @testset "SCC 12v_20e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/12v_20e_tc.txt")
+  (scc_g, _g) = calc_scc("$(TF_DIR)/12v_20e_tc.txt")
   # [4, 3, 2, 3, 3, 2, 1, 1, 1, 1, 1, 1]
 
   @test count(scc_g) == 4
@@ -123,16 +133,26 @@ end
   @test topn(scc_g) == [1 => 6, 3 => 3, 2 => 2, 4 => 1] # [6, 3, 2, 1]
 end
 
+for file in filter((fs) -> occursin(r"\Ainput_scc_.+\.txt\z", fs),
+                   cd(readdir, "$(TF_DIR)"))
 
-## Challenge
-## bash: ulimit -s unlimited  for the stack
-## 371762 SCC
-@testset "SCC 875714v_5105043e" begin
-  (scc_g, _g) = calc_scc("$(FILEDIR)/875714v_5105043e_tc.txt")
+  ifile = replace(file, r"\Ainput_" => s"output_")
+  exp_val = read_sol("$(TF_DIR)/$(ifile)")
 
-  @test count(scc_g) == 371762
+  @testset "SCC for $(file)" begin
+    DT = Int
+    m = match(r"\Ainput_scc_\d+_(\d+)", file)
+    m === nothing && throw(ArgumentError("Expecting a filename like: input_scc_\\d+_(\\d+)"))
+    n = parse(DT, m[1])
 
-  @test topn(scc_g) == [ 218472 => 434821, 214518 => 968, 213230 => 459, 363858 => 313, 188585 => 211 ] # 5-element Array{Pair{Int64,Int64},1}
+    @time (scc_g, _g) = calc_scc("$(TF_DIR)/$(file)"; n=n)
+
+    act_val = map(p -> p[2], topn(scc_g))
+    la = length(act_val)
+    if la < 5
+      for ix in la+1:5; push!(act_val, zero(DT)); end
+    end
+
+    @test act_val == exp_val
+  end
 end
-
-# run with: ulimit -s unlimited && julia runtests.jl

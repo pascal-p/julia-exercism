@@ -3,8 +3,8 @@ push!(LOAD_PATH, "../11-queue/src") ## for YAQ
 
 using YAG_SCC
 
-function calc_scc(infile::String)   ## T == Int here...
-  g = DiGraph{Int}(infile)
+function calc_scc(infile::String; n::Integer=-1)   ## T == Int here...
+  g = n > 0 ? DiGraph{Int}(infile, n) : DiGraph{Int}(infile)
   scc_g = SCC{Int}(g)
 
   return (scc_g, g)

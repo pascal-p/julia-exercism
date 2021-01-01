@@ -16,6 +16,10 @@ mutable struct DiGraph{T}
   function DiGraph{T}(infile::String) where T
     from_file(infile, DiGraph{T})
   end
+
+  function DiGraph{T}(infile::String, n::Integer) where T
+    from_file(infile, n, DiGraph{T})
+  end
 end
 
 function add_edge(self::DiGraph{T}, x::T, y::T) where T
@@ -52,43 +56,78 @@ e(g::DiGraph) = g.e
   4
 
 """
-function from_file(infile::String, graph_cons; T::DataType=Int)
+function from_file(infile::String, graph_cons; DT::DataType=Int)
   g = graph_cons(0)
   act_nv = 0
-  try
+  # try
     open(infile, "r") do fh
-      nv = 0
-      for line in eachline(fh) # read only first line
-        nv = parse(Int, line)
-        break
-      end
+      # nv = 0
+      # for line in eachline(fh) # read only first line
+      #  nv = parse(Int, line)
+      #  break
+      #end
+      nv = get_nv(fh, DT)
 
       g = graph_cons(nv)
 
-      for line in eachline(fh)
-        length(line) == 0 && continue
-        ary = split(line)
-        v = parse(T, ary[1])
-        act_nv += 1
-        for w in ary[2:end]
-          add_edge(g, v, parse(T, w))
-        end
-      end
+      # for line in eachline(fh)
+      #   length(line) == 0 && continue
+      #   ary = split(line)
+      #   v = parse(T, ary[1])
+      #   act_nv += 1
+      #   for w in ary[2:end]
+      #     add_edge(g, v, parse(T, w))
+      #   end
+      # end
+      act_nv = load_edges!(g, fh, DT)
     end
 
     @assert act_nv == g.v # defer message to catch block
     return g
 
-  catch err
-    if isa(err, ArgumentError)
-      println("! Problem with content of file $(infile)")
-    elseif isa(err, SystemError)
-      println("! Problem opening $(infile) in read mode... Exit")
-    elseif isa(err, AssertionError)
-      println("! Expected $(g.v) vertices, got: $(act_nv)")
-    else
-      println("! other error: $(err)...")
-    end
-    exit(1)
+  # catch err
+  #   if isa(err, ArgumentError)
+  #     println("! Problem with content of file $(infile)")
+  #   elseif isa(err, SystemError)
+  #     println("! Problem opening $(infile) in read mode... Exit")
+  #   elseif isa(err, AssertionError)
+  #     println("! Expected $(g.v) vertices, got: $(act_nv)")
+  #   else
+  #     println("! other error: $(err)...")
+  #   end
+  #   exit(1)
+  # end
+end
+
+function from_file(infile::String, n::Integer, graph_cons; DT::DataType=Int)
+  g = DiGraph{DT}(n)
+  open(infile, "r") do fh
+    load_edges!(g, fh, DT)
   end
+  g
+end
+
+function get_nv(fh, DT::DataType)
+  nv = 0
+  for line in eachline(fh) # read only first line
+    nv = parse(DT, line)
+    break
+  end
+  nv
+end
+
+function load_edges!(g::DiGraph, fh, DT::DataType)
+  nv = 0
+  for line in eachline(fh)
+    length(line) == 0 && continue
+
+    ary = split(line)
+    v = parse(DT, ary[1])
+
+    nv += 1
+    for w in ary[2:end]
+      add_edge(g, v, parse(DT, w))
+    end
+  end
+  nv
 end
