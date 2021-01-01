@@ -9,7 +9,7 @@
   general problem from canonical 3-SAT is NP-complete (cf. Cook–Levin theorem [https://en.wikipedia.org/wiki/Cook%E2%80%93Levin_theorem])
 
   In this implementation, we convert CNF into a digraph of implication normal form. Remenber:
-  x v y ≡ ¬ x → y ^ ¬ y → x
+  x ∨ y ≡ ¬ x → y ^ ¬ y → x
 
   Thus when constructing the graph, we will, for each var., add 2 vertices vₓ and -vₓ. An edge will correspong to one implication
 
@@ -90,22 +90,22 @@ end
 function add_edge_to_graph(g::DiGraph{T}, u₀::T, u₁::T) where T
   n = T(v(g) ÷ 2)
 
-  if u₀ > 0 && u₁ > 0            ## ≡ u₀ v u₁
+  if u₀ > 0 && u₁ > 0            ## ≡ u₀ ∨ u₁
     add_edge(g, u₀ + n, u₁)      ## ≡ ¬u₀ → u₁
     add_edge(g, u₁ + n, u₀)      ## ≡ ¬u₁ → u₀
     # println(">1> u₀:$(u₀), u₁:$(u₁) - edge: $(u₀ + n) →  $(u₁) / edge: $(u₁ + n) → $(u₀)")
 
-  elseif u₀ < 0 && u₁ > 0        ## ¬u₀ v u₁
+  elseif u₀ < 0 && u₁ > 0        ## ≡ ¬u₀ ∨ u₁
     add_edge(g, -u₀, u₁)         ## ≡ u₀ → u₁
     add_edge(g, u₁ + n, -u₀ + n) ## ≡ ¬u₁ → ¬u₀
     # println(">2> u₀:$(u₀), u₁:$(u₁) - edge: $(-u₀) →  $(u₁) / edge: $(u₁ + n) → $(-u₀ + n)")
 
-  elseif u₀ < 0 && u₁ < 0        ## ¬u₀ v ¬u₁
+  elseif u₀ < 0 && u₁ < 0        ## ≡ ¬u₀ ∨ ¬u₁
     add_edge(g, -u₀, -u₁ + n)    ## ≡ u₀ → ¬u₁
     add_edge(g, -u₁, -u₀ + n)    ## ≡ u₁ → ¬u₀
     # println(">3> u₀:$(u₀), u₁:$(u₁) - edge: $(-u₀) →  $(-u₁ + n) / edge: $(-u₁) → $(-u₀ + n)")
 
-  else   ## u₀ ≥ 0 && u₁ ≤ 0     ## ≡ u₀ v ¬u₁
+  else   ## u₀ ≥ 0 && u₁ ≤ 0     ## ≡ u₀ ∨ ¬u₁
     add_edge(g, u₀ + n, -u₁ + n) ## ≡ ¬u₀ → ¬u₁
     add_edge(g, -u₁, u₀)         ## ≡ u₁ → u₀
     # println(">4> u₀:$(u₀), u₁:$(u₁) - edge: $(u₀ + n) →  $(-u₁ + n) / edge: $(-u₁) → $(u₀)")
