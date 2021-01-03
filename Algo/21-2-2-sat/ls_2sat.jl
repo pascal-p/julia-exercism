@@ -1,5 +1,5 @@
 """
-  2SAT problem using Papadimitriou’s 2-SAT Algorithm
+  2SAT problem using Papadimitriou’s 2-SAT Algorithm (Randomized Local Search)
 
   Repeat log₂(n) times:
     - Choose random initial assignment

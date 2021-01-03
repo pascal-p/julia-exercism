@@ -1,6 +1,6 @@
 # Programming Problem 21-1: 2SAT
 
-  Using Papadimitirou's algorithm (an instance oflocal search)   
+  Using Papadimitirou's algorithm (an instance of randomized local search)  
 
 
 ## Work
