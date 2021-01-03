@@ -41,7 +41,7 @@ The primary topics in this part of the specialization are: shortest paths (Bellm
   - [X] [week 1/PA - Floyd-Warshall APSP](https://github.com/pascal-p/julia-exercism/tree/master/Algo/18-2-dp-apsp-floyd-warshall) and [week 1/PA - Johnson APSP](https://github.com/pascal-p/julia-exercism/tree/master/Algo/18-3-dp-apsp-johnson)
   - [X] [week 2/PA - Travelling Salesman Problem (TSP) Bellman Held Karp](https://github.com/pascal-p/julia-exercism/tree/master/Algo/19-1-tsp)
   - [X] [week 3/PA - Travelling Salesman Problem (TSP) revisited Nearest Neighbor heuristic](https://github.com/pascal-p/julia-exercism/tree/master/Algo/20-1-tsp-heuristic)
-  - [ ] WIP...
+  - [X] [week 4/PA - 2SAT using Digrap SCC](https://github.com/pascal-p/julia-exercism/tree/master/Algo/21-1-2-sat) and [week 4/PA - 2SAT using Papadimitriou's Algorithm](https://github.com/pascal-p/julia-exercism/tree/master/Algo/21-2-2-sat)
 
 <hr />
-<p style="font-size:0.25em">Nov-Dec 2020, Corto Inc</p>
+<p style="font-size:0.25em">Nov-Dec 2020, Jan 2021 Corto Inc</p>
