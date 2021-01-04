@@ -38,7 +38,7 @@ end
 
 function solve_2sat(infile::String, DT::DataType)
   hsh, n = load_data(infile, DT)
-  @assert n > 0 "Expected n to be positify, got: $(n)"
+  @assert n > zero(DT) "Expected n to be positify, got: $(n)"
 
   nᵣ = reduction!(hsh, DT)
   nᵣ == 0 && return ((true, nothing), )
@@ -78,13 +78,14 @@ function lsearch(clauses::Vector{Clause}, hvars::Dict{T, BN}, n::T) where T <: I
   (false, hvars)
 end
 
-function load_data(infile::String, DT::DataType)
-  local n
-  hsh = Dict{Integer, Vector{Integer}}()
+function load_data(infile::String, DT::DataType)::Tuple{Dict{DT, Vector{DT}}, DT}
+  hsh = Dict{DT, Vector{DT}}()
+  n = zero(DT)
+
   open(infile, "r") do fh
     for line in eachline(fh)  ## read only first line
-      a = split(line, r"\s+")
-      n = parse(DT, strip(a[1]))
+      n += parse(DT,
+                 strip(split(line, r"\s+")[1]))
       break
     end
 
@@ -93,15 +94,16 @@ function load_data(infile::String, DT::DataType)
       u == -v && continue  ## pass tautology
 
       ## Record  x ∨ y and (symmetric) y ∨ x in other to ease the reduction phase
-      for (x, y) in [(u, v), (v, u)]
+      for (x, y) ∈ [(u, v), (v, u)]
         if haskey(hsh, x)
           y ∉ hsh[x] && push!(hsh[x], y)
         else
-          hsh[x] = [y]
+          hsh[x] = DT[y]
         end
       end
     end
   end
+
   (hsh, n)
 end
 
@@ -118,7 +120,7 @@ end
   (resp. negative form to False) w/o impacting other clauses
 
 """
-function reduction!(hsh::Dict{Integer, Vector{Integer}}, DT::DataType)
+function reduction!(hsh::Dict{T, Vector{T}}, DT::DataType)::DT where T <: Integer
   while true
     dkeys = [k for k ∈ keys(hsh) if -k ∉ keys(hsh)]
     length(dkeys) == 0 && break
@@ -146,7 +148,7 @@ function reduction!(hsh::Dict{Integer, Vector{Integer}}, DT::DataType)
   nᵣ
 end
 
-function rm_symetrical!(hsh::Dict{Integer, Vector{Integer}},  DT::DataType)
+function rm_symetrical!(hsh::Dict{T, Vector{T}}, DT::DataType) where T <: Integer
   dkeys, done = Vector{DT}(), Vector{DT}()
 
   for k ∈ keys(hsh)
@@ -168,8 +170,8 @@ function rm_symetrical!(hsh::Dict{Integer, Vector{Integer}},  DT::DataType)
   end
 end
 
-function prep_clauses_vars(hsh::Dict{Integer, Vector{Integer}}, DT::DataType)
-  akeys, n = Vector{DT}(), 0
+function prep_clauses_vars(hsh::Dict{T, Vector{T}}, DT::DataType) where T <: Integer
+  akeys, n = Vector{DT}(), zero(DT)
 
   for (k, vs) ∈ hsh
     push!(akeys, k)
@@ -179,10 +181,10 @@ function prep_clauses_vars(hsh::Dict{Integer, Vector{Integer}}, DT::DataType)
 
   clauses, hvars = Vector{Clause}(undef, n), Dict{DT, BN}()
   det_assign!(hvars, akeys)
-  ix = 1
+  ix = one(DT)
   for u ∈ keys(hsh), v in hsh[u]
     clauses[ix] = Clause(u, v)
-    ix += 1
+    ix += one(DT)
   end
 
   (clauses, hvars)
