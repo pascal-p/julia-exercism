@@ -34,7 +34,7 @@ The primary topics in this part of the specialization are: greedy algorithms (sc
   - [X] [week 4/PA - Knapsack problem](https://github.com/pascal-p/julia-exercism/tree/master/Algo/16-1-dp-knapsack)
 
 ### C04 - Shortest Paths Revisited, NP-Complete Problems and What To Do About Them
- - [ ] [Shortest Paths Revisited, NP-Complete Problems and What To Do About Them](https://www.coursera.org/learn/algorithms-npcomplete)
+ - [X] [Shortest Paths Revisited, NP-Complete Problems and What To Do About Them](https://www.coursera.org/learn/algorithms-npcomplete)
 
 The primary topics in this part of the specialization are: shortest paths (Bellman-Ford, Floyd-Warshall, Johnson), NP-completeness and what it means for the algorithm designer, and strategies for coping with computationally intractable problems (analysis of heuristics, local search).
 
