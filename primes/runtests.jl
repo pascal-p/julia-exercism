@@ -14,6 +14,16 @@ using YA_PRIMES
   @test collect(pr) == T[2, 3, 5, 7, 11, 13]
 end
 
+@testset "list of primes ≤ 15" begin
+  n = 15
+  T = typeof(n)
+  pr = Primes{T}(n)
+  @test isa(pr, Primes{T})
+
+  @test length(pr) == 6
+  @test collect(pr) == T[2, 3, 5, 7, 11, 13]
+end
+
 @testset "list of primes ≤ 100" begin
   T = UInt32
   n = T(100)
@@ -184,4 +194,46 @@ end
   @test nth(pr, T(10_001)) == 104_743
   @test nth(pr, T(20_001)) == 224_743
   @test nth(pr, T(50_001)) == 611_957
+end
+
+
+@testset "sum of primes ≤ 17" begin
+  T = UInt32
+  n = T(17)
+  pr = Primes{T}(n)
+
+  @test collect(pr) == T[2, 3, 5, 7, 11, 13, 17]
+  @test sum(pr) == 58
+end
+
+@testset "sum of primes ≤ 2001" begin
+  T = UInt32
+  n = T(2001)
+  pr = Primes{T}(n)
+
+  @test sum(pr) == 277_050
+end
+
+@testset "sum of primes ≤ 2001" begin
+  T = UInt32
+  n = T(2001)
+  pr = Primes{T}(n)
+
+  @test sum(pr) == 277_050
+end
+
+@testset "sum of primes ≤ 140_759" begin
+  T = UInt32
+  n = T(140_759)
+  pr = Primes{T}(n)
+
+  @test sum(pr) == 873_749_121
+end
+
+@testset "sum of primes ≤ 2_000_000" begin
+  T = UInt32
+  n = T(2000000)
+  pr = Primes{T}(n)
+
+  @test sum(pr) == 142_913_828_922
 end

@@ -1,4 +1,4 @@
-## Mutable of not?
+
 struct Primes{T <: Integer}
   _v::Vector{T}
 
@@ -28,6 +28,8 @@ function nth(pr::Primes{T}, n::T) where {T <: Integer}
 
   pr._v[n]
 end
+
+Base.sum(pr::Primes{T}) where {T <: Integer} = sum(pr._v)
 
 get_primes(pr::Primes{T}) where {T <: Integer} = pr._v
 
