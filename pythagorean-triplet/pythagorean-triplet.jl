@@ -40,8 +40,8 @@ function ptriplets(n::Int)
   triples = [Triplet(1, 1, 1)]
   ncand = 0
 
-  for t in 1:n
-    for s in t+1:2:n
+  for t ∈ 1:n
+    for s ∈ t+1:2:n
       gcd(s, t) != 1 && continue
 
       ncand += 1
@@ -67,8 +67,8 @@ end
 function pythagorean_triplets(n::Integer)::Array{Tuple{Integer,Integer,Integer},1}
   triples::Array{Tuple{Integer,Integer,Integer},1} = [(1, 1, 1)]
 
-  for t in 1:n
-    for s in t+1:2:n
+  for t ∈ 1:n
+    for s ∈ t+1:2:n
       c = s * s + t * t
       c > n && break
 
@@ -78,7 +78,7 @@ function pythagorean_triplets(n::Integer)::Array{Tuple{Integer,Integer,Integer},
 
       a + b + c == n && (triples = vcat(triples, (a, b, c)))
 
-      for k in 2:n
+      for k ∈ 2:n
         k * (a + b + c) > n && break
         k * (a + b + c) == n && (triples = vcat(triples, (k * a,  k * b, k * c)))
       end

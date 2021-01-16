@@ -4,23 +4,23 @@ using Test
 include("pythagorean-triplet.jl")
 
 @testset "triplets whose sum is 12" begin
-    @test pythagorean_triplets(12) == [(3, 4, 5)]
+  @test pythagorean_triplets(12) == [(3, 4, 5)]
 end
 
 @testset "triplets whose sum is 108" begin
-    @test pythagorean_triplets(108) == [(27, 36, 45)]
+  @test pythagorean_triplets(108) == [(27, 36, 45)]
 end
 
 @testset "triplets whose sum is 1000" begin
-    @test pythagorean_triplets(1000) == [(200, 375, 425)]
+  @test pythagorean_triplets(1000) == [(200, 375, 425)]
 end
 
 @testset "triplets whose sum is 1001" begin
-    @test pythagorean_triplets(1001) == []
+  @test pythagorean_triplets(1001) == []
 end
 
 @testset "returns all matching triplets" begin
-    @test pythagorean_triplets(90) == [(9, 40, 41), (15, 36, 39)]
+  @test pythagorean_triplets(90) == [(9, 40, 41), (15, 36, 39)]
 end
 
 @testset "several matching triplets" begin
