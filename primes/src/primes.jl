@@ -1,4 +1,3 @@
-
 struct Primes{T <: Integer}
   _v::Vector{T}
 
@@ -6,7 +5,7 @@ struct Primes{T <: Integer}
     @assert n > 0 "Expecting n (number of primes) to be > 0"
 
     n == one(T) && return new(T[])
-    
+
     new(gen_primes(n))
   end
 
@@ -49,8 +48,6 @@ end
 
 Base.length(iter::Primes{T}) where T = length(iter._v)
 Base.eltype(::Primes{T}) where T = T
-
-## what about a generator?
 
 ##
 ## Internal
