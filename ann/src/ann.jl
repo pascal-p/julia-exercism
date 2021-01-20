@@ -1,8 +1,4 @@
-# using Plots
-# using MLJBase
 using StableRNGs
-
-# module ANN
 
 ##
 ## Model
@@ -36,16 +32,16 @@ function update_ann_model(parms, ∇; η=0.0001)
   parms
 end
 
-function train_ann_model(layer_dims, DMatrix, y;
-                         seed=42, init=:He, η=0.0001, epochs=1_000, threshold=0.5, verbose=true)
-  costs = Vector{Float}(undef, epochs)
-  accuracy = Vector{Float}(undef, epochs)
+function train_ann_model(layer_dims, x::Matrix{T}, y::Matrix{T};
+                         seed=42, init=:He, η=0.0001, epochs=1_000, threshold=0.5, verbose=true) where {T <: Real}
+  costs = Vector{T}(undef, epochs)
+  accuracy = Vector{T}(undef, epochs)
   iters = Vector{Int}(undef, epochs)
 
   parms = init_ann_model(layer_dims; seed, init)
 
   for ix ∈ 1:epochs
-    ŷ, caches = forward_pass(DMatrix, parms)
+    ŷ, caches = forward_pass(x, parms)
 
     cost = cost_fn(ŷ, y)
     acc = accuracy_fn(ŷ, y; threshold)
@@ -104,7 +100,6 @@ end
   Zˡ = Wˡ × Aˡ⁻¹ + bˡ
   Aˡ = σ(Zˡ)
 """
-
 function linear_forward(a, w, b)
   z = (w * a) .+ b
   cache = (a, w, b)
@@ -115,7 +110,7 @@ function linear_forward(a, w, b)
 end
 
 function linear_forward_activation(aₚ, w, b; activation_fn=relu_afn)
-  @assert Symbol(activation_fn) ∈ ACTIVATION_FN
+  @assert Symbol(activation_fn) ∈ ACTIVATION_FN "Expecting $(Symbol(activation_fn)) to be in $(ACTIVATION_FN)"
 
   (z, linear_cache) = linear_forward(aₚ, w, b)
   (a, activ_cache) = activation_fn(z)
@@ -133,7 +128,6 @@ end
   Binary cross-entropy cost function
   J =  - 1/m Σᵢᵐ Yⁱ × log(Ŷⁱ) + (1 - Yⁱ) × log(1 - Ŷⁱ)
 """
-
 function cost_fn(ŷ, y)
   m = size(y, 2)
   ϵ = eps(1.0)
@@ -145,7 +139,7 @@ function cost_fn(ŷ, y)
 end
 
 function accuracy_fn(ŷ, y; threshold=0.5)
-  @assert size(ŷ) ≡ size(z)
+  @assert size(ŷ) ≡ size(y)
 
   sum((ŷ .> threshold) .== y) / length(y)
 end
@@ -171,10 +165,10 @@ function linear_backward(∂z, cache)
 end
 
 function linear_backward_activation(∂a, cache; activation_fn=relu_afn)
-  @assert Symbol(activation_fn) ∈ ACTIVATION_FN
+  @assert Symbol(activation_fn) ∈ ACTIVATION_FN "Expecting $(Symbol(activation_fn)) to be in $(ACTIVATION_FN)"
 
   linear_cache, activ_cache = cache
-  ∂z = getfield(Main, Symbol(string("der_", activation_fn)))(∂a, activ_cache)
+  ∂z = getfield(@__MODULE__, Symbol(string("der_", activation_fn)))(∂a, activ_cache)
 
   (∂w, ∂b, ∂aₚ) = linear_backward(∂z, linear_cache)
 
@@ -229,8 +223,5 @@ function backward_pass(ŷ, y, meta_cache)
   ∇
 end
 
-
 const ACTIVATION_FN = filter(s -> match(r".+_afn\z", string(s)) != nothing && match(r"\Ader_", string(s)) == nothing,
-                             names(Main))
-
-# end  # of module ANN
+                             names(@__MODULE__; all=true, imported=false))

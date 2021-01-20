@@ -1,6 +1,6 @@
 using Test
 
-include("./ann.jl")
+include("./src/ann.jl")
 
 @testset "initialisation" begin
   layer_dims = [5, 4, 3]
