@@ -4,33 +4,42 @@ using StableRNGs
 ## Model
 ##
 
-function init_ann_model(layer_dims::Vector{T};
-                        seed=42, init=:He, DType=Float32)::Dict{String, Matrix{DType}} where T <: Integer
-  parms = Dict{String, Matrix{DType}}()
+struct ANN{T}
+  parms::Dict{String, Array{T, N} where N}
+  η::T
 
-  for l ∈ 2:length(layer_dims)
-    key_w, key_b = string("w", l-1), string("b", l-1)
-    parms[key_w] = rand(StableRNG(seed), layer_dims[l], layer_dims[l-1])
-    if init == :He
-      parms[key_w] *= √(2 / layer_dims[l-1])
+  function ANN{T}(layer_dims::Vector{T1};
+                  seed=42, init=:He, η=T(0.0001)) where {T, T1 <: Integer}
+
+    parms = Dict{String, Matrix{T}}()
+
+    for l ∈ 2:length(layer_dims)
+      key_w, key_b = string("w", l-1), string("b", l-1)
+      parms[key_w] = rand(StableRNG(seed), layer_dims[l], layer_dims[l-1])
+      if init == :He
+        parms[key_w] *= √(2 / layer_dims[l-1])
+      end
+      parms[key_b] = zeros(layer_dims[l], 1)
     end
-    parms[key_b] = zeros(layer_dims[l], 1)
+    new(parms, η)
   end
 
-  parms
+  function ANN{T}(parms::Dict{String, Array{T, N} where N}; η=T(0.0001)) where T
+    new(parms, η)
+  end
 end
 
-function update_ann_model(parms, ∇; η=0.0001)
-  l_len = length(parms) ÷ 2
+
+function update_ann_model!(ann::ANN{T}, ∇) where {T <: Real}
+  l_len = length(ann.parms) ÷ 2
 
   for l ∈ 1:l_len
     key_w, key_b = string("w", l), string("b", l)
-    parms[key_w] -= η .* ∇[string("∂", key_w)]
-    parms[key_b] -= η .* ∇[string("∂", key_b)]
+    ann.parms[key_w] -= ann.η .* ∇[string("∂", key_w)]
+    ann.parms[key_b] -= ann.η .* ∇[string("∂", key_b)]
   end
-
-  parms
 end
+
 
 function train_ann_model(layer_dims, x::Matrix{T}, y::Matrix{T};
                          seed=42, init=:He, η=0.0001, epochs=1_000, threshold=0.5, verbose=true) where {T <: Real}
@@ -38,16 +47,16 @@ function train_ann_model(layer_dims, x::Matrix{T}, y::Matrix{T};
   accuracy = Vector{T}(undef, epochs)
   iters = Vector{Int}(undef, epochs)
 
-  parms = init_ann_model(layer_dims; seed, init)
+  ann = ANN{T}(layer_dims; seed, init, η)
 
   for ix ∈ 1:epochs
-    ŷ, caches = forward_pass(x, parms)
+    ŷ, caches = forward_pass(ann, x)
 
     cost = cost_fn(ŷ, y)
     acc = accuracy_fn(ŷ, y; threshold)
 
     ∇ = backward_pass(ŷ, y, caches)
-    parms = update_ann_model(parms, ∇; η)
+    update_ann_model!(ann, ∇)
 
     verbose && println("Epoch $(ix) / $(epochs) - cost: $(cost) - accuracy: $(acc)")
 
@@ -56,8 +65,10 @@ function train_ann_model(layer_dims, x::Matrix{T}, y::Matrix{T};
     iters[ix] = ix
   end
 
-  return (epochs=iters, cost=costs, accuracy=accuracy, parms=parms)
+  return (epochs=iters, cost=costs, accuracy=accuracy, parms=ann.parms)
 end
+
+
 
 ##
 ## activation functions / derivatives of activation functions
@@ -92,6 +103,8 @@ function der_softmax_afn(∂a, act_cache)
   # TODO
 end
 
+
+
 ##
 ## forward pass
 ##
@@ -120,6 +133,8 @@ function linear_forward_activation(aₚ, w, b; activation_fn=relu_afn)
        Activation_Step_Cache=activ_cache))
 end
 
+
+
 ##
 ## cost / accuracy
 ##
@@ -143,6 +158,8 @@ function accuracy_fn(ŷ, y; threshold=0.5)
 
   sum((ŷ .> threshold) .== y) / length(y)
 end
+
+
 
 ##
 ## backward pass
@@ -180,22 +197,23 @@ end
 ## forward pass, backward pass
 ##
 
-function forward_pass(x, parms)
+function forward_pass(ann::ANN{T}, x::Matrix{T}) where T
   a = x
-  l_len = length(parms) ÷ 2
+  l_len = length(ann.parms) ÷ 2
   meta_cache = []
 
   ## forward propagate until penultimate layer (last layer before output)
   for l ∈ 1:l_len-1
     aₚ = a
     key_w, key_b = string("w", l), string("b", l)
-    a, cache = linear_forward_activation(aₚ, parms[key_w], parms[key_b])  # using relu
+    a, cache = linear_forward_activation(aₚ, ann.parms[key_w], ann.parms[key_b])  # using relu
     push!(meta_cache, cache)
   end
 
   ## make predictions with output layer
   key_w, key_b = string("w", l_len), string("b", l_len)
-  ŷ, cache = linear_forward_activation(a, parms[key_w], parms[key_b]; activation_fn=sigmoid_afn)
+  ŷ, cache = linear_forward_activation(a, ann.parms[key_w], ann.parms[key_b];
+                                       activation_fn=sigmoid_afn)
   push!(meta_cache, cache)
 
   return (ŷ, meta_cache)

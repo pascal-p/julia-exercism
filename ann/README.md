@@ -1,5 +1,6 @@
 
-### Implementing a vanilla ANN
+### Implementing a vanilla ANN in Julia
+
   ANN: Artificial Neural Network
 
   src:   
