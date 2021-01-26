@@ -43,7 +43,7 @@ function minimax(node::T, depth::T1, max_player::Bool;
                  α::T2=typemin(T2), β::T2=typemax(T2)) where {T, T1 <: Integer, T2 <: AbstractFloat}
 
   function _minimax(node::T, depth::T1, max_player::Bool, α::T2, β::T2)
-    (depth == 0 || is_terminal(node)) && (return value(node))
+    (depth == 0 || is_terminal(node)) && (return value(node) == nothing ? zero(T2) : value(node))
 
     if max_player # turn
       cval = typemin(T2)
@@ -71,7 +71,7 @@ function minimax(node::T, depth::T1, max_player::Bool;
   _minimax(node, depth, max_player, α, β)
 end
 
-
+-∞
 
 ##
 ## Client portion

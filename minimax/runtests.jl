@@ -21,7 +21,7 @@ end
 function tree3()
   # like tree1 with missing value => that don't need to be eval'ed when
   # using α-β pruning
-  T = Int64
+  T = Int64  # depth == 4
   [
     [[NT{T}[8, 5], NT{T}[6, -4]], [NT{T}[3, 8], NT{T}[4, -6]]],
     [[NT{T}[1, nothing], NT{T}[5, 2]], [NT{T}[nothing, nothing], NT{T}[nothing, nothing]]],
@@ -29,10 +29,20 @@ function tree3()
 end
 
 function tree4()
-  T = Int64
+  T = Int64  # depth == 3
   [
    [NT{T}[-1, 3], NT{T}[5, nothing]],
    [NT{T}[-6, -4], NT{T}[nothing, nothing]]
+  ]
+end
+
+function tree5()
+  # with partial eval (full eval commented - that would be for pure minimax)
+  T = Int64  # depth == 3
+  [
+   [NT{T}[5, 7], NT{T}[1, -2, nothing], NT{T}[-4]],     ## [NT{T}[5, 7], NT{T}[1, -2, 8], NT{T}[-4]]
+   [NT{T}[nothing]], # [NT{T}[nothing, nothing], NT{T}[nothing], NT{T}[nothing, nothing]],               ## [NT{T}[3, 7], NT{T}[-9], NT{T}[2, 3]],
+   [NT{T}[1, -5], NT{T}[8], NT{T}[1, nothing, nothing]] ## [NT{T}[1, -5], NT{T}[8], NT{T}[1, 3, 2]]
   ]
 end
 
@@ -70,4 +80,10 @@ end
   tree = Node{Int}(tree4())
 
   @test minimax(tree, 3, true; α=-Inf32, β=Inf32) == Float32(3.0)
+end
+
+@testset "minimax α-β /5" begin
+  tree = Node{Int}(tree5())
+
+  @test minimax(tree, 3, true; α=-Inf32, β=Inf32) == Float32(1.0)
 end
