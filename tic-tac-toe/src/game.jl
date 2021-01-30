@@ -35,7 +35,7 @@ function move!(game::Game, cell::Int, player::Symbol)::Bool
     _is_winning_move(game, cell, player) && (game.current_winner[1] = player)
     return true
   else
-    throw(ArgumentError("movde $(cell) already played on $(game.board)"))
+    throw(ArgumentError("move $(cell) already played on $(game.board)"))
   end
 
   return false

@@ -60,7 +60,8 @@ repr(p::APlayer) = p.repr
 ## Internal
 ##
 
-function _minimax(game::Game, cplayer::Symbol, maxp::Bool; α=-Inf32, β=Inf32)::Dict{Symbol, NFloat}
+function _minimax(game::Game, cplayer::Symbol, maxp::Bool;
+                  α=-Inf32, β=Inf32)::Dict{Symbol, NFloat}
   max_p = maxp ? cplayer : other_player(cplayer)
   oth_p = other_player(cplayer)
 
@@ -73,10 +74,10 @@ function _minimax(game::Game, cplayer::Symbol, maxp::Bool; α=-Inf32, β=Inf32):
   end
 
   best = Dict{Symbol, NFloat}(:position => nothing,
-                              :score =>  cplayer == max_p ? -Inf32 : Inf32)
+                              :score => cplayer == max_p ? -Inf32 : Inf32)
 
   for poss_move ∈ available_moves(game)
-    ## make a move and eval  its value
+    ## make a move and eval its value
     move!(game, poss_move, cplayer)
     sim_score = _minimax(game, oth_p, !maxp; α, β)
     sim_score[:position] = poss_move
@@ -91,7 +92,7 @@ function _minimax(game::Game, cplayer::Symbol, maxp::Bool; α=-Inf32, β=Inf32):
 
     else
       best = sim_score[:score] < best[:score] ? sim_score : best
-      α = min(β, best[:score] )
+      β = min(β, best[:score] )
       if β ≤ α
         reset!(game, poss_move)
         break
@@ -104,9 +105,9 @@ function _minimax(game::Game, cplayer::Symbol, maxp::Bool; α=-Inf32, β=Inf32):
   best
 end
 
-other_player(symb::Symbol) = symb == :X ? :O : :X
+other_player(symb::Symbol) = symb == Player_Symbols[1] ? Player_Symbols[2] : Player_Symbols[1]
 
 function score_fn(game, max_p::Symbol, oth_p::Symbol)::NFloat
   f = max_p == oth_p ? one(DT) : -one(DT)
-  (num_empty_cells(game) + 1) * f
+  DT(num_empty_cells(game) + 1) * f
 end
