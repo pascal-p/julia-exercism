@@ -94,7 +94,7 @@ end
 
 @testset "larger integers array with no duplicates - magic index / perf - seq. search" begin
   a = collect(-100000000:2:400000000);
-  
+
   @time @test magic_idx_bf(a; first_only=false) == [100000002]
   # 0.103253 seconds (11 allocations: 704 bytes)
 end

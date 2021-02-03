@@ -28,7 +28,7 @@ end
 end
 
 @testset "count_parentheses 20" begin
-  @test count_par(20) == 6_564_120_420
+  @time @test count_par(20) == 6_564_120_420
   # 0.000292 seconds
 
   ## @time count_par(13)
@@ -58,7 +58,7 @@ end
   ## rough estimate for  22:  2112s (4×),          128_000_000_000
   ## rough estimate for  23:  8448s (4×),          512_000_000_000
   ## rough estimate for  25: 33792s (4×),        1_024_000_000_000 > 9h
-  
+
   ## @time count_par(19)
   ## 31.316739 seconds
   ##  1_767_263_190
@@ -66,7 +66,7 @@ end
   ## @time count_par(20)
   ## 122.574722 seconds
   ##  6_564_120_420
-  
+
   ## @time count_par(21)
   ## 458.700420 seconds
   ## 24_466_267_020
@@ -77,7 +77,7 @@ end
 
 end
 
-# OOOppps 
+# OOOppps
 #@testset "count_parentheses 100" begin
 #  #
 #  @test count_par(100) == 16796

@@ -24,10 +24,10 @@ function count_par(n::Int, po::Int, pc::Int)
     # either use "(" xor ")"
     return count_par(n, po + 1, pc) + count_par(n, po, pc + 1)
 
-  elseif po < n
-    # keep going with "("
-    @assert pc < n
-    return count_par(n, po + 1, pc)
+  # elseif po < n
+  #   # keep going with "("
+  #   @assert pc < n
+  #   return count_par(n, po + 1, pc)
 
   else
     @assert po == n
@@ -50,10 +50,11 @@ function count_par(n::Int, po::Int, pc::Int, expr::Vector{String})::TIV
     (c2, nexpr2) = count_par(n, po, pc + 1, [expr..., ")"])
     return (c1 + c2, [nexpr1..., nexpr2...])
 
-  elseif po < n
-    # keep going with "("
-    @assert pc < n
-    return count_par(n, po + 1, pc, [expr..., "("])
+  # # Simplifying
+  # elseif po < n
+  #   # keep going with "("
+  #   @assert pc < n
+  #   return count_par(n, po + 1, pc, [expr..., "("])
 
   else
     @assert po == n
