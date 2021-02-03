@@ -64,10 +64,18 @@ end
 # Test Summary:                              | Pass  Total
 # all 9! = 362880 perms of array of length 9 |    1      1
 
-#   5.536038 seconds (34.74 M allocations: 3.521 GiB, 29.09% gc time)
-# Test Summary:                                 | Pass  Total
-# all 10! = 3628800 perms of array of length 10 |    1      1
+#  12.328127 seconds (276.56 M allocations: 30.062 GiB, 12.87% gc time)
+# Test Summary:                                | Pass  Total
+# all subsets of a set of length 10 - Set impl |    1      1
 
-# 334.693098 seconds (380.13 M allocations: 40.040 GiB, 85.64% gc time)
-# Test Summary:                                  | Pass  Total
-# all 11! = 39916800 perms of array of length 11 |    1      1
+# 3.347634 seconds (73.81 M allocations: 6.070 GiB, 11.43% gc time)
+# Test Summary:                                | Pass  Total
+# all subsets of a set of length 10 - Array impl |    1      1
+
+# 1865.702176 seconds (36.51 G allocations: 4.425 TiB, 15.68% gc time)
+# Test Summary:                                | Pass  Total
+# all subsets of a set of length 12 - Set impl |    1      1
+
+# 402.196236 seconds (9.70 G allocations: 798.821 GiB, 10.70% gc time)
+# Test Summary:                                | Pass  Total
+# all subsets of a set of length 12 - Array impl |    1      1

@@ -130,7 +130,7 @@ for k ∈ [4, 8, 10, 12]
     @time @test length(all_subset(s)) == 2^k
   end
 
-  @testset "all subsets of a set of length $(k) - Set impl" begin
+  @testset "all subsets of a set of length $(k) - Array impl" begin
     T = Int
     s = VT{T}(collect(1:k))
 
