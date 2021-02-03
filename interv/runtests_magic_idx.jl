@@ -4,7 +4,7 @@ using Random
 include("./magic_idx.jl")
 
 @testset "trival case with magic index" begin
-  a = collect(Int, 1:10)  # sorted sequence
+  a = collect(Int, 1:2:20)  # sorted sequence
 
   @test magic_idx(a) == 1
 end
@@ -60,7 +60,7 @@ end
   a = [-5, -3, -1, 0, 6, 7, 8, 8, 9, 9, 9, 9, 13, 14, 15, 16, 20, 20, 20, 23]
   #     1   2   3  4  5  6  7  8, 9 10 11 12  13  14  15  16  17  18  19  20
 
-  @test magic_idx(a; no_dup=false) == 8 # and 9
+  @test magic_idx(a; no_dup=false) ∈ [8, 9, 15, 16]
 end
 
 @testset "random sequence of integers with duplicate - with magic indexes" begin
@@ -68,12 +68,33 @@ end
   #     1   2   3  4  5  6  7  8  9 10 11 12  13  14  15  16  17  18  19  20
 
   @test magic_idx(a; first_only=false, no_dup=false) == [8, 9, 13, 14, 15, 16]
-  @test magic_idx(a; first_only=true, no_dup=false) == 8
+  @test magic_idx(a; first_only=true, no_dup=false) ∈ [8, 9, 13, 14, 15, 16]
 end
 
-@testset "integers  with duplicates- magic index" begin
+@testset "integers  with duplicates - magic index" begin
   a = sort([collect(Int, 1:20)..., collect(Int, 2:2:20)...])
 
   @test magic_idx(a; first_only=false, no_dup=false) == [1, 2]
-  @test magic_idx(a; no_dup=false) == 1
+  @test magic_idx(a; no_dup=false) ∈ [1, 2]
+end
+
+@testset "large integers array with no duplicates - magic index" begin
+  a = collect(-10000:2:40000);
+
+  @test magic_idx(a) == 10002
+  @test magic_idx(a; first_only=false) == [10002]
+end
+
+@testset "larger integers array with no duplicates - magic index / perf - binary search" begin
+  a = collect(-100000000:2:400000000);
+
+  @time @test magic_idx(a; first_only=false) == [100000002]
+  # 0.000039 seconds (239 allocations: 4.359 KiB)
+end
+
+@testset "larger integers array with no duplicates - magic index / perf - seq. search" begin
+  a = collect(-100000000:2:400000000);
+  
+  @time @test magic_idx_bf(a; first_only=false) == [100000002]
+  # 0.103253 seconds (11 allocations: 704 bytes)
 end

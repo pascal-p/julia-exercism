@@ -7,9 +7,52 @@ a magic index, if one exists in array A.
 Next: what if the values are not distinct
 """
 
-const NInt = Union{Nothing, Int}
+const VInt = Vector{Int}
+const NVInt = Union{Nothing, Int, VInt}
 
-function magic_idx(a::Vector{Int}; first_only=true, no_dup=true) #::NInt
+"""
+  Using binary serach principle
+"""
+function magic_idx(a::Vector{Int}; first_only=true, no_dup=true)::NVInt
+  resp = Int[]
+
+  function _magic_idx(il::Int, ih::Int)::NVInt
+    il > ih && (return first_only ? nothing : resp)
+
+    im = (il + ih) ÷ 2
+
+    if im == a[im]
+      first_only && return im
+      push!(resp, im)
+    end
+
+    if no_dup
+      im > a[im] && return _magic_idx(im + 1, ih)
+
+      # im < a[im]
+      return _magic_idx(il, im - 1)
+
+    else
+      r = _magic_idx(im + 1, ih)
+
+      if r != nothing && first_only
+        return r
+      else
+        return _magic_idx(il, im - 1)
+      end
+    end
+
+  end
+
+  a = _magic_idx(1, length(a))
+  return a == nothing ? nothing : (first_only ? a : sort(resp))
+end
+
+
+"""
+  Naive way
+"""
+function magic_idx_bf(a::Vector{Int}; first_only=true, no_dup=true)::NVInt
   length(a) == 0 && return nothing
 
   n = length(a)
