@@ -23,12 +23,17 @@ mutable struct BST{T}
       data = length(input) < 2 ? nothing : input[2]
       TNode{T}(input[1]; data=data)
 
+    elseif isa(input, TNode{T})
+      TNode{T}(input.key;
+               data=input.data, parent=input.parent, left=input.left, right=input.right)
+
     elseif isa(input, T)
       TNode{T}(input)
 
     else
-      throw(ArgumentError("Error..."))
+      throw(ArgumentError("Error... for input: $(input)"))
     end
+
     bst = new(root)
   end
 
@@ -43,6 +48,14 @@ length(bst::BST{T}) where T = defined(bst.root) ? bst.root.size : 0 ## Synonym
 left(bst::BST{T}) where T = defined(bst.root) ? bst.root.left : nothing
 right(bst::BST{T}) where T = defined(bst.root) ? bst.root.right : nothing
 key(bst::BST{T}) where T = defined(bst.root) ? bst.root.key : nothing
+
+function height(bst::BST{T})::Int where T
+  size(bst) == 1  && return 1
+
+  hl = left(bst) |> height
+  rl = right(bst) |> height
+  1 + max(hl, rl)
+end
 
 """
   search(bst, key)

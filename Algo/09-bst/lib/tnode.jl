@@ -6,13 +6,16 @@ mutable struct TNode{T}
   left::Union{TNode, Nothing}
   right::Union{TNode, Nothing}
 
-  function TNode{T}(key::T; data::Any=nothing, parent=nothing, left=nothing, right=nothing) where T
-    self = new(key, data, 1, parent, left, right)
+  function TNode{T}(key::T;
+                    data::Any=nothing, parent=nothing, left=nothing, right=nothing) where T
+    size = get_size(left, right)
+    self = new(key, data, size, parent, left, right)
     @assert typeof(self.key) == T
     self
   end
 end
 
+const TNN = Union{TNode{T}, Nothing} where T
 const TData{T} = Union{Tuple{T, Any}, Nothing}
 
 isleaf(tnode::TNode{T}) where T = tnode.left == nothing && tnode.right == nothing
@@ -28,6 +31,16 @@ right(tnode::TNode{T}) where T = tnode.right
 key(tnode::TNode{T}) where T = tnode.key
 
 size(tnode::TNode{T}) where T = tnode.size
+
+height(::TNN) where T = 0
+
+function height(tnode::TNode{T})::Int where T
+  size(tnode) == 1  && return 1
+
+  hl = left(tnode) == nothing ? 0 : left(tnode) |> height
+  rl = right(tnode) == nothing ? 0 : right(tnode) |> height
+  1 + max(hl, rl)
+end
 
 function to_tuple(tnode::TNode{T})::TData{T} where T
   (tnode.key, tnode.data)
@@ -47,4 +60,20 @@ function Base.show(io::IO, tnode::TNode{T}) where T
   str = tnode.left != nothing ? string(str, ", left: $(tnode.left.key)") : string(str, ", left: <>")
   str = tnode.right != nothing ? string(str, ", right: $(tnode.right.key)") : string(str, ", right: <>")
   print(io, str)
+end
+
+##
+## Helper
+##
+
+function get_size(left::TNN{T}, right::TNN{T})::Int where T
+  if left == right == nothing
+    1
+  elseif left == nothing
+    1 + size(right)
+  elseif right == nothing
+    1 + size(left)
+  else
+    1 + size(left) + size(right)
+  end
 end

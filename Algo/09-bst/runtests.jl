@@ -28,6 +28,7 @@ end
   @test key(right(bst)) == 9
 
   @test size(bst) == 3
+  @test height(bst) == 2
 end
 
 @testset "bst subtree (treenode size)" begin
@@ -40,6 +41,8 @@ end
   @test size(bst.root) == 1 + size(bst.root.left) + size(bst.root.right)
   @test size(bst.root.left) == 4
   @test size(bst.root.right) == 7
+
+  @test height(bst) == 5
 end
 
 @testset "four node bst with insert!" begin

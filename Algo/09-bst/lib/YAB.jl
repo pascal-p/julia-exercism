@@ -5,7 +5,7 @@ module YAB
 
   export BST, TNode
 
-  export isleaf, parent, left, right, key
+  export isleaf, parent, left, right, key, height
   export ==, to_tuple, has_one_child
   export insert!, search, min, max
   export pred, succ, select
