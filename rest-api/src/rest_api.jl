@@ -49,14 +49,14 @@ end
 db(api::RestAPI) = Model.coll(api.db[])
 
 ##
-## fetch methods
+## fetch methods (User model)
 ##
 
 fetch_all(api::RestAPI) = api.db[] # db(api)
 
 function fetch_many(api::RestAPI;
                     exclude::Vector{Model.User}=Model.User[])
-  filter(u -> u ∉ exclude, db(api)) ## api.db[]
+  filter(u -> u ∉ exclude, db(api))
 end
 
 """
@@ -64,8 +64,14 @@ Assuming name is unique
 """
 function fetch_one(api::RestAPI;
                    by_name::String="foo")
-  res = filter(u -> u.name == by_name, db(api)) ## api.db[]
+  res = filter(u -> u.name == by_name, db(api))
   return res == nothing || length(res) == 0 ? nothing : res[1]
+end
+
+## find (User model)
+function find_by(api::RestAPI; by_name::String="foo")
+  res = filter(u -> u.name == by_name, db(api))
+  length(res) == 0 ? nothing : res[1]
 end
 
 
@@ -80,7 +86,7 @@ function get(api, endpoint::String; payload::String="")::Response
   local users
   if length(payload) > 0
     ## 1 - parse payload / validate
-    hsh = convert_payload(payload) |>
+    hsh = convert_user_payload(payload) |>
       validate_user
 
     ## 2 - select user as specified by payload
@@ -104,21 +110,33 @@ function post(api, endpoint::String, payload::String)::Response
   @assert length(payload) > 0
 
   if endpoint == "/add"
-    hsh = convert_payload(payload) |>
+    hsh = convert_user_payload(payload) |>
       validate_user
 
-    ## Model creation
+    ## User Model create
     user = Model.create_user(hsh[:user])
 
     ## Assuming creation OK. - return newly created user
     return Response(user; code=201)
 
   elseif endpoint == "/iou"
-    ##
-    ## TODO ...
-    ##
+    hsh = convert_iou_payload(payload) |>
+      validate_iou
 
-    return # response...
+    users = Vector{Model.User}(undef, 2)
+    for (ix, key) in enumerate([:lender, :borrower])
+      u = find_by(api, by_name=hsh[key])
+      @assert u != nothing
+      users[ix] = u
+    end
+
+    ## update User Model
+    Model.update!(;borrower=users[2], lender=users[1], amt=Model.Money(hsh[:amount]))
+
+    husers = Dict{Symbol, Vector{Model.User}}(
+      :users => sort(users, by=u -> u.name, rev=false)
+    )
+    return Response(husers; code=201)
   end
 
   throw(ArgumentError("Unknown route..."))
@@ -135,11 +153,26 @@ function add_to_users!(hdb::Dict{Symbol, Vector{Model.User}}, key::Union{String,
   end
 end
 
-function convert_payload(json_payload::String)::Dict{Symbol, String}
+function convert_user_payload(json_payload::String)::Dict{Symbol, String}
   JSON.parse(json_payload; dicttype=Dict{Symbol, String})
+end
+
+function convert_iou_payload(json_payload::String)::Dict{Symbol, Any}
+  JSON.parse(json_payload; dicttype=Dict{Symbol, Any})
 end
 
 function validate_user(hsh::Dict{Symbol, String})::Dict{Symbol, String}
   @assert haskey(hsh, :user) && !isempty(hsh[:user])
+  hsh
+end
+
+function validate_iou(hsh::Dict{Symbol, Any})::Dict{Symbol, Any}
+  for key  ∈ [:lender, :borrower]
+    @assert haskey(hsh, key) && !isempty(hsh[key])
+  end
+
+  @assert hsh[:lender] != hsh[:borrower]
+  @assert haskey(hsh, :amount) && hsh[:amount] > zero(Model.Money)
+
   hsh
 end
