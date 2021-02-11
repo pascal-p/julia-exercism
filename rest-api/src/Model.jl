@@ -35,23 +35,39 @@ end
   update!(borrower, lender, amount)
 """
 function update!(; borrower::User, lender::User, amt::Money)
-  b_owed_by = get(borrower.owed_by, lender.name, zero(Money))
-  if b_owed_by > zero(Money)
-    borrower.owed_by[lender.name] = b_owed_by - amt
-  else
-    borrower.owes[lender.name] = get(borrower.owes, lender.name, zero(Money)) + amt
-  end
-  borrower.balance = calc_balance(borrower.owes, borrower.owed_by)
-  #
-  #
-  l_owes = get(lender.owes, borrower.name, zero(Money))
-  if l_owes > zero(Money)
-    lender.owes[borrower.name] = l_owes - amt
-  else
-    lender.owed_by[borrower.name] = get(lender.owed_by, borrower.name, zero(Money)) + amt
-  end
-  lender.balance = calc_balance(lender.owes, lender.owed_by)
+  # attr_changed =
+  _update!(borrower, lender.name, amt, :owed_by) |>
+    attr_changed -> _post_update!(borrower, lender.name, attr_changed)
+
+  _update!(lender, borrower.name, amt, :owes) |>
+    attr_changed -> _post_update!(lender, borrower.name, attr_changed)
 end
+
+# function update!(; borrower::User, lender::User, amt::Money)
+#   ## borrower part
+#   b_owed_by = get(borrower.owed_by, lender.name, zero(Money))
+#   changed = if b_owed_by > zero(Money)
+#     borrower.owed_by[lender.name] = b_owed_by - amt
+#     :owed_by
+#   else
+#     borrower.owes[lender.name] = get(borrower.owes, lender.name, zero(Money)) + amt
+#     :owes
+#   end
+#   borrower.balance = calc_balance(borrower.owes, borrower.owed_by)
+#   _post_update!(borrower, lender.name, changed)
+#   ##
+#   ## lender part
+#   l_owes = get(lender.owes, borrower.name, zero(Money))
+#   changed = if l_owes > zero(Money)
+#     lender.owes[borrower.name] = l_owes - amt
+#     :owes
+#   else
+#     lender.owed_by[borrower.name] = get(lender.owed_by, borrower.name, zero(Money)) + amt
+#     :owed_by
+#   end
+#   lender.balance = calc_balance(lender.owes, lender.owed_by)
+#   _post_update!(lender, borrower.name, changed)
+# end
 
 function ==(u₁::User, u₂::User)::Bool
   ## relying on cmp of dict.
@@ -133,6 +149,53 @@ function stringify(user::User; attr=:owes)
   end
 
   return coll
+end
+
+
+function _update!(user::User, name::String, amt::Money, attr::Symbol)::Symbol
+  val = get(getfield(user, attr), name, zero(Money))
+
+  changed = if val > zero(Money)
+    hsh = getfield(user, attr)
+    hsh[name] = val - amt
+    setfield!(user, attr, hsh)
+    attr
+  else
+    o_attr = attr == :owed_by ? :owes : :owed_by
+    hsh = getfield(user, o_attr)
+    val = get(hsh, name, zero(Money))
+    hsh[name] = val + amt
+    setfield!(user, o_attr, hsh)
+    o_attr
+  end
+  user.balance = calc_balance(user.owes, user.owed_by)
+  changed
+end
+
+"""
+  if field :owed_by becomes < 0. => it becomes a > 0 :owes filed (and conversely)
+  if field :owed_by becomes ≈ 0. => remove it from dictionary (same for :owes)
+"""
+function _post_update!(user::User, name::String, attr::Symbol)
+  hsh₁ = getfield(user, attr) # ex. :owed_by
+
+  if length(hsh₁) > 0 && haskey(hsh₁, name)
+
+    if hsh₁[name] < zero(Money)
+      o_attr = attr == :owed_by ? :owes : :owed_by
+      hsh₂ = getfield(user, o_attr)
+      hsh₂[name] = -hsh₁[name]
+
+      delete!(hsh₁, name)
+
+      setfield!(user, attr, hsh₁) ## update attr as key name wasremove from it
+      setfield!(user, o_attr, hsh₂)
+
+    elseif hsh₁[name] ≈ zero(Money)
+      delete!(hsh₁, name)
+      setfield!(user, attr, hsh₁)
+    end
+  end
 end
 
 end  ## module
