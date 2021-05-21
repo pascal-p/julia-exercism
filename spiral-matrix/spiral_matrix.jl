@@ -1,3 +1,8 @@
+"""
+  Incomplete - assume input is only Int64!
+  
+  Check spiral-matrix.jl instead 
+"""
 function spiral_matrix(n::Int)::Matrix{Int}
   n == 0 && return Matrix{Int}(undef, 0, 0)
 

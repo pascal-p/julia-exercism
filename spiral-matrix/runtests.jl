@@ -6,27 +6,39 @@ include("spiral-matrix.jl")
 @testset "Different valid values" begin
   @testset "Empty spiral" begin
     @test spiral_matrix(0) == Matrix{Int}(undef, 0, 0)
+
+    @test spiral_matrix(false) == Matrix{Int}(undef, 0, 0)
+  end
+
+  @testset "Trying wrong type of argument" begin
+    @test_throws ArgumentError spiral_matrix(1.0)
+    @test_throws ArgumentError spiral_matrix("Abracadbra")
+    @test_throws ArgumentError spiral_matrix(:Abracadbra)
+    
+    @test_throws AssertionError spiral_matrix(-10)
   end
 
   @testset "Trivial spiral" begin
-    @test_skip spiral_matrix(1) == reshape([1],(1,1))
+    @test spiral_matrix(1) == reshape([1],(1,1))
+
+    @test spiral_matrix(true) == reshape([1],(1,1))
   end
 
   @testset "Spiral of size 2" begin
-    @test_skip spiral_matrix(2) == [1 2; 4 3]
+    @test spiral_matrix(2) == [1 2; 4 3]
   end
 
   @testset "Spiral of size 3" begin
-    @test_skip spiral_matrix(3) == [1 2 3; 8 9 4; 7 6 5]
+    @test spiral_matrix(3) == [1 2 3; 8 9 4; 7 6 5]
   end
 
   @testset "Spiral of size 4" begin
-    @test_skip spiral_matrix(4) == [1 2 3 4; 12 13 14 5; 11 16 15 6; 10 9 8 7]
+    @test spiral_matrix(4) == [1 2 3 4; 12 13 14 5; 11 16 15 6; 10 9 8 7]
   end
 
 
   @testset "spiral of size 5" begin
-    @test_skip spiral_matrix(5) == [1 2 3 4 5;
+    @test spiral_matrix(5) == [1 2 3 4 5;
                                16 17 18 19 6;
                                15 24 25 20 7;
                                14 23 22 21 8;
@@ -34,7 +46,7 @@ include("spiral-matrix.jl")
   end
 
   @testset "spiral of size 6" begin
-    @test_skip spiral_matrix(6) == [1 2 3 4 5 6;
+    @test spiral_matrix(6) == [1 2 3 4 5 6;
                                20 21 22 23 24 7;
                                19 32 33 34 25 8;
                                18 31 36 35 26 9;
@@ -44,7 +56,7 @@ include("spiral-matrix.jl")
   end
   
   @testset "spiral of size 10" begin
-    @test_skip spiral_matrix(10) == [1  2  3  4   5  6  7  8  9  10;
+    @test spiral_matrix(10) == [1  2  3  4   5  6  7  8  9  10;
                                 36 37 38 39  40 41 42 43 44 11;
                                 35 64 65 66  67 68 69 70 45 12;
                                 34 63 84 85  86 87 88 71 46 13;
