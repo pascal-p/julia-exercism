@@ -1,7 +1,6 @@
 """
 Binary Search (Assume array sorted, but can be in reverse order)
-
-Assume elem can be ∈ array multiple times
+Assume duplicate values
 """
 function binarysearch(ary::Vector{T}, elem::T;
                       by=identity, lt=isless, rev::Bool=false, all::Bool=false,) where T

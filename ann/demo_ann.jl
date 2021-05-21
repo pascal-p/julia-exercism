@@ -2,6 +2,8 @@
 # from https://towardsdatascience.com/how-to-build-an-artificial-neural-network-from-scratch-in-julia-c839219b3ef8
 #
 
+using Pkg; Pkg.activate("Exercism_env", shared=true)
+
 push!(LOAD_PATH, "./src")
 using YA_ANN
 
