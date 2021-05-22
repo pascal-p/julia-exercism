@@ -1,17 +1,45 @@
+"""
+  Write a robot simulator.
+
+A robot factory's test facility needs a program to verify robot movements.
+
+The robots have three possible movements:
+
+    turn right
+    turn left
+    advance
+
+Robots are placed on a hypothetical infinite grid, facing a particular direction (north, east, south, or west) at a set of {x,y} coordinates, e.g., {3,8}, with coordinates increasing to the north and east.
+
+The robot then receives a number of instructions, at which point the testing facility verifies the robot's new position, and in which direction it is pointing.
+
+    The letter-string "RAALAL" means:
+        Turn right
+        Advance twice
+        Turn left
+        Advance once
+        Turn left yet again
+    Say a robot starts at {7, 3} facing north. Then running this stream of instructions should leave it at {9, 4} facing west.
+"""
 const NORTH = 1
 const EAST = 2
 const SOUTH = 3
 const WEST = 4
 const DIRS = (NORTH, EAST, SOUTH, WEST)
 
-import Base: show, ==
+import Base: == #, show
 
-# abstract type Point end
+"""
+  Point (mutable) data structure
+"""
 mutable struct Point{T <: Integer}
   x::T
   y::T
 end
 
+"""
+  Robot (mutable) data structure
+"""
 mutable struct Robot
   pos::Point
   dir::Int
@@ -20,13 +48,8 @@ mutable struct Robot
     @assert(dir ∈ DIRS,
             "direction should be NORTH, EAST, SOUTH or WEST")
     @assert length(pos) == 2
-    # ensure pos is a tuple of Int
 
-    if pos[1] == zero(Int) && pos[2] == zero(Int)
-      new(Point{Int}(0, 0), dir)
-    else
-      new(Point{T}(pos...), dir)
-    end
+    new(Point{T}(pos...), dir)
   end
 end
 
@@ -43,17 +66,31 @@ position(r::Robot) = r.pos
 turn_right!(r::Robot) = _turn!(r, 1)
 turn_left!(r::Robot) = _turn!(r, -1)
 
+"""
+  move!
+
+Execute succession of instructions given by `instructions` a String
+
+"""
 function move!(r::Robot, instructions::String)
-  for instruction ∈ instructions
-    if instruction == "A"
+  for instruction ∈ instructions |> uppercase
+    if instruction == 'A'
       advance!(r)
+
+    elseif instruction == 'L'
+      turn_left!(r)
+
+    elseif instruction == 'R'
+      turn_right!(r)
+
     else
+      throw(ArgumentError("Instruction is either A, L xor R, got: $(instruction)"))
     end
   end
   r
 end
 
-advance!(r::Robot) = _advance(r) # throw(ArgumentError("Not Inplemented yet!"))
+advance!(r::Robot) = _advance(r)
 
 ## Internal helpers
 

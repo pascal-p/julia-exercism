@@ -66,32 +66,41 @@ end
   @test position(advance!(Robot((0, 0), WEST))) == Point(-1, 0)
 end
 
-# @testset "instructions" begin
-#     @testset "moving east and north from README" begin
-#         r = Robot((7, 3), NORTH)
-#         move!(r, "RAALAL")
-#         @test position(r) == Point(9, 4)
-#         @test heading(r) == WEST
-#     end
+@testset "instructions" begin
+  @testset "moving east and north from README" begin
+    r = Robot((7, 3), NORTH)
+    move!(r, "RAALAL")
 
-#     @testset "move west and north" begin
-#         r = Robot((0, 0), NORTH)
-#         move!(r, "LAAARALA")
-#         @test position(r) == Point(-4, 1)
-#         @test heading(r) == WEST
-#     end
+    @test position(r) == Point(9, 4)
+    @test heading(r) == WEST
+  end
 
-#     @testset "move west and south" begin
-#         r = Robot((2, -7), EAST)
-#         move!(r, "RRAAAAALA")
-#         @test position(r) == Point(-3, -8)
-#         @test heading(r) == SOUTH
-#     end
+  @testset "move west and north" begin
+    r = Robot((0, 0), NORTH)
+    move!(r, "LAAARALA")
 
-#     @testset "move east and north" begin
-#         r = Robot((8, 4), SOUTH)
-#         move!(r, "LAAARRRALLLL")
-#         @test position(r) == Point(11, 5)
-#         @test heading(r) == NORTH
-#     end
-# end
+    @test position(r) == Point(-4, 1)
+    @test heading(r) == WEST
+  end
+
+  @testset "move west and south" begin
+    r = Robot((2, -7), EAST)
+    move!(r, "RRAAAAALA")
+
+    @test position(r) == Point(-3, -8)
+    @test heading(r) == SOUTH
+  end
+
+  @testset "move east and north" begin
+    r = Robot((8, 4), SOUTH)
+    move!(r, "LAAARRRALLLL")
+
+    @test position(r) == Point(11, 5)
+    @test heading(r) == NORTH
+  end
+
+  @testset "exception incorrect instructions" begin
+    r = Robot((8, 4), SOUTH)
+    @test_throws ArgumentError move!(r, "LAMB")
+  end
+end
