@@ -1,5 +1,5 @@
 ## Algorithms Specialization - Stanford / Coursera
-Instructor: [Tim Roughgarden](https://www.coursera.org/instructor/~768)  
+Instructor: [Tim Roughgarden](https://www.coursera.org/instructor/~768)
 
 Julia Programming Implementation.
 
@@ -8,16 +8,16 @@ Julia Programming Implementation.
 
 The primary topics in this part of the specialization are: asymptotic ("Big-oh") notation, sorting and searching, divide and conquer (master method, integer and matrix multiplication, closest pair), and randomized algorithms (QuickSort, contraction algorithm for min cuts).
 
- - [X] [week 1/PA - Karatsuba’s integer multiplication](https://github.com/pascal-p/julia-exercism/blob/master/Algo/01-karatsuba-int-mult/)  
- - [X] [week 2/PA - Counting Inversions](https://github.com/pascal-p/julia-exercism/blob/master/Algo/02-counting-inversions/)  
- - [X] [week 3/PA - Quick Sort](https://github.com/pascal-p/julia-exercism/blob/master/Algo/03-quick-sort/)  
- - [X] [week 4/PA - Graph Mincut](https://github.com/pascal-p/julia-exercism/blob/master/Algo/05-graph-mincut/)  
+ - [X] [week 1/PA - Karatsuba’s integer multiplication](https://github.com/pascal-p/julia-exercism/blob/master/Algo/01-karatsuba-int-mult/)
+ - [X] [week 2/PA - Counting Inversions](https://github.com/pascal-p/julia-exercism/blob/master/Algo/02-counting-inversions/)
+ - [X] [week 3/PA - Quick Sort](https://github.com/pascal-p/julia-exercism/blob/master/Algo/03-quick-sort/)
+ - [X] [week 4/PA - Graph Mincut](https://github.com/pascal-p/julia-exercism/blob/master/Algo/05-graph-mincut/)
 
 ### C02 - Graph Search, Shortest Paths, and Data Structures
  - [X] [Graph Search, Shortest Paths, and Data Structures](https://www.coursera.org/learn/algorithms-graphs-data-structures)
 
 The primary topics in this part of the specialization are: data structures (heaps, balanced search trees, hash tables, bloom filters), graph primitives (applications of breadth-first and depth-first search, connectivity, shortest paths), and their applications (ranging from deduplication to social network analysis).
-    
+
  - [X] [week 1/PA - Digraph Strongly Connected Components](https://github.com/pascal-p/julia-exercism/blob/master/Algo/06-digraph-scc/)
  - [X] [week 2/PA - Dijkstra Shortest Path](https://github.com/pascal-p/julia-exercism/blob/master/Algo/07-dijkstra-sp/)
  - [X] [week 3/PA - Median Maintenance - heap](https://github.com/pascal-p/julia-exercism/tree/master/Algo/08-median-maintenance-heap) and [week 3/PA - Median Maintenance - bst](https://github.com/pascal-p/julia-exercism/tree/master/Algo/10-median-maintenance-bst)
@@ -44,4 +44,4 @@ The primary topics in this part of the specialization are: shortest paths (Bellm
   - [X] [week 4/PA - 2SAT using Digrap SCC](https://github.com/pascal-p/julia-exercism/tree/master/Algo/21-1-2-sat) and [week 4/PA - 2SAT using Papadimitriou's Algorithm](https://github.com/pascal-p/julia-exercism/tree/master/Algo/21-2-2-sat)
 
 <hr />
-<p style="font-size:0.25em">Nov-Dec 2020, Jan 2021 Corto Inc</p>
+<p><sub><em>Nov-Dec 2020, Jan 2021 Corto Inc</sub></em></p>
