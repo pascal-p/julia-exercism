@@ -56,7 +56,32 @@ end
 
 
 @testset "#decode" begin
+  @test decode([0x7f]) == UInt32[0x7f] # [0x0000007f]
+  @test decode([0xc0, 0x00]) == UInt32[0x2000]
+  @test decode([0xff, 0xff, 0x7f]) == UInt32[0x1fffff]
+
+  @test decode([0x81, 0x80, 0x80, 0x00]) == UInt32[0x200000];
+  @test decode([0x8f, 0xff, 0xff, 0xff, 0x7f]) == UInt32[0xffffffff]
+
+  @test decode([0xc0,
+                0x00,
+                0xc8,
+                0xe8,
+
+                0x56,
+                0xff,
+                0xff,
+                0xff,
+
+                0x7f,
+                0x00,
+                0xff,
+                0x7f,
+                0x81,
+                0x80,
+                0x00]) == UInt32[0x2000, 0x123456, 0xfffffff, 0x00, 0x3fff, 0x4000]
 end
 
-@testset "#decode" begin
+@testset "#decode - exceptions" begin
+  @test_throws ArgumentError decode([0xff])   # leftmost bit is 1 (and should be 0)
 end
