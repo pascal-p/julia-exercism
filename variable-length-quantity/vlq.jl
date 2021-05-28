@@ -75,26 +75,16 @@ function decode(vnum::Vector{T})::Vector{UInt32} where {T <: Unsigned}
   rsum = Vector{UInt32}()
 
   # get index of byte whose leftmost bit is 0 - these are the boundaries
-  ixes = filter(p -> (p[2] & 0x80) >> 7 == 0x00,
-                zip(1:length(vnum), vnum) |> collect) |>
-    a -> map(p -> p[1], a)
-
+  ixes =  get_boundaries(vnum)
   length(ixes) == 0 && throw(ArgumentError("Incomplete sequence"))
 
-  # Extract slices of bytes...
-  slices = Vector{Vector{UInt8}}()
-  s_ix = 1
-  for ix ∈ ixes
-    push!(slices, vnum[s_ix:ix])
-    s_ix = ix + 1
-  end
+  slices = extract_slices(vnum, ixes)
 
   # Now we can decode each slice
   for slice ∈ slices
     slice = slice .& KEEP1         # NOTE: broadcast
     sum = UInt32(slice[end])
     shift = SHIFT
-
     for byte ∈ slice[1:end-1] |> reverse
       sum += UInt32(byte) << shift # multiply and add
       shift += SHIFT
@@ -104,4 +94,22 @@ function decode(vnum::Vector{T})::Vector{UInt32} where {T <: Unsigned}
   end
 
   rsum
+end
+
+function get_boundaries(vnum::Vector{T}) where {T <: Unsigned}
+  filter(p -> (p[2] & MOD) >> SHIFT == 0x00,
+         zip(1:length(vnum), vnum) |> collect) |>
+    a -> map(p -> p[1], a)
+end
+
+function extract_slices(vnum::Vector{T}, ixes::Vector{<: Integer}) where {T <: Unsigned}
+  slices = Vector{Vector{UInt8}}()
+  s_ix = 1
+
+  for ix ∈ ixes
+    push!(slices, vnum[s_ix:ix])
+    s_ix = ix + 1
+  end
+
+  slices
 end
