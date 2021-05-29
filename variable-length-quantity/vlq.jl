@@ -37,16 +37,14 @@ function encode(vnum::Vector{T})::Vector{<: Unsigned} where {T <: Unsigned}
   length(vnum) == 1 && vnum[1] ≤ 0x7f && return vnum
 
   r_ary = UInt8[];
-
   for n ∈ vnum
     ary = UInt8[];
     low_part = n % MOD             # lower 8 byte (rightmost one) ==> zero-ed leftmost bit
     push!(ary, low_part)
-
     r = n >> SHIFT                 # divide until...
     while (r > 0x00)               # ... we reach 0
       push!(ary, r % MOD + MOD)    # set leftmost bit to 1
-      r = r >> SHIFT               #
+      r >>= SHIFT                  # next
     end
 
     push!(r_ary, reverse(ary)...)  # reverse byte order
@@ -82,15 +80,16 @@ function decode(vnum::Vector{T})::Vector{UInt32} where {T <: Unsigned}
 
   # Now we can decode each slice
   for slice ∈ slices
-    slice = slice .& KEEP1         # NOTE: broadcast
-    sum = UInt32(slice[end])
-    shift = SHIFT
-    for byte ∈ slice[1:end-1] |> reverse
-      sum += UInt32(byte) << shift # multiply and add
-      shift += SHIFT
-    end
+    slice = slice .& KEEP1              # NOTE: broadcast
 
-    push!(rsum, sum)
+    # closure => side effect
+    shift = -SHIFT
+    λ(byte) = (shift += SHIFT; UInt32(byte) << shift)
+
+    sum_ = map(λ, slice |> reverse) |>  # multiply
+      sum                               # add
+
+    push!(rsum, sum_)
   end
 
   rsum
