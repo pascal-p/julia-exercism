@@ -237,3 +237,38 @@ end
 
   @test sum(pr) == 142_913_828_922
 end
+
+
+@testset "generate 1000 first primes" begin
+  @test @time generate_n_firstprimes(1000) |> length == 1000
+end
+
+@testset "generate 10_000 first primes" begin
+  @test @time generate_n_firstprimes(10_000) |> length == 10_000
+end
+
+@testset "generate 100_000 first primes" begin
+  @test @time generate_n_firstprimes(100_000) |> length == 100_000
+end
+
+@testset "generate 1_000_000 first primes" begin
+  @test @time generate_n_firstprimes(1_000_000) |> length == 1_000_000
+end
+
+@testset "generate 10_000_000 first primes" begin
+  @test @time generate_n_firstprimes(10_000_000) |> length == 10_000_000
+end
+
+@testset "generate 50_000_000 first primes" begin
+  @test @time generate_n_firstprimes(50_000_000) |> length == 50_000_000
+end
+
+@testset "generate 100_000_000 first primes" begin
+  @test @time generate_n_firstprimes(100_000_000) |> length == 100_000_000
+  # 11.962785 seconds (12 allocations: 3.185 GiB, 0.42% gc time)
+end
+
+#@testset "generate 500_000_000 first primes" begin
+  # @test @time generate_n_firstprimes(500_000_000) |> length == 500_000_000
+  # 67.706756 seconds (12 allocations: 15.456 GiB, 0.43% gc time)
+#end
