@@ -25,8 +25,32 @@ end
 ## external constructors
 Primes{T1}(n::T2) where {T1 <: Unsigned, T2 <: Signed} = Primes{T1}(T1(n))
 
-## accessor
+function Primes(n::T) where {T <: Signed}
+  # @assert n > 0
+  Primes{T}(n)
+end
+
+Primes(n::T) where {T <: Unsigned} = Primes{T}(n)
+
+## accessors
 v(pr::Primes) = pr._v
+
+"""
+  first_nth_primes(pr, n)
+
+  returns first n consecutive primes if defined
+  otherwise throw AssertionError
+"""
+function first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Integer}
+  @assert zero(T) < n - from + 1 ≤ length(pr) "Expecting argument `n` to be in range 1..$(length(pr))"
+  @assert one(T) ≤ from ≤ length(pr) "Expecting argument `from` to be in range 1..$(length(pr))"
+  pr._v[from:n]
+end
+
+function first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Unsigned}
+  @assert one(T) ≤ from ≤ length(pr) "Expecting argument `from` to be in range 1..$(length(pr))"
+  pr._v[from:n]
+end
 
 """
   nth(primes, n)
@@ -98,16 +122,26 @@ function generate_n_firstprimes(n::T)::Primes{T} where {T <: Integer}
   f = max(2, round(Int, log(n) / log(10)) ÷ 2 + 1) # increasing factor
   m = f * n # m = 6 * n
   pr = Primes{T}(m)
-
   while true
     length(pr) == n && return pr
     length(pr) > n && return Primes{T}(pr, n)
-
     m = f * m                          # exp. increase... overflow danger
     m < 0 && throw(OverflowError("overflow detected..."))
-
     pr = Primes{T}(pr._v, m - length(pr))  # try adding
   end
+end
+
+
+## primality test
+function isprime(p::T)::Bool where {T <: Integer}
+  (p ≤ 1 || (p > 2 && p % 2 == 0)) && return false
+  p ≤ 3 && return true
+  n = floor(T, √(p))
+  prime = true
+  for cp ∈ generate_n_firstprimes(n)
+    p % cp == 0 && return false    # cp ≠ p
+  end
+  prime
 end
 
 

@@ -259,16 +259,35 @@ end
   @test @time generate_n_firstprimes(10_000_000) |> length == 10_000_000
 end
 
-@testset "generate 50_000_000 first primes" begin
-  @test @time generate_n_firstprimes(50_000_000) |> length == 50_000_000
-end
+# @testset "generate 50_000_000 first primes" begin
+#   @test @time generate_n_firstprimes(50_000_000) |> length == 50_000_000
+# end
 
-@testset "generate 100_000_000 first primes" begin
-  @test @time generate_n_firstprimes(100_000_000) |> length == 100_000_000
+#@testset "generate 100_000_000 first primes" begin
+  # @test @time generate_n_firstprimes(100_000_000) |> length == 100_000_000
   # 11.962785 seconds (12 allocations: 3.185 GiB, 0.42% gc time)
-end
+#end
 
 #@testset "generate 500_000_000 first primes" begin
   # @test @time generate_n_firstprimes(500_000_000) |> length == 500_000_000
   # 67.706756 seconds (12 allocations: 15.456 GiB, 0.43% gc time)
 #end
+
+
+@testset "primality test" begin
+  @test isprime(3)
+  @test isprime(2)
+  @test isprime(19)
+  @test isprime(947)
+  @test isprime(9941)
+  @test isprime(99991)
+  @test isprime(499879)
+
+  @test all(p -> isprime(p), generate_n_firstprimes(1000))
+  @test all(p -> isprime(p), generate_n_firstprimes(20000))
+
+  @test !isprime(64)
+  @test !isprime(1)
+  @test !isprime(0)
+  @test !isprime(77)
+end
