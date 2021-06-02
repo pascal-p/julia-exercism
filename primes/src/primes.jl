@@ -25,10 +25,11 @@ end
 ## external constructors
 Primes{T1}(n::T2) where {T1 <: Unsigned, T2 <: Signed} = Primes{T1}(T1(n))
 
-function Primes(n::T) where {T <: Signed}
-  # @assert n > 0
-  Primes{T}(n)
-end
+Primes(n::T) where {T <: Signed} = Primes{T}(n)
+# function Primes(n::T) where {T <: Signed}
+#   @assert n > 0
+#   Primes{T}(n)
+# end
 
 Primes(n::T) where {T <: Unsigned} = Primes{T}(n)
 
@@ -41,16 +42,18 @@ v(pr::Primes) = pr._v
   returns first n consecutive primes if defined
   otherwise throw AssertionError
 """
-function first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Integer}
-  @assert zero(T) < n - from + 1 ≤ length(pr) "Expecting argument `n` to be in range 1..$(length(pr))"
-  @assert one(T) ≤ from ≤ length(pr) "Expecting argument `from` to be in range 1..$(length(pr))"
-  pr._v[from:n]
-end
+first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Integer} = pr._v[from:from + n - 1]
+# function first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Integer}
+#   @assert zero(T) < n - from + 1 ≤ length(pr) "Expecting argument `n` to be in range 1..$(length(pr))"
+#   @assert one(T) ≤ from ≤ length(pr) "Expecting argument `from` to be in range 1..$(length(pr))"
+#   pr._v[from:n]
+# end
 
-function first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Unsigned}
-  @assert one(T) ≤ from ≤ length(pr) "Expecting argument `from` to be in range 1..$(length(pr))"
-  pr._v[from:n]
-end
+first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Unsigned} = pr._v[from:from + n - 1]
+# function first_nth_primes(pr::Primes, n::T; from=one(T)) where {T <: Unsigned}
+#   @assert one(T) ≤ from ≤ length(pr) "Expecting argument `from` to be in range 1..$(length(pr))"
+#   pr._v[from:n]
+# end
 
 """
   nth(primes, n)
@@ -118,32 +121,33 @@ function generate_n_firstprimes(n::T)::Primes{T} where {T <: Integer}
   #
   # no idea about the 'density' of primes (any link with Riemann ζ function?)
   #
-
   f = max(2, round(Int, log(n) / log(10)) ÷ 2 + 1) # increasing factor
   m = f * n # m = 6 * n
   pr = Primes{T}(m)
   while true
     length(pr) == n && return pr
     length(pr) > n && return Primes{T}(pr, n)
-    m = f * m                          # exp. increase... overflow danger
+    m = f * m                              # exp. increase... overflow danger
     m < 0 && throw(OverflowError("overflow detected..."))
     pr = Primes{T}(pr._v, m - length(pr))  # try adding
   end
 end
 
 
-## primality test
+## primality test - a convenience function
 function isprime(p::T)::Bool where {T <: Integer}
   (p ≤ 1 || (p > 2 && p % 2 == 0)) && return false
   p ≤ 3 && return true
+  p % 3 == 0 && return false
+
   n = floor(T, √(p))
-  prime = true
-  for cp ∈ generate_n_firstprimes(n)
-    p % cp == 0 && return false    # cp ≠ p
+  prime, cp = true, 5
+  while cp < n
+    (p % cp == 0 || p % (cp + 2) == 0) && return false
+    cp += 6
   end
   prime
 end
-
 
 ## Iterator
 Base.collect(pr::Primes{T}) where {T <: Integer} = pr._v
@@ -182,7 +186,7 @@ function gen_primes(n::T) where {T <: Integer}
     cp = 2x + 1
     cp * cp > 2m + 1 && break  ## DONE: because cp² > 2m + 1
 
-    for jx in (x + cp):cp:m
+    @inbounds for jx in (x + cp):cp:m
       prime_ind[jx] = false
     end
 
@@ -226,7 +230,7 @@ function gen_primes(vp::Vector{T}, n::T) where {T <: Integer}
     end
     ix > m && break                   ## we are done...
 
-    for jx ∈ ix:p:m                   ## now eliminate multiples of p
+    @inbounds for jx ∈ ix:p:m         ## now eliminate multiples of p
       prime_ind[jx] = false
     end
   end
@@ -234,7 +238,6 @@ function gen_primes(vp::Vector{T}, n::T) where {T <: Integer}
   ## finally combine
   primes = Vector{T}(undef, length(vp) + sum(prime_ind))
   copyto!(primes, vp)
-
   ix = length(vp) + 1
   for x ∈ 1:m
     if prime_ind[x]
