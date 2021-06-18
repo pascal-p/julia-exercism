@@ -1,10 +1,10 @@
 const NON_LETTERS = r"[^a-zA-Z0-9]+"
 const DEFL = '.'
 
-## A convenince macro
+## A convenience macro
 macro loop(n, incr_fn, decr_fn)
   quote
-    ix = 1
+    local ix = 1
     while true
       ix = $(esc(incr_fn))(ix)
       ix > $(esc(n)) && break
@@ -18,8 +18,7 @@ function check_fn(msg::String, rails::Int)::Bool
   rails == 1 && return false
   (length(msg) == 0  || rails > length(msg)) && return false
   rails ≤ 0 && throw(ArgumentError("rails should be strictly positive - got: $(rails)"))
-
-  return true
+  true
 end
 
 macro enc_dec_checker(fn)
