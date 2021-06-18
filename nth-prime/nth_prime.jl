@@ -1,106 +1,69 @@
-const MAX_PRIME_LIM = 1_000_000  # =>  78_498 first primes, last prime:   999_983
-#                     2_000_000  # => 148_933 first primes, last prime: 1_999_993
-#                     5_000_000  # => 348_513 first primes, last prime: 4_999_999
+module YaPrime
 
-function prime(num::Integer; lim=MAX_PRIME_LIM)::Integer
-  0 < num < lim || throw(ArgumentError("Out of bounds"))
+const _PRIMES = Int64[2, 3, 5, 7, 11, 13];
 
-  primes = gen_primes_lt(lim)
+export _PRIMES, nth_prime
+"""
+The n-th Prime Number
 
-  if num > length(primes)
-    throw(ArgumentError("You need to increase the current limit of $(lim) to get the $(num)-th prime / currently only $(length(primes)) available"))
-  end
+The prime number theorem is equivalent to the statement that the n-th prime number pₙ satisfies
+  pₙ ∼ n × ln(n)
 
-  primes[num]
+the asymptotic notation meaning again that the relative error of this approximation approaches 0 as n → ∞.
+
+"""
+function nth_prime(num::Integer)::Integer
+  num == 0 && throw(ArgumentError("Argument should be >0"))
+  n = length(YaPrime._PRIMES)
+
+  (num <= n) && return YaPrime._PRIMES[num];
+
+  # primes = gen_primes_lt(lim)
+  lim = ceil(Int, num * log(num) * 1.2) # 20% error
+  gen_primes_upto!(lim)
+  YaPrime._PRIMES[num]
 end
 
 ##
-## Avoiding restarting from scracth the computation of primes
+## Avoiding restarting from scratch the computation of primes
 ##
-let primes = Int[2], lim = 0
+function gen_primes_upto!(n::Integer)# ::Vector{Int64}
+  last_prime = YaPrime._PRIMES[end]  ## starting from last calculated prime
+  prime_ind = fill(true, (n - last_prime) ÷ 2)
+  m = length(prime_ind)
 
-  global function gen_primes_lt(n::Integer)
-    n ≤ lim && length(primes) > 2 && return primes
-
-    if lim == 0   ## init of primes vector
-      prime_ind = vcat([ true ],
-                       [ true for _ ∈ 3:2:(n - 1) ])
-
-      x, m = 1, length(prime_ind)
-      while x < m
-        cp = 2x + 1
-        for jx in (x + cp):cp:m
-          prime_ind[jx] = false
-        end
-        x += 1
-        while x < m && !prime_ind[x]
-          x += 1
-        end
-      end
-      primes = vcat([2,], [2x + 1 for x ∈ 1:m if prime_ind[x]])
-      lim = n
-      return primes
-
-    else          ## extension of primes vector
-      last_prime = primes[end]            ## starting from last calculted prime
-
-      prime_ind = [true for _ ∈ (last_prime + 2):2:n]
-      ## prime_ind holds for last_prime + 2, last_prime + 4 ...
-
-      m = length(prime_ind)
-
-      ## now try multiples for primes to determine which integer
-      ## are prime in prime_ind
-
-      for p in primes[2:end]
-        p * p > last_prime + 2m && break  ## we are done...
-
-        ix = 1                            ## index for primes_ind
-        cp = last_prime + 2
-        while ix ≤ m && cp % p != 0
-          ix += 1
-          cp += 2
-        end
-        ix > m && break                   ## we are done...
-
-        for jx ∈ ix:p:m                   ## now eliminate multiples of p
-          prime_ind[jx] = false
-        end
-
-        ## try next prime
-      end
-      ## finally combine
-      primes = vcat(primes,
-                    [last_prime + 2x for x ∈ 1:m if prime_ind[x]])
-      lim = n
-      return primes
-    end
+  ## now eliminate all multiples of the known primes (primes vector)
+  ## from prime_ind (≡ prime candidates)
+  for p in YaPrime._PRIMES[2:end]         ## p ∈ 3, 5, 7, 11, 13,
+    p * p > last_prime + 2m && break      ## we are done...
+    ix, cp = next_prime(last_prime, m, p) ## find next prime cp
+    ix > m && break                       ## we are done...
+    (_v = view(prime_ind, ix:p:m)) .= false
   end
-
+  ## finally combine
+  push!(YaPrime._PRIMES, [last_prime + 2x for x ∈ 1:m if prime_ind[x]]...)
 end
 
-## re-starting from scracth each time
-# let primes = Int[2], lim = 0
-#   global function gen_primes_lt0(n::Integer)
-#     """
-#     Using Eratosthenes siver method
-#     """
-#     n ≤ lim && length(primes) > 2 && return primes
-#     # we need to (re)start from scratch
-#     prime_ind = vcat([ true ],
-#                      [ true for _ ∈ 3:2:(n - 1) ])
-#     x, m = 1, length(prime_ind)
-#     while x < m
-#       cp = 2x + 1
-#       for jx in (x + cp):cp:m
-#         prime_ind[jx] = false
-#       end
-#       x += 1
-#       while x < m && !prime_ind[x]
-#         x += 1
-#       end
-#     end
-#     primes = vcat([2,], [2x + 1 for x ∈ 1:m if prime_ind[x]])
-#     return primes
-#   end
-# end
+"""
+find next prime, given last known prime so far
+cp is a prime if it cannot be divided by any of the prime that precedes it
+"""
+@inline function next_prime(last_prime::Integer, m::Integer, p::Integer)::Tuple{Integer, Integer}
+  ix = 1                            ## starting index for primes_ind
+  cp = last_prime + 2               ## (possible) next candidate prime
+  while ix ≤ m && cp % p != 0
+    ix += 1
+    cp += 2
+  end
+  (ix, cp)
+end
+
+@inline function next_prime(x::Integer, m::Integer, prime_ind::Vector{Bool})::Integer
+  x += 1
+  while x < m && !prime_ind[x]
+    x += 1
+  end
+  x
+end
+
+end # module
