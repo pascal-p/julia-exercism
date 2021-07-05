@@ -22,11 +22,12 @@ The case where the sum of the lengths of two sides _equals_ that of the
 third is known as a _degenerate_ triangle - it has zero area and looks like
 a single line. Feel free to add your own code/tests to check for degenerate triangles.
 
-
 ## Source
 
 The Ruby Koans triangle project, parts 1 & 2 [http://rubykoans.com](http://rubykoans.com)
 
-## Submitting Incomplete Solutions
+## Version compatibility
+This exercise has been tested on Julia versions >=1.0.
 
+## Submitting Incomplete Solutions
 It's possible to submit an incomplete solution so you can see how others have completed the exercise.
