@@ -2,300 +2,86 @@ using Test
 
 include("allergies.jl")
 
-@testset "eggs allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0)
-    @test !allergic_to(allergies, "eggs")
+# canonical data
+@testset "testing for single allergies" begin
+  @testset "testing for eggs allergy" begin
+    @test !allergic_to(0, "eggs")
+    @test  allergic_to(1, "eggs")
+    @test  allergic_to(3, "eggs")
+    @test !allergic_to(2, "eggs")
+    @test  allergic_to(255, "eggs")
   end
 
-  @testset "allergic only to eggs" begin
-    allergies = Allergies(1)
-    @test allergic_to(allergies, "eggs")
+  @testset "testing for peanuts allergy" begin
+    @test !allergic_to(0, "peanuts")
+    @test  allergic_to(2, "peanuts")
+    @test  allergic_to(7, "peanuts")
+    @test !allergic_to(5, "peanuts")
+    @test  allergic_to(255, "peanuts")
   end
 
-  @testset "allergic to eggs and something else" begin
-    allergies = Allergies(3)
-    @test allergic_to(allergies, "eggs")
+  @testset "testing for shellfish allergy" begin
+    @test !allergic_to(0, "shellfish")
+    @test  allergic_to(4, "shellfish")
+    @test  allergic_to(14, "shellfish")
+    @test !allergic_to(10, "shellfish")
+    @test  allergic_to(255, "shellfish")
   end
 
-  @testset "allergic to something, but not eggs" begin
-    allergies = Allergies(2.0)             # yes this float works...
-    @test !allergic_to(allergies, "eggs")
+  @testset "testing for strawberries allergy" begin
+    @test !allergic_to(0, "strawberries")
+    @test  allergic_to(8, "strawberries")
+    @test  allergic_to(28, "strawberries")
+    @test !allergic_to(20, "strawberries")
+    @test  allergic_to(255, "strawberries")
   end
 
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, "eggs")
-  end
-end
-
-@testset "peanuts allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0)
-    @test !allergic_to(allergies, :peanuts)
+  @testset "testing for tomatoes allergy" begin
+    @test !allergic_to(0, "tomatoes")
+    @test  allergic_to(16, "tomatoes")
+    @test  allergic_to(56, "tomatoes")
+    @test !allergic_to(40, "tomatoes")
+    @test  allergic_to(255, "tomatoes")
   end
 
-  @testset "allergic only to peanuts" begin
-    allergies = Allergies(2)
-    @test allergic_to(allergies, :peanuts)
+  @testset "testing for chocolate allergy" begin
+    @test !allergic_to(0, "chocolate")
+    @test  allergic_to(32, "chocolate")
+    @test  allergic_to(112, "chocolate")
+    @test !allergic_to(80, "chocolate")
+    @test  allergic_to(255, "chocolate")
   end
 
-  @testset "allergic to peanuts and something else" begin
-    allergies = Allergies(7)
-    @test allergic_to(allergies, :peanuts)
+  @testset "testing for pollen allergy" begin
+    @test !allergic_to(0, "pollen")
+    @test  allergic_to(64, "pollen")
+    @test  allergic_to(224, "pollen")
+    @test !allergic_to(160, "pollen")
+    @test  allergic_to(255, "pollen")
   end
 
-  @testset "allergic to something, but not peanuts" begin
-    allergies = Allergies(5)
-    @test !allergic_to(allergies, :peanuts)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :peanuts)
-  end
-end
-
-@testset "shellfish allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0.0)
-    @test !allergic_to(allergies, :shellfish)
-  end
-
-  @testset "allergic only to shellfish" begin
-    allergies = Allergies(4)
-    @test allergic_to(allergies, :shellfish)
-  end
-
-  @testset "allergic to shellfish and something else" begin
-    allergies = Allergies(14.0)
-    @test allergic_to(allergies, :shellfish)
-  end
-
-  @testset "allergic to something, but not shellfish" begin
-    allergies = Allergies(10)
-    @test !allergic_to(allergies, :shellfish)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :shellfish)
+  @testset "testing for cats allergy" begin
+    @test !allergic_to(0, "cats")
+    @test  allergic_to(128, "cats")
+    @test  allergic_to(192, "cats")
+    @test !allergic_to(64, "cats")
+    @test  allergic_to(255, "cats")
   end
 end
 
-@testset "strawberries allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0.0)
-    @test !allergic_to(allergies, :strawberries)
+@testset "testing the allergy_list" begin
+  @testset "testing single allergies" begin
+    @test allergy_list(0) == Set([])
+    @test allergy_list(1) == Set(["eggs"])
+    @test allergy_list(2) == Set(["peanuts"])
+    @test allergy_list(8) == Set(["strawberries"])
   end
 
-  @testset "allergic only to strawberries" begin
-    allergies = Allergies(8)
-    @test allergic_to(allergies, :strawberries)
+  @testset "testing for more allergies" begin
+    @test allergy_list(3) == Set(["eggs", "peanuts"])
+    @test allergy_list(5) == Set(["eggs", "shellfish"])
+    @test allergy_list(248) == Set(["strawberries", "tomatoes", "chocolate", "pollen", "cats"])
+    @test allergy_list(255) == Set(["eggs", "peanuts", "shellfish", "strawberries", "tomatoes", "chocolate", "pollen", "cats"])
+    @test allergy_list(509) == Set(["eggs", "shellfish", "strawberries", "tomatoes", "chocolate", "pollen", "cats"])
   end
-
-  @testset "allergic to strawberries and something else" begin
-    allergies = Allergies(28)
-    @test allergic_to(allergies, :strawberries)
-  end
-
-  @testset "allergic to something, but not strawberries" begin
-    allergies = Allergies(20)
-    @test !allergic_to(allergies, :strawberries)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :strawberries)
-  end
-end
-
-@testset "tomatoes allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0.0)
-    @test !allergic_to(allergies, :tomatoes)
-  end
-
-  @testset "allergic only to tomatoes" begin
-    allergies = Allergies(16)
-    @test allergic_to(allergies, :tomatoes)
-  end
-
-  @testset "allergic to tomatoes and something else" begin
-    allergies = Allergies(56)
-    @test allergic_to(allergies, :tomatoes)
-  end
-
-  @testset "allergic to something, but not tomatoes" begin
-    allergies = Allergies(40)
-    @test !allergic_to(allergies, :tomatoes)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :tomatoes)
-  end
-
-end
-
-@testset "chocolate allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0.0)
-    @test !allergic_to(allergies, :chocolate)
-  end
-
-  @testset "allergic only to chocolate" begin
-    allergies = Allergies(32)
-    @test allergic_to(allergies, :chocolate)
-  end
-
-  @testset "allergic to chocolate and something else" begin
-    allergies = Allergies(112)
-    @test allergic_to(allergies, :chocolate)
-  end
-
-  @testset "allergic to something, but not chocolate" begin
-    allergies = Allergies(80)
-    @test !allergic_to(allergies, :chocolate)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :chocolate)
-  end
-
-end
-
-@testset "pollen allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0.0)
-    @test !allergic_to(allergies, :pollen)
-  end
-
-  @testset "allergic only to pollen" begin
-    allergies = Allergies(64)
-    @test allergic_to(allergies, :pollen)
-  end
-
-  @testset "allergic to pollen and something else" begin
-    allergies = Allergies(224)
-    @test allergic_to(allergies, :pollen)
-  end
-
-  @testset "allergic to something, but not pollen" begin
-    allergies = Allergies(160)
-    @test !allergic_to(allergies, :pollen)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :pollen)
-  end
-end
-
-@testset "cats allergy" begin
-  @testset "not allergic to anything" begin
-    allergies = Allergies(0.0)
-    @test !allergic_to(allergies, :cats)
-  end
-
-  @testset "allergic only to cats" begin
-    allergies = Allergies(128)
-    @test allergic_to(allergies, :cats)
-  end
-
-  @testset "allergic to cats and something else" begin
-    allergies = Allergies(192)
-    @test allergic_to(allergies, :cats)
-  end
-
-  @testset "allergic to something, but not cats" begin
-    allergies = Allergies(64)
-    @test !allergic_to(allergies, :cats)
-  end
-
-  @testset "allergic to everything" begin
-    allergies = Allergies(255)
-    @test allergic_to(allergies, :cats)
-  end
-end
-
-
-@testset "list when" begin
-  @testset "no allergies" begin
-    allergies = Allergies(0)
-    @test list(allergies) == []
-  end
-
-  @testset "just eggs" begin
-    allergies = Allergies(1)
-    @test list(allergies) == [:eggs]
-  end
-
-  @testset "just peanuts" begin
-    allergies = Allergies(2)
-    @test list(allergies) == [:peanuts]
-  end
-
-  @testset "just strawberries" begin
-    allergies = Allergies(8)
-    @test list(allergies) == [:strawberries]
-  end
-
-  @testset "eggs and peanuts" begin
-    allergies = Allergies(3)
-    @test list(allergies) == [:eggs, :peanuts]
-  end
-
-  @testset "more than eggs but not peanuts" begin
-    allergies = Allergies(5)
-    @test list(allergies) == [:eggs, :shellfish]
-  end
-
-  @testset "lots of stuff" begin
-    allergies = Allergies(248)
-    @test list(allergies) == [
-        :strawberries,
-        :tomatoes,
-        :chocolate,
-        :pollen,
-        :cats,
-    ]
-  end
-
-  @testset "everything" begin
-    allergies = Allergies(255)
-    @test list(allergies) == [
-        :eggs,
-        :peanuts,
-        :shellfish,
-        :strawberries,
-        :tomatoes,
-        :chocolate,
-        :pollen,
-        :cats,
-    ]
-  end
-
-  @testset "no allergen score parts" begin
-    allergies = Allergies(509)
-    @test list(allergies) == [
-        :eggs,
-        :shellfish,
-        :strawberries,
-        :tomatoes,
-        :chocolate,
-        :pollen,
-        :cats,
-    ]
-  end
-end
-
-
-@testset "Exceptions" begin
-  @test_throws ArgumentError Allergies(:foo)
-
-  @test_throws ArgumentError Allergies("bar")
-
-  @test_throws MethodError Allergies(π)
 end

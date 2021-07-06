@@ -1,53 +1,42 @@
-const ALLERGIES = Dict{UInt, Symbol}(
-  1 => :eggs,
-  2 => :peanuts,
-  4 => :shellfish,
-  8 =>  :strawberries,
-  16 => :tomatoes,
-  32 =>  :chocolate,
-  64 =>  :pollen,
-  128 =>  :cats
+const Allergies = Dict{Int, String}(
+  1 => "eggs",
+  2 => "peanuts",
+  4 => "shellfish",
+  8 => "strawberries",
+  16 => "tomatoes",
+  32 => "chocolate",
+  64 => "pollen",
+  128 => "cats"
 )
 
-const KEYS = keys(ALLERGIES) |> collect |> a -> sort(a, rev=true)
+const KEYS = keys(Allergies) |> collect |> sort
+const N = length(KEYS)
 
-const MAXVAL = 256;
+allergic_to(score, allergen)::Bool = allergen ∈ allergy_list(score)
 
-struct Allergies
-  names::Set{Symbol}
-  indexes::Vector{UInt}
+function allergy_list(score::Integer)
+  z₀ = zero(typeof(score))
+  score == z₀ && return Set{String}()
 
-  function Allergies(val::T) where {T <: Unsigned}
-    val %= MAXVAL
-    ary, allergies = (Vector{T}(), Set{Symbol}())
-    for k ∈ KEYS
-      if val ≥ k
-        pushfirst!(ary, k)
-        push!(allergies, ALLERGIES[k])
-        val -= k
-      end
-      val < 0 && break
-    end
-    new(allergies, ary)
+  ix = next_pow(score)
+  s = Set{String}()
+  while ix ≥ 1
+    push!(s, Allergies[KEYS[ix]])
+    score -= KEYS[ix]
+    score ≤ z₀ && break
+    ix = next_pow(score)
   end
+  s
 end
 
-# Other constructors
-Allergies(val::T) where {T <: Integer} = val ≥ zero(T) ? Allergies(UInt(val)) :
-  throw(ArgumentError("Expecting a natural integer"))
+@inline function next_pow(score::Integer)
+  ix = if score ∈ KEYS
+    findfirst(s -> s == score, KEYS) # exact pow of 2
+  else
+    ceil(Int, log(score) / log(2))   # closest power of 2
+  end
+  ix > N ? N : ix
+end
 
-#
-# Convert float => int, works only for floats ending with .0
-# Any other value will throw an Exception
-#
-Allergies(val::T) where {T <: Real} = convert(UInt, val) |> Allergies
-
-Allergies(_::Any) = throw(ArgumentError("Expecting a natural integer"))
-
-
-allergic_to(self::Allergies, allergy::Symbol) = allergy ∈ self.names
-
-allergic_to(self::Allergies, allergy::String) = allergic_to(self, allergy |> Symbol)
-
-
-list(self::Allergies) = map(ix -> ALLERGIES[ix], self.indexes)
+# to check for type stability
+# @code_warntype  allergy_list(248)
