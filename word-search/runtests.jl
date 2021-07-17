@@ -59,4 +59,36 @@ include("word-search.jl")
   end
 end
 
-# TODO 'multi line grids'
+@testset "multiline grids" begin
+  @testset "can locate a left to right word in a two line grid" begin
+    grid = ["jefblpepre", "clojurermt"]
+    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+      :clojure => (_start=(2, 1), _end=(2, 7))
+    )
+    ws = WordSearch(grid)
+
+    @test find(ws, ["clojure"]) == expected
+  end
+
+  @testset "can locate a left to right word in a different position in a two line grid" begin
+    grid = ["jefblpepre", "tclojurerm"]
+    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+      :clojure => (_start=(2, 2), _end=(2, 8))
+    )
+    ws = WordSearch(grid)
+
+    @test find(ws, ["clojure"]) == expected
+  end
+
+  @testset "can locate a left to right word in a three line grid" begin
+    grid = ["camdcimgtc", "jefblpepre", "clojurermt"]
+    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+      :clojure => (_start=(3, 1), _end=(3, 7))
+    )
+    ws = WordSearch(grid)
+
+    @test find(ws, ["clojure"]) == expected
+  end
+
+  # TODO: 'can locate a left to right word in a ten line grid'...
+end
