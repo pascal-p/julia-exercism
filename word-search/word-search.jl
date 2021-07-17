@@ -77,7 +77,7 @@ function check_matching_dir(ws::WordSearch, word::AbstractString, ix::Int, coord
     !flag && return nothing
 
   elseif coord.dir ∈ (1, 5)
-    (flag, frow, fcol) = _dir_dia_up(ws, word, (ix, jx), coord, frow, fcol, lim)
+    (flag, jx, frow, fcol) = _dir_dia_up(ws, word, (ix, jx), coord, frow, fcol, lim)
     !flag && return nothing
 
   elseif coord.dir ∈ (2, 6)
@@ -85,7 +85,7 @@ function check_matching_dir(ws::WordSearch, word::AbstractString, ix::Int, coord
     !flag && return nothing
 
   elseif coord.dir ∈ (3, 7)
-    (flag, frow, fcol) = _dir_dia_down(ws, word, (ix, jx), coord, frow, fcol, lim)
+    (flag, jx, frow, fcol) = _dir_dia_down(ws, word, (ix, jx), coord, frow, fcol, lim)
     !flag && return nothing
 
   else
@@ -107,7 +107,7 @@ function _dir_up_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}
 
   elseif coord.dir == 4
     for r ∈ coord.row:ws.dim.nrows
-      jx ≥ lim && break
+      jx > lim && break
       word[jx] != ws.grid[r][coord.col] && return (false, nothing, nothing)
       jx += 1
       frow = r
@@ -144,7 +144,7 @@ function _dir_dia_up(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int},
     (r, c) = (coord.row, coord.col)
     while r ≥ 1 && c ≤ ws.dim.ncols
       jx > lim && break
-      word[jx] != ws.grid[r][c] && return (false, nothing, nothing)
+      word[jx] != ws.grid[r][c] && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
       r -= 1
@@ -155,15 +155,14 @@ function _dir_dia_up(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int},
     (r, c) = (coord.row, coord.col)
     while r ≤ ws.dim.ncols && c ≥ 1
       jx > lim && break
-      (word[jx] != ws.grid[r][c]) && return (false, nothing, nothing)
+      (word[jx] != ws.grid[r][c]) && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
       r += 1
       c -= 1
     end
   end
-
-  (true, frow, fcol)
+  (true, jx, frow, fcol)
 end
 
 function _dir_dia_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}, coord::NamedTuple, frow, fcol, lim)
@@ -172,8 +171,8 @@ function _dir_dia_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int
     # for (let [r, c] = [row, col]; r < this.dim[0] && c < this.dim[1]; r++, c++) {
     (r, c) = (coord.row, coord.col)
     while r ≤ ws.dim.nrows && c ≤ ws.dim.ncols
-      jx ≥ lim && break
-      word[jx] != ws.grid[r][c] && return (false, nothing, nothing)
+      jx > lim && break
+      word[jx] != ws.grid[r][c] && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
       c += 1
@@ -183,15 +182,16 @@ function _dir_dia_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int
     # for (let [r, c] = [row, col]; r >= 0 && c >= 0; r--, c--) {
     (r, c) = (coord.row, coord.col)
     while r ≥ 1  && c ≥ 1
-      jx ≥ lim && break
-      word[jx] != ws.grid[r][c] && return (false, nothing, nothing)
+      jx > lim && break
+      word[jx] != ws.grid[r][c] && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
       c -= 1
       r -= 1
     end
   end
-  (true, frow, fcol)
+
+  (true, jx, frow, fcol)
 end
 
 function neighboring_search(ws::WordSearch, word::AbstractString, ix::Int, rₒ::Int, cₒ::Int)
