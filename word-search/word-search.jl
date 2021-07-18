@@ -1,4 +1,4 @@
-const DIRS = [7, 0, 1, 6, -1, 2, 5, 4, 3];
+const DIRS = [7, 0, 1, 6, -1, 2, 5, 4, 3] # cf. check_matching_dir...
 
 const NT_RANGE = NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}
 const NT_DIM = NamedTuple{(:nrows, :ncols), Tuple{Int64, Int64}}
@@ -21,7 +21,7 @@ struct WordSearch
   dim::NT_DIM
 end
 
-WordSearch(grid::AbstractVector{<: AbstractString}) = WordSearch(grid, (nrows=length(grid), ncols=length(grid[1]))) # , nothing)
+WordSearch(grid::AbstractVector{<: AbstractString}) = WordSearch(grid, (nrows=length(grid), ncols=length(grid[1])))
 
 function find(ws::WordSearch, words::AbstractVector{<: AbstractString})
   result = Dict{Symbol, NT_RANGE}()
@@ -70,7 +70,7 @@ end
 
 
 """
-  Directions as follows:
+  Directions are as follows:
 
   | 7 | 0 | 1 |
   |---+---+---|
@@ -100,7 +100,7 @@ function check_matching_dir(ws::WordSearch, word::AbstractString, ix::Int, coord
     !flag && return nothing
 
   else
-    nothing
+    nothing # or exception?
   end
 
   jx > lim ? (frow, fcol) : nothing
@@ -108,45 +108,39 @@ end
 
 function _dir_up_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}, coord::NamedTuple, frow, lim)
   (ix, jx) = tix
-  if coord.dir == 0
-    for r ∈ coord.row:-1:1
-      jx > lim && break
-      word[jx] != ws.grid[r][coord.col] && return (false, nothing, nothing)
-      jx += 1;
-      frow = r;
-    end
-
+  range = if coord.dir == 0
+    coord.row:-1:1
   elseif coord.dir == 4
-    for r ∈ coord.row:ws.dim.nrows
-      jx > lim && break
-      word[jx] != ws.grid[r][coord.col] && return (false, nothing, nothing)
-      jx += 1
-      frow = r
-    end
+    coord.row:ws.dim.nrows
   else
-    throw(ArgumentError(""))
+    throw(ArgumentError("direction $(coord.dir) is not meaningful in this function context"))
   end
 
+  for r ∈ range
+    jx > lim && break
+    word[jx] != ws.grid[r][coord.col] && return (false, nothing, nothing)
+    jx += 1
+    frow = r
+  end
   (true, jx, frow)
 end
 
 function _dir_left_right(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}, coord::NamedTuple, fcol, lim)
   (ix, jx) = tix
-  if coord.dir == 2
-    for c ∈ coord.col:ws.dim.ncols
-      jx > lim && break
-      word[jx] != ws.grid[coord.row][c] && return (false, nothing, nothing)
-      jx += 1
-      fcol = c
-    end
+  range = if coord.dir == 2
+    coord.col:ws.dim.ncols
   elseif coord.dir == 6
-    for c ∈ coord.col:-1:1
-      word[jx] != ws.grid[coord.row][c] && return (false, nothing, nothing)
-      jx += 1
-      fcol = c
-    end
+    coord.col:-1:1
+  else
+    throw(ArgumentError("direction $(coord.dir) is not meaningful in this function context"))
   end
 
+  for c ∈ range
+    jx > lim && break
+    word[jx] != ws.grid[coord.row][c] && return (false, nothing, nothing)
+    jx += 1
+    fcol = c
+  end
   (true, jx, fcol)
 end
 
@@ -166,6 +160,8 @@ function _dir_dia_up(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int},
       (frow, fcol) = (r, c)
       jx += 1
     end
+  else
+    throw(ArgumentError("direction $(coord.dir) is not meaningful in this function context"))
   end
   (true, jx, frow, fcol)
 end
@@ -186,8 +182,9 @@ function _dir_dia_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int
       jx += 1
       (frow, fcol) = (r, c)
     end
+  else
+    throw(ArgumentError("direction $(coord.dir) is not meaningful in this function context"))
   end
-
   (true, jx, frow, fcol)
 end
 

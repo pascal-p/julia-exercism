@@ -20,7 +20,7 @@ include("word-search.jl")
 
   @testset "should locate a word written left to right" begin
     grid = ["clojurermt"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(1, 1), _end=(1, 7))
     )
     ws = WordSearch(grid)
@@ -30,7 +30,7 @@ include("word-search.jl")
 
   @testset "can locate a left to right word in a different position" begin
     grid = ["mtclojurer"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(1, 3), _end=(1, 9))
     )
     ws = WordSearch(grid)
@@ -40,7 +40,7 @@ include("word-search.jl")
 
   @testset "can locate a different left to right word" begin
     grid = ["coffeelplx"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :coffee => (_start=(1, 1), _end=(1, 6))
     )
     ws = WordSearch(grid)
@@ -50,7 +50,7 @@ include("word-search.jl")
 
   @testset "can locate that different left to right word in a different position" begin
     grid = ["xcoffeezlp"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :coffee => (_start=(1, 2), _end=(1, 7))
     )
     ws = WordSearch(grid)
@@ -62,7 +62,7 @@ end
 @testset "multiline grids" begin
   @testset "can locate a left to right word in a two line grid" begin
     grid = ["jefblpepre", "clojurermt"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(2, 1), _end=(2, 7))
     )
     ws = WordSearch(grid)
@@ -72,7 +72,7 @@ end
 
   @testset "can locate a left to right word in a different position in a two line grid" begin
     grid = ["jefblpepre", "tclojurerm"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(2, 2), _end=(2, 8))
     )
     ws = WordSearch(grid)
@@ -82,7 +82,7 @@ end
 
   @testset "can locate a left to right word in a three line grid" begin
     grid = ["camdcimgtc", "jefblpepre", "clojurermt"]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(3, 1), _end=(3, 7))
     )
     ws = WordSearch(grid)
@@ -103,7 +103,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7))
     )
     ws = WordSearch(grid)
@@ -124,7 +124,7 @@ end
       "clojurermt",
       "jalaycalmp",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(9, 1), _end=(9, 7))
     )
     ws = WordSearch(grid)
@@ -145,7 +145,7 @@ end
       "clojurermt",
       "jalaycalmp",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :scree => (_start=(7, 1), _end=(7, 5))
     )
     ws = WordSearch(grid)
@@ -170,7 +170,7 @@ end
       "clojurermt",
       "xjavamtzlp",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :java => (_start=(11, 2), _end=(11, 5)),
     )
@@ -185,7 +185,7 @@ end
   @testset "should locate a single word written right to left" begin
     grid = ["rixilelhrs"]
 
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :elixir => (_start=(1, 6), _end=(1, 1))
     )
     ws = WordSearch(grid)
@@ -206,7 +206,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1))
     )
@@ -230,7 +230,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1)),
       :ecmascript => (_start=(1, 10), _end=(10, 10))
@@ -253,7 +253,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1)),
       :ecmascript => (_start=(1, 10), _end=(10, 10)),
@@ -277,7 +277,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1)),
       :ecmascript => (_start=(1, 10), _end=(10, 10)),
@@ -302,7 +302,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1)),
       :ecmascript => (_start=(1, 10), _end=(10, 10)),
@@ -328,7 +328,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1)),
       :ecmascript => (_start=(1, 10), _end=(10, 10)),
@@ -355,7 +355,7 @@ end
       "jalaycalmp",
       "clojurermt",
     ]
-    expected = Dict{Symbol, NamedTuple{(:_start, :_end), Tuple{Tuple{Int64, Int64}, Tuple{Int64, Int64}}}}(
+    expected = Dict{Symbol, NT_RANGE}(
       :clojure => (_start=(10, 1), _end=(10, 7)),
       :elixir => (_start=(5, 6), _end=(5, 1)),
       :ecmascript => (_start=(1, 10), _end=(10, 10)),
