@@ -5,6 +5,17 @@ const NT_DIM = NamedTuple{(:nrows, :ncols), Tuple{Int64, Int64}}
 
 const DM = Union{Nothing, Dict{String, NT_RANGE}}
 
+macro for_(expr, body)
+  quote
+    $(esc(expr.args[1]))        # init
+
+    while $(esc(expr.args[3]))  # loop
+      $(esc(body))
+      $(esc(expr.args[5]))      # update
+    end
+  end
+end
+
 struct WordSearch
   grid::AbstractVector{AbstractString}
   dim::NT_DIM
@@ -112,6 +123,8 @@ function _dir_up_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}
       jx += 1
       frow = r
     end
+  else
+    throw(ArgumentError(""))
   end
 
   (true, jx, frow)
@@ -138,28 +151,20 @@ function _dir_left_right(ws::WordSearch, word::AbstractString, tix::Tuple{Int, I
 end
 
 function _dir_dia_up(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}, coord::NamedTuple, frow, fcol, lim)
-  (ix, jx) = tix
+  local (ix, jx) = tix
   if coord.dir == 1
-    # for (r, c) ∈ (row, col); r >= 0 && c < this.dim[1]; r--, c++)
-    (r, c) = (coord.row, coord.col)
-    while r ≥ 1 && c ≤ ws.dim.ncols
+    @for_ ((r, c) = (coord.row, coord.col); r ≥ 1 && c ≤ ws.dim.ncols; (r -= 1, c += 1)) begin
       jx > lim && break
       word[jx] != ws.grid[r][c] && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
-      r -= 1
-      c += 1
     end
   elseif coord.dir == 5
-    # for (let [r, c] = [row, col]; r < this.dim[0] && c >= 0; r++, c--)
-    (r, c) = (coord.row, coord.col)
-    while r ≤ ws.dim.ncols && c ≥ 1
+    @for_ ((r, c) = (coord.row, coord.col); r ≤ ws.dim.ncols && c ≥ 1; (r += 1, c -= 1)) begin
       jx > lim && break
       (word[jx] != ws.grid[r][c]) && return (false, jx, nothing, nothing)
-      jx += 1
       (frow, fcol) = (r, c)
-      r += 1
-      c -= 1
+      jx += 1
     end
   end
   (true, jx, frow, fcol)
@@ -168,26 +173,18 @@ end
 function _dir_dia_down(ws::WordSearch, word::AbstractString, tix::Tuple{Int, Int}, coord::NamedTuple, frow, fcol, lim)
   (ix, jx) = tix
   if coord.dir == 3
-    # for (let [r, c] = [row, col]; r < this.dim[0] && c < this.dim[1]; r++, c++) {
-    (r, c) = (coord.row, coord.col)
-    while r ≤ ws.dim.nrows && c ≤ ws.dim.ncols
+    @for_ ((r, c) = (coord.row, coord.col); r ≤ ws.dim.nrows && c ≤ ws.dim.ncols; (r += 1, c += 1)) begin
       jx > lim && break
       word[jx] != ws.grid[r][c] && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
-      c += 1
-      r += 1
     end
   elseif coord.dir == 7
-    # for (let [r, c] = [row, col]; r >= 0 && c >= 0; r--, c--) {
-    (r, c) = (coord.row, coord.col)
-    while r ≥ 1  && c ≥ 1
+    @for_ ((r, c) = (coord.row, coord.col); r ≥ 1  && c ≥ 1; (r -= 1, c -= 1)) begin
       jx > lim && break
       word[jx] != ws.grid[r][c] && return (false, jx, nothing, nothing)
       jx += 1
       (frow, fcol) = (r, c)
-      c -= 1
-      r -= 1
     end
   end
 
