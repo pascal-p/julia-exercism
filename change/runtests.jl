@@ -24,5 +24,4 @@ end
 @testset "Change - exceptions" begin
   @test_throws ArgumentError find_fewest_coins([1, 2, 5], -5)  # target < 0
   @test_throws ArgumentError find_fewest_coins([5, 10], 94)    # target not reachable
-
 end
