@@ -1,6 +1,23 @@
 const VS = Vector{String}
 const DIV = Dict{Integer, VS}
 
+macro check_grade(fn::Expr)
+  local _grade = if fn.args[1].args[1].args[3] isa Expr
+    fn.args[1].args[1].args[3].args[1] # with type hint
+  else
+    fn.args[1].args[1].args[3]         # w/o type hint
+  end
+
+  ## replace body
+  fn.args[2] = quote
+    $(_grade) ≤ 0 && throw(ArgumentError("Expecting grade to be > 0"))
+
+    $(fn.args[2])
+  end
+
+  return fn
+end
+
 mutable struct Student
   name::String
   grade::Integer
@@ -29,16 +46,22 @@ function student_roster(gr::GradeSchool)::DIV
         init=DIV())
 end
 
-function students_in_grade(gr::GradeSchool, grade::Integer)::VS
-  grade ≤ 0 && throw(ArgumentError("Expecting grade to be > 0"))
+# grade ≤ 0 && throw(ArgumentError("Expecting grade to be > 0"))
 
+@check_grade function students_in_grade(gr::GradeSchool, grade::Integer)::VS
   lst = get(gr.roster, grade, String[])
   [lst...]
 end
 
-function add_student!(gr::GradeSchool, name::String, grade::Integer)
-  grade ≤ 0 && throw(ArgumentError("Expecting grade to be > 0"))
+# w/o type hints
+# @check_grade function students_in_grade(gr, grade)::VS
+#   lst = get(gr.roster, grade, String[])
+#   [lst...]
+# end
 
+add_student!(gr::GradeSchool, name::String, grade::Integer) = add_student!(gr, grade, name)
+
+@check_grade function add_student!(gr::GradeSchool, grade::Integer, name::String)::Nothing
   ix = findfirst(stu -> stu.name == name, gr.students)
   if ix === nothing
     ## create
@@ -51,6 +74,8 @@ function add_student!(gr::GradeSchool, name::String, grade::Integer)
     _update_roster!(gr, name, grade, ix)
     gr.students[ix].grade = grade
   end
+
+  nothing
 end
 
 ##

@@ -69,7 +69,6 @@ end
 end
 
 @testset "roster cannot be modified outside of module" begin
-  # TODO
   grade_school = GradeSchool()
   add_student!(grade_school, "Aimee", 2)
 
@@ -81,10 +80,22 @@ end
 end
 
 @testset "roster cannot be modified outside of module using students_in_drade()" begin
-  # TODO
   grade_school = GradeSchool()
   add_student!(grade_school, "Aimee", 2)
   push!(students_in_grade(grade_school, 2), "Ooops")
 
   @test student_roster(grade_school) == DIV(2 => [ "Aimee" ])
+end
+
+
+@testset "Exception /1" begin
+  grade_school = GradeSchool()
+  add_student!(grade_school, "Aimee", 2)
+
+  @test_throws ArgumentError students_in_grade(grade_school, 0)
+end
+
+@testset "Exception /2" begin
+  grade_school = GradeSchool()
+  @test_throws ArgumentError add_student!(grade_school, "Aimee", -1)
 end
