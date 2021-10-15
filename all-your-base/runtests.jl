@@ -28,6 +28,20 @@ end
   @test all_your_base([1, 1, 2, 0], 3, 16) == [2, 10]
 end
 
+@testset "base_in == base_out" begin
+  @testset "decimal -> decimal" begin
+    @test all_your_base([1, 1, 0, 9], 10, 10) == [1, 1, 0, 9]
+  end
+
+  @testset "octal -> octal" begin
+    @test all_your_base([1, 1, 7, 7], 8, 8) == [1, 1, 7, 7]
+  end
+
+  @testset "octal -> octal" begin
+    @test all_your_base([10, 11, 15, 12], 16, 16) == [10, 11, 15, 12]
+  end
+end
+
 @testset "decimal_to_hexadecimal" begin
   @test all_your_base([6, 5, 5, 3, 6], 10, 16) == [1, 0, 0, 0, 0]
   @test all_your_base([6, 5, 5, 3, 5], 10, 16) == [15, 15, 15, 15]
@@ -58,6 +72,15 @@ end
 
 @testset "leading zeros" begin
   @test all_your_base([0, 6, 0], 7, 10) == [4, 2]
+end
+
+# Exception handling
+@testset "Non integer as input" begin
+  @test_throws DomainError all_your_base(true, 7, 10)
+end
+
+@testset "Non integer as input" begin
+  @test_throws InexactError all_your_base([true, false], 7, 10)
 end
 
 @testset "input base is one" begin

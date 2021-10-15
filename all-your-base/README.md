@@ -15,17 +15,11 @@ represented as a sequence of digits, convert it to base **b**.
 In positional notation, a number in base **b** can be understood as a linear
 combination of powers of **b**.
 
-The number 42, *in base 10*, means:
+The number 42, *in base 10*, means: `(4 × 10¹) + (2 × 10⁰)`
 
-(4 * 10^1) + (2 * 10^0)
+The number 101010, *in base 2*, means: `(1 × 2⁵) + (0 × 2⁴) + (1 × 2³) + (0 × 2²) + (1 × 2¹) + (0 × 2⁰)`
 
-The number 101010, *in base 2*, means:
-
-(1 * 2^5) + (0 * 2^4) + (1 * 2^3) + (0 * 2^2) + (1 * 2^1) + (0 * 2^0)
-
-The number 1120, *in base 3*, means:
-
-(1 * 3^3) + (1 * 3^2) + (2 * 3^1) + (0 * 3^0)
+The number 1120, *in base 3*, means: `(1 × 3³) + (1 × 3²) + (2 × 3¹) + (0 × 3⁰`
 
 I think you got the idea!
 
