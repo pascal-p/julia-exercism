@@ -37,7 +37,7 @@ end
     @test all_your_base([1, 1, 7, 7], 8, 8) == [1, 1, 7, 7]
   end
 
-  @testset "octal -> octal" begin
+  @testset "hexa -> hexa" begin
     @test all_your_base([10, 11, 15, 12], 16, 16) == [10, 11, 15, 12]
   end
 end

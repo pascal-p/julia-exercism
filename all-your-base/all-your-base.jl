@@ -43,14 +43,16 @@ function all_your_base(digits::Any, base_in::Integer, base_out::Integer)::AVInt
   throw(DomainError("Not supported"))
 end
 
+"""
+Convert to decimal base
+"""
 function to_base10(digits::AVInt{T}, base::Integer)::Integer where {T <: Integer}
   n = zero(digits)
 
   for ix in 1:length(digits) - 1
     p = (n + digits[ix]) * base
     if p < n  # => overflow
-      p = (UInt128(n) + digits[ix]) * base
-      # we can still have an overflow!
+      p = (UInt128(n) + digits[ix]) * base # we can still have an overflow!
     end
     n = p
   end
@@ -62,7 +64,7 @@ check_valid_bases(b_in::Integer, b_out::Integer) = (b_in ≤ 1 || b_out ≤ 1) &
 
 """
 Check whether each digit from digits (abstract) vector are ∈ [0..base-1]
-Also if all digits are 0 - return a boolean set to ture to short-cut the execution
+Also if all digits are 0 - returns a boolean set to true to short-cut the execution
 """
 function check_digits(digits::AVInt{T}, base::Integer)::Bool where {T <: Integer}
   ## At this stage digits vector is, at least, of length 1
