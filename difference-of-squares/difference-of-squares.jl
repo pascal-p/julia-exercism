@@ -24,7 +24,7 @@ function sum_of_squares(n::Integer)::Integer
   """
   n = _promote(n)
   x₁, x₂, x₃ = n, n + 1, (n << 1) + 1
-  x = (BigInt(x₁) *  BigInt(x₂) *  BigInt(x₃)) >> 1 # FIXME: find better way
+  x = (BigInt(x₁) * BigInt(x₂) * BigInt(x₃)) >> 1 # FIXME: find better way
   return div(x, 3)
 end
 

@@ -7,7 +7,7 @@ function rot_n_maker(n::Int)
       return 'a' + (letter - 'a' + n) % 26
     elseif 'A' ≤ letter ≤ 'Z'
       return 'A' + (letter - 'A' + n) % 26
-    elseif letter in [' ', Punctuation..., Digit_As_Char...]
+    elseif letter ∈ [' ', Punctuation..., Digit_As_Char...]
       return letter
     else
       throw(ArgumentError("$(letter) is not a latin alphabet"))

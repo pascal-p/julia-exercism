@@ -32,17 +32,17 @@ function to_roman(number)
   end
 
   while true
-    num, rem = div(number, p), number % p
+    number, rem = divrem(number, p)
 
-    if num > 0
+    if number > 0
       if p == 1000
-        roman = string(roman, ya_map[p] ^ num)
+        roman = string(roman, ya_map[p] ^ number)
 
       elseif p == 100 || p == 10
-        roman = roman_helper(num, p)
+        roman = roman_helper(number, p)
 
       elseif p == 1
-        roman = string(roman, ya_map[num])
+        roman = string(roman, ya_map[number])
       end
     end
 
