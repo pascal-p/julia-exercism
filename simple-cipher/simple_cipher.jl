@@ -10,6 +10,9 @@ const NON_ALPHA_REXP = r"[^a-zA-Z0-9]"
 
 const LEN_GEN_KEY = 100
 
+const T_IC = Tuple{Integer, AbstractChar}
+const VT_IC = AbstractVector{T_IC}
+
 macro key_checker(fn)
   if typeof(fn) == Expr
     ## extract key and build checker
@@ -17,7 +20,8 @@ macro key_checker(fn)
     local key = fn.args[1].args[1].args[3].args[1]
 
     local genkey = :($(key) === nothing && ($(key) = generate_key()))
-    local checkkey = :(length($(key)) < 3 && throw(ArgumentError("$($(key)) should be at least of length 4")))
+    local checkkey = :((length($(key)) < 3 || match(r"\A[a-z0-9]+\z", $(key)) == nothing) &&
+      throw(ArgumentError("$($(key)) should be at least of length 4")))
 
     ## Inject checker in body of wrapped function
     ## fn.args[2] is the body of the initial function
@@ -31,14 +35,22 @@ macro key_checker(fn)
   fn
 end
 
+## Public API
+
 encode(txt::String) = encode(txt, nothing)
 
 @key_checker function encode(txt::String, key::Union{String, Nothing})::String
-  encode_fn(enumerate(txt) |> collect, key |> lowercase)
+  xcode_fn(txt_filtered_to_vec(txt),
+           key |> lowercase,
+           encode_fn)
 end
 
+decode(::String) = throw(ArgumentError("Expecting a key as well for decoding"));
+
 @key_checker function decode(txt::String, key::String)::String
-  # TODO
+  xcode_fn(txt_filtered_to_vec(txt),
+           key |> lowercase,
+           decode_fn)
 end
 
 ## Private helpers
@@ -46,20 +58,31 @@ end
 generate_key() = (IX2L[mod(x, LEN_ALPHA)] for x ∈ Random.rand(Int, LEN_GEN_KEY)) |>
     a -> join(a)
 
-encode_fn(vtxt::AbstractVector, key::AbstractString) =
-  encode_fn.(vtxt, key) |>
+xcode_fn(vtxt::VT_IC, key::AbstractString, fn) =
+  fn.(vtxt, key) |>
   ixes -> map(ix -> IX2L[ix], ixes) |>
   a -> join(a)
 
-function encode_fn(tuple::Tuple{Integer, AbstractChar}, key::AbstractString)::Integer
+function encode_fn(tuple::T_IC, key::AbstractString)::Integer
   (ix, ch) = tuple
   keylen = length(key)
-  kx = ix % keylen
-  kx == 0 && (kx = 1)
-  (L2IX[lowercase(ch)] + L2IX[key[kx]]) % LEN_ALPHA
+  (L2IX[ch] + L2IX[key[key_index(ix, keylen)]]) % LEN_ALPHA
 end
 
-function decode_fn(ix::Integer, ch::AbstractChar, key::AbstractString)::AbstractChar
+function decode_fn(tuple::T_IC, key::AbstractString)::Integer
+  (ix, ch) = tuple
   keylen = length(key)
-  mod((L2IX[ch] - L2IX[key[ix % keylen]]), LEN_ALPHA)
+  mod((L2IX[ch] - L2IX[key[key_index(ix, keylen)]]), LEN_ALPHA)
+end
+
+@inline function txt_filtered_to_vec(txt::String)::VT_IC
+  lowercase(txt) |>
+    t -> replace(t, r"[^a-z0-9]" => "") |>
+    t -> enumerate(t) |>
+    collect
+end
+
+@inline function key_index(ix::Integer, keylen::Integer)::Integer
+  kx = ix % keylen
+  kx == zero(eltype(ix)) ? one(eltype(ix)) : kx
 end
