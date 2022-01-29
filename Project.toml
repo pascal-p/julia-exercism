@@ -1,0 +1,7 @@
+name = "exercism"
+uuid = "f6b4b00c-d2a4-4378-9a2a-ad916f89d628"
+authors = ["Pascal P <lacsap_666@yahoo.fr>"]
+version = "0.1.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
