@@ -71,3 +71,11 @@ end
 @testset "capital word is not own anagram" begin
   @test detect_anagrams("BANANA", ["Banana"]) == []
 end
+
+@testset "Errors" begin
+  @test_throws ArgumentError detect_anagrams(1, ["aaa", "bbb"])
+
+  @test_throws ArgumentError detect_anagrams(true, [10, 20, 30])
+
+  @test_throws ArgumentError detect_anagrams([10, 20, 30], false)
+end
