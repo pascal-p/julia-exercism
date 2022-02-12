@@ -130,7 +130,10 @@ end
     @test score(game) == SType(300)
   end
 
-  @testset "" begin
+  @testset "test last two strikes followed by only last bonus with non strike points" begin
+    rolls = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 0, 1]
+    game = roll_new_game(rolls)
+    @test score(game) == SType(31)
   end
 end
 
