@@ -40,7 +40,7 @@ const MAP = Dict{Integer, Symbol}(
 const FACTORS = keys(MAP) |> collect |> v -> sort(v)
 
 
-function raindrops(num::Integer) # ::AbstractString
+function raindrops(num::Integer)::String
   num ≤ 1 && return string(num)
   num ∈ FACTORS && return MAP[num] |> string
 
@@ -48,7 +48,7 @@ function raindrops(num::Integer) # ::AbstractString
   length(res) == 0 ? string(num) : join(res, "")
 end
 
-function decomp(num::Integer)    # ::Vector{String}
+function decomp(num::Integer)::Vector{String}
   res = Vector{String}()
   ix = 1
   while ix ≤ length(FACTORS)
