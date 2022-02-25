@@ -25,5 +25,12 @@ end
 
 
 @testset "territories" begin
-  # TBD
+  @testset "1 cell board" begin
+    board = GoBoard([" "])
+    hres = territories(board)
+
+    @test hres[BLACK] == Set{Point}()
+    @test hres[WHITE] == Set{Point}()
+    @test hres[NONE] == Set{Point}([Point(TT(1), TT(1))])
+  end
 end

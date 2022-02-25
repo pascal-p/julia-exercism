@@ -28,7 +28,23 @@ end
 
 ## Public API
 
+"""
+    territory(goboard::GoBoard, x::TT, y::TT)::Tuple{Char, SP}
+
+Find the owner and the territories given a coordinate (x, y) on the board
+
+Return a tuple, the first element being the owner of that area.  One of "W", "B", "".
+The second being a set of coordinates, representing the owner's territories.
+
+# Examples
+```julia-repl
+julia> board = GoBoard(["  B  ", " B B ", "B W B", " W W ", "  W  "])
+julia> territory(board, 3, 4)
+(WHITE, Set([Point(3, 4)]))
+```
+"""
 function territory(goboard::GoBoard, x::TT, y::TT)::Tuple{Char, SP}
+
   (!(1 ≤ x ≤ goboard.x_lim) || !(1 ≤ y ≤ goboard.y_lim)) && throw(ArgumentError("Invalid coordinate"))
 
   goboard.board[y][x] != NONE && return (NONE, Set())
@@ -48,12 +64,38 @@ function territory(goboard::GoBoard, x::Integer, y::Integer)
   territory(goboard, TT(x), TT(y)) # truncation can happen!
 end
 
-function territories(goboard::GoBoard)::Dict{String, Set{Point}}
-  # TBD
+territory(goboard::GoBoard, p::Point)::Tuple{Char, SP} = territory(goboard, p.x, p.y)
+
+"""
+    territories(goboard::GoBoard)::Dict{String, Set{Point}}
+
+Find the owners and the territories of the whole board
+Returns A dictionary whose key being the owner, i.e. "W", "B", "".
+The value being a set of coordinates owned by the owner.
+
+# Examples
+```julia-repl
+
+TBD
+```
+"""
+function territories(goboard::GoBoard)::Dict{Char, Set{Point}}
+  hres = Dict{Char, Set{Point}}(BLACK => Set{Point}(), WHITE => Set{Point}(), NONE => Set{Point}())
+
+  done = Set{Point}()
+  for cpoint ∈ (Point(x, y) for x ∈ 1:goboard.x_lim, y ∈ 1:goboard.y_lim)
+    cpoint ∈ done && continue
+    color, territry = territory(goboard, cpoint)
+    union!(hres[color], territry)
+    union!(done, territry)
+  end
+
+  hres
 end
 
+##
 ## Private Helpers
-
+##
 function get_neighbors(goboard::GoBoard, x::TT, y::TT)::Vector{Union{Point, Nothing}}
   [Point(x - 1, y), Point(x + 1, y), Point(x, y - 1), Point(x, y + 1)] |>
     l -> filter((p::Point) -> (1 ≤ p.x ≤ goboard.x_lim) && (1 ≤ p.y ≤ goboard.y_lim), l)
