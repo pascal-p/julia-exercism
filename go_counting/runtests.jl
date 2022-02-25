@@ -33,4 +33,33 @@ end
     @test hres[WHITE] == Set{Point}()
     @test hres[NONE] == Set{Point}([Point(TT(1), TT(1))])
   end
+
+  @testset "rectangular board 2x4" begin
+    board = GoBoard([" BW ", " BW "])
+    hres = territories(board)
+
+    @test hres[BLACK] == Set{Point}([Point(TT(1), TT(1)), Point(TT(1), TT(2))])
+    @test hres[WHITE] == Set{Point}([Point(TT(4), TT(1)), Point(TT(4), TT(2))])
+    @test hres[NONE] == Set{Point}()
+  end
+
+  @testset "rectangular board 1x3" begin
+    board = GoBoard([" W "])
+    hres = territories(board)
+
+    @test hres[BLACK] == Set{Point}()
+    @test hres[WHITE] == Set{Point}([Point(TT(1), TT(1)), Point(TT(3), TT(1))])
+    @test hres[NONE] == Set{Point}()
+  end
+
+  @testset "multi territories on sqare board" begin
+    board = GoBoard(["  B  ", " B B ", "B W B", " W W ", "  W  "])
+    hres = territories(board)
+
+    @test hres[BLACK] == Set{Point}([Point(TT(1), TT(1)), Point(TT(1), TT(2)), Point(TT(2), TT(1)),
+                                     Point(TT(4), TT(1)), Point(TT(5), TT(1)), Point(TT(5), TT(2))])
+    @test hres[WHITE] == Set{Point}([Point(TT(3), TT(4))])
+    @test hres[NONE] == Set{Point}([Point(TT(1), TT(4)), Point(TT(1), TT(5)), Point(TT(2), TT(5)),
+                                    Point(TT(4), TT(5)), Point(TT(5), TT(4)), Point(TT(5), TT(5))])
+  end
 end
