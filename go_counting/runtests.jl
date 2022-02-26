@@ -1,6 +1,19 @@
-using Test
+push!(LOAD_PATH, "./src")
 
-include("go_counting.jl")
+using Test, Documenter
+using YaGo
+
+# DocMeta.setdocmeta!(YaGo, :DocTestSetup, :(using YaGo); recursive=true)
+# makedocs(modules=[YaGo])
+# doctest(YaGo)
+
+include("./src/go_counting.jl")
+
+
+# @testset "YaGo" begin
+#   doctest(YaGo; manual = false)
+#   # other tests & testsets
+# end
 
 @testset "territory" begin
   board = GoBoard(["  B  ", " B B ", "B W B", " W W ", "  W  "])

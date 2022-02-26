@@ -37,8 +37,7 @@ Return a tuple, the first element being the owner of that area.  One of "W", "B"
 The second being a set of coordinates, representing the owner's territories.
 
 # Examples
-```julia-repl
-julia> board = GoBoard(["  B  ", " B B ", "B W B", " W W ", "  W  "])
+```jldoctest; setup = :(board = GoBoard(["  B  ", " B B ", "B W B", " W W ", "  W  "]))
 julia> territory(board, 3, 4)
 (WHITE, Set([Point(3, 4)]))
 ```
@@ -74,9 +73,8 @@ Returns A dictionary whose key being the owner, i.e. "W", "B", "".
 The value being a set of coordinates owned by the owner.
 
 # Examples
-```julia-repl
-
-TBD
+```jldoctest; setup = :(board = GoBoard([" BW ", " BW "]))
+julia> hres = territories(board)
 ```
 """
 function territories(goboard::GoBoard)::Dict{Char, Set{Point}}
