@@ -1,5 +1,3 @@
-# const T <: integer
-
 abstract type Cell{T <: Integer} end
 
 mutable struct InputCell{T} <: Cell{T}
@@ -49,8 +47,9 @@ function propagate(ic::InputCell)
   end
 end
 
-# The syntax a.b = c calls setproperty!(a, :b, c).
 function Base.setproperty!(ic::InputCell, symb::Symbol, val::T) where T
+  ## The syntax a.b = c calls setproperty!(a, :b, c).
+
   if symb == :value
     ex_val = ic.value
     setfield!(ic, :value, val) # ic.value = val # => dangerous: will loop forever
