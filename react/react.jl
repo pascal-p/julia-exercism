@@ -38,7 +38,6 @@ function propagate(ic::InputCell)
 
   while length(q_ccells) > 0
     ccell = q_ccells[1]
-    # q_ccells = q_ccells[2:end]
     re_calc(ccell)
     q_ccells = [
       q_ccells[2:end]...,
@@ -49,7 +48,6 @@ end
 
 function Base.setproperty!(ic::InputCell, symb::Symbol, val::T) where T
   ## The syntax a.b = c calls setproperty!(a, :b, c).
-
   if symb == :value
     ex_val = ic.value
     setfield!(ic, :value, val) # ic.value = val # => dangerous: will loop forever
