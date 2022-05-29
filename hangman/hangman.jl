@@ -34,11 +34,7 @@ function guess(hg::Hangman, ch::Char)::Nothing
   if hg.state.remaining_guesses < 0 || hg.state.status != ONGOING::States
     throw(DomainError("The game has already ended."))
   end
-
-  if hg.state.remaining_guesses == 0
-    hg.state.status = LOSE::States
-    return
-  end
+  hg.state.remaining_guesses == 0 && (hg.state.status = LOSE::States)
 
   ixes = ch ∉ hg.state.letters ? findall(c -> c == ch, hg.word) : []
   push!(hg.state.letters, ch)
@@ -47,6 +43,7 @@ function guess(hg::Hangman, ch::Char)::Nothing
   else
     hg.state.remaining_guesses -= 1
   end
+
   return
 end
 

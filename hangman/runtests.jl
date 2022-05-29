@@ -15,12 +15,12 @@ include("hangman.jl")
     game = Hangman("foo")
 
     @test get_masked_word(game) == "___"
-    for ix ∈ 0:NUM_GUESSES
+    for ix ∈ 1:NUM_GUESSES
       guess(game, 'x')
     end
 
+    guess(game, 'x')
     @test get_status(game) == LOSE::States
-    @test get_remaining_guesses(game) == 0
   end
 
   @testset "feeding a correct letter removes underscores" begin
@@ -77,12 +77,12 @@ include("hangman.jl")
 
   @testset "winning on last guess still counts as a win" begin
     game = Hangman("aaa")
-    for ch ∈ "bcdefghia"
+    for ch ∈ "bcdefghija"
       guess(game, ch)
     end
 
     @test get_masked_word(game) == "aaa"
-    @test get_remaining_guesses(game) == 1
+    @test get_remaining_guesses(game) == 0
     @test get_status(game) == WIN::States
   end
 
@@ -115,11 +115,10 @@ end
 
 @testset "exception/1" begin
   game = Hangman("foo")
-
-  @test get_masked_word(game) == "___"
   for ix ∈ 0:NUM_GUESSES
     guess(game, 'x')
   end
+
   @test_throws DomainError guess(game, 'x')
 end
 
