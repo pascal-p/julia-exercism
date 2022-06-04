@@ -67,7 +67,7 @@ end
     :user => DSA(:name => "Adam", :owes => DSA(), :owed_by => DSA()),
     :balance => 0.0
   )
-  resp = post(api, "/add", payload)
+  resp = post(api, Path("/add"), payload)
   act = JSON.parse(resp.body; dicttype=DSA)
 
   @test resp.status == 201 # created
@@ -77,7 +77,7 @@ end
 @testset "single iou" begin
   api, _ = prep_test([Model.NT("Adam"), Model.NT("Bob")])
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 5.5))
-  resp = post(api, "/iou", payload)
+  resp = post(api, Path("/iou"), payload)
 
   exp  = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(:Bob => 5.5), :name => "Adam", :owes => DSA()),
@@ -98,7 +98,7 @@ end
     Model.NT("Chuck", owed_by=Dict("Bob" => 3.0))
   ])
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 3.0))
-  resp = post(api, "/iou", payload)
+  resp = post(api, Path("/iou"), payload)
   exp  = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(:Bob => 3.0), :name => "Adam", :owes => DSA()),
         :balance => 3.0)
@@ -117,7 +117,7 @@ end
     Model.NT("Bob", owed_by=Dict("Adam" => 3.0))
   ])
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 2.0))
-  resp = post(api, "/iou", payload)
+  resp = post(api, Path("/iou"), payload)
   exp  = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(),:name => "Adam", :owes => DSA(:Bob => 1.0)),
         :balance => -1.0),
@@ -125,8 +125,6 @@ end
         :balance => 1.0)
   ])
   act = JSON.parse(resp.body; dicttype=DSA)
-  # println("exp: ", exp)
-  # println("act: ", act)
 
   @test resp.status == 201 # created
   @test act == exp
@@ -141,7 +139,7 @@ end
     Model.NT("Bob", owed_by=Dict("Adam" => 3.0))
   ])
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 4.0))
-  resp = post(api, "/iou", payload)
+  resp = post(api, Path("/iou"), payload)
 
   exp = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(:Bob => 1.0), :name => "Adam", :owes => DSA()),
@@ -160,7 +158,7 @@ end
     Model.NT("Bob", owed_by=Dict("Adam" => 3.0))
   ])
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 3.0))
-  resp = post(api, "/iou", payload)
+  resp = post(api, Path("/iou"), payload)
   exp = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(),:name => "Adam", :owes => DSA()),
         :balance => 0.0),
@@ -179,7 +177,7 @@ end
     Model.NT("Chuck", owed_by=Dict("Bob" => 3.0))
   ])
   payload = JSON.json(DSA(:lender => "Bob", :borrower => "Adam", :amount => 3.0))
-  resp = post(api, "/iou", payload)
+  resp = post(api, Path("/iou"), payload)
   exp = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(),:name => "Adam",:owes => DSA(:Bob => 3.0)),
         :balance => -3.0),
@@ -189,4 +187,12 @@ end
 
   @test resp.status == 201 # created
   @test JSON.parse(resp.body; dicttype=DSA) == exp
+end
+
+@testset "NotFound" begin
+  api, _TU = prep_test([])
+  resp = post(api, Path("/foo"), "")
+
+  @test resp.status == 404 # NotFound
+  @test JSON.parse(resp.body; dicttype=DSA) == Dict(:error => "Not Found")
 end

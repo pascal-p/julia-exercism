@@ -17,7 +17,12 @@ struct Response
   end
 
   Response(dt::Model.User; code=200) = new(code, JSON.json(dt))
+
+  Response(error::Dict; code=404) = new(code, JSON.json(error))
 end
+
+struct Path{x} end
+Path(x) = Path{Symbol(x)}() # constructor
 
 function show(io::IO, resp::Response)
   status, body = (resp.status, resp.body)
@@ -100,38 +105,40 @@ function get(api::RestAPI, endpoint::String; payload::String="")::Response
   Response(users.coll)
 end
 
-function post(api::RestAPI, endpoint::String, payload::String)::Response
+function post(::RestAPI, ::Path{Symbol("/add")}, payload::String)::Response
   ## payload is JSON format
   @assert length(payload) > 0
 
-  if endpoint == "/add"
-    hsh = convert_user_payload(payload) |> validate_user
+  hsh = convert_user_payload(payload) |> validate_user
 
-    ## User Model create
-    user = Model.create_user(hsh[:user])
+  ## User Model create
+  user = Model.create_user(hsh[:user])
 
-    ## Assuming creation OK. - return newly created user
-    return Response(user; code=201)
+  ## Assuming creation OK. - return newly created user
+  Response(user; code=201)
+end
 
-  elseif endpoint == "/iou"
-    hsh = convert_iou_payload(payload) |> validate_iou
-    users = Vector{Model.User}(undef, 2)
-    for (ix, key) ∈ enumerate([:lender, :borrower])
-      u = find_by(api, by_name=hsh[key])
-      @assert u !== nothing && typeof(u) == Model.User
-      users[ix] = u
-    end
+function post(api::RestAPI, ::Path{Symbol("/iou")}, payload::String)::Response
+  ## payload is JSON format
+  @assert length(payload) > 0
 
-    ## update User Model
-    Model.update!(;borrower=users[2], lender=users[1], amt=Model.Money(hsh[:amount]))
-    husers = Dict{Symbol, Vector{Model.User}}(
-      :users => sort(users, by=u -> u.user.name, rev=false)
-    )
-    return Response(husers; code=201)
+  hsh = convert_iou_payload(payload) |> validate_iou
+  users = Vector{Model.User}(undef, 2)
+  for (ix, key) ∈ enumerate([:lender, :borrower])
+    u = find_by(api, by_name=hsh[key])
+    @assert u !== nothing && typeof(u) == Model.User
+    users[ix] = u
   end
 
-  throw(ArgumentError("Unknown route..."))
+  ## update User Model
+  Model.update!(;borrower=users[2], lender=users[1], amt=Model.Money(hsh[:amount]))
+  husers = Dict{Symbol, Vector{Model.User}}(
+    :users => sort(users, by=u -> u.user.name, rev=false)
+    )
+  Response(husers; code=201)
 end
+
+post(::RestAPI, ::Path, ::String) = Response(Dict(:error => "Not Found"); code=404)
 
 
 ##
