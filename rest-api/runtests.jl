@@ -19,7 +19,7 @@ end
 
 @testset "no users" begin
   api, TU = prep_test([])
-  resp = get(api, "/users")
+  resp = get(api, Path("/users"))
   exp  = Dict{Symbol, Vector{TU}}(:users => TU[])
 
   @test resp.status == 200
@@ -28,7 +28,7 @@ end
 
 @testset "get all users" begin
   api, _ = prep_test([Model.NT("PasMas"), Model.NT("Corto"), Model.NT("Ayu")])
-  resp = get(api, "/users")
+  resp = get(api, Path("/users"))
 
   exp = DSA(:users => Any[
     DSA(:user => DSA(:owed_by => DSA(), :name => "PasMas", :owes => DSA()), :balance => 0.0),
@@ -45,7 +45,7 @@ end
   api, _ = prep_test([Model.NT("PasMas"), Model.NT("Corto"), Model.NT("Ayu")])
   payload = JSON.json(Dict{Symbol, String}(:user => "Ayu"))
 
-  resp = get(api, "/users"; payload)
+  resp = get(api, Path("/users"); payload)
   exp = DSA(
     :user => DSA(
       :name => "Ayu",
@@ -191,8 +191,13 @@ end
 
 @testset "NotFound" begin
   api, _TU = prep_test([])
-  resp = post(api, Path("/foo"), "")
+  resp = post(api, Path("/foo"), "...")
 
   @test resp.status == 404 # NotFound
   @test JSON.parse(resp.body; dicttype=DSA) == Dict(:error => "Not Found")
+end
+
+@testset "post with no payload - problem" begin
+  api, _TU = prep_test([])
+  @test_throws  AssertionError post(api, Path("/iou"), "")
 end

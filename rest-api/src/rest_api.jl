@@ -29,6 +29,34 @@ function show(io::IO, resp::Response)
   show(io, (;status, body))
 end
 
+## useful macro
+"""
+  Aim: inject oneliner to check whether the payload (3rd param) has a length > 0
+
+With: @coprime_checker function encode(plain::AbstractString, α::Integer, β::Integer)::AbstractString
+We have the following:
+
+  fn.args[1]:                   post(::RestAPI, ::Path{Symbol("/add")}, payload::String)::Response
+  fn.args[1].args[1].args[2]:   ::RestAPI
+  fn.args[1].args[1].args[4]:   payload::String
+"""
+macro with_payload_ckeck(fn)
+  if typeof(fn) == Expr
+    ## extract payload param and build the checker
+    local _payload = fn.args[1].args[1].args[4].args[1]  # access payload
+    local checker = :(@assert length($(_payload)) > 0)
+
+    ## Inject checker in body of wrapped function
+    fn.args[2] = :(begin
+      $(checker)
+      $(fn.args[2])
+    end)
+  end
+
+  fn
+end
+
+
 ##
 ## API
 ##
@@ -81,10 +109,7 @@ end
 ## Public API
 ##
 
-function get(api::RestAPI, endpoint::String; payload::String="")::Response
-  ## payload is JSON format
-  @assert endpoint == "/users"
-
+function get(api::RestAPI, ::Path{Symbol("/users")}; payload::String="")::Response
   local users
   if length(payload) > 0
     ## 1 - parse payload / validate
@@ -105,10 +130,7 @@ function get(api::RestAPI, endpoint::String; payload::String="")::Response
   Response(users.coll)
 end
 
-function post(::RestAPI, ::Path{Symbol("/add")}, payload::String)::Response
-  ## payload is JSON format
-  @assert length(payload) > 0
-
+@with_payload_ckeck function post(::RestAPI, ::Path{Symbol("/add")}, payload::String)::Response
   hsh = convert_user_payload(payload) |> validate_user
 
   ## User Model create
@@ -118,10 +140,7 @@ function post(::RestAPI, ::Path{Symbol("/add")}, payload::String)::Response
   Response(user; code=201)
 end
 
-function post(api::RestAPI, ::Path{Symbol("/iou")}, payload::String)::Response
-  ## payload is JSON format
-  @assert length(payload) > 0
-
+@with_payload_ckeck function post(api::RestAPI, ::Path{Symbol("/iou")}, payload::String)::Response
   hsh = convert_iou_payload(payload) |> validate_iou
   users = Vector{Model.User}(undef, 2)
   for (ix, key) ∈ enumerate([:lender, :borrower])
