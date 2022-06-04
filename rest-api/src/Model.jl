@@ -98,7 +98,7 @@ const YA_users = Ref{Users}(Users())
 
 function create_user(name::String; owes::DSF=DSF(), owed_by::DSF=DSF())::User
   nt_user = NT(name; owes, owed_by)
-  user = User(nt_user)# User(name; owes, owed_by)
+  user = User(nt_user)
   push!(YA_users[].coll[:users], user)
   user
 end
@@ -106,10 +106,10 @@ end
 function create_iou(borrower::User, lender::User, amt::Money)
   ## no limit for lender and no limit for borrower
   ## assume it is always possible
-  @assert borrower.user.name != lender.user.name
+  @assert borrower |> name != lender |> name
 
-  update!(borrower, lender.user.name, amt, key=:borrower)
-  update!(lender, borrower.user.name, amt)
+  update!(borrower, lender |> name, amt, key=:borrower)
+  update!(lender, borrower |> name, amt)
 end
 
 
@@ -117,22 +117,16 @@ end
 ## Internal
 ##
 
-function calc_sum(iou::DSF)::Money
-  Money(values(iou) |> sum)
-end
+calc_sum(iou::DSF)::Money = Money(values(iou) |> sum)
 
-function calc_balance(owes::DSF, owed_by::DSF)::Money
-  calc_sum(owed_by) - calc_sum(owes)
-end
+calc_balance(owes::DSF, owed_by::DSF)::Money = calc_sum(owed_by) - calc_sum(owes)
 
 function stringify(user::User; attr=:owes)
   coll = join(["$(uname): $(uamt)" for (uname, uamt) ∈ getfield(user, attr)],
               ", ")
-  if length(coll) > 0
-    coll = string("{ ", coll, " }")
-  end
+  length(coll) > 0 && (coll = string("{ ", coll, " }"))
 
-  return coll
+  coll
 end
 
 function _update!(tuser::User, name::String, amt::Money, attr::Symbol)::Symbol

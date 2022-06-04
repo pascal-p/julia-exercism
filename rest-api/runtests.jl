@@ -16,6 +16,14 @@ function prep_test(ary)
   RestAPI(yadb), MU
 end
 
+function cons_user(name::String;
+                   owes::DSA = DSA(), owed_by::DSA = DSA(), bal::Model.Money = 0.0)
+  DSA(
+    :user => DSA(:owed_by => owed_by, :name => name, :owes => owes),
+    :balance => bal
+  )
+end
+
 
 @testset "no users" begin
   api, TU = prep_test([])
@@ -29,11 +37,8 @@ end
 @testset "get all users" begin
   api, _ = prep_test([Model.NT("PasMas"), Model.NT("Corto"), Model.NT("Ayu")])
   resp = get(api, Path("/users"))
-
   exp = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(), :name => "PasMas", :owes => DSA()), :balance => 0.0),
-    DSA(:user => DSA(:owed_by => DSA(), :name => "Corto", :owes => DSA()), :balance => 0.0),
-    DSA(:user => DSA(:owed_by => DSA(), :name => "Ayu", :owes => DSA()), :balance => 0.0)
+    cons_user("PasMas"), cons_user("Corto"), cons_user("Ayu")
   ])
   act = JSON.parse(resp.body; dicttype=DSA)
 
@@ -44,16 +49,8 @@ end
 @testset "get one user" begin
   api, _ = prep_test([Model.NT("PasMas"), Model.NT("Corto"), Model.NT("Ayu")])
   payload = JSON.json(Dict{Symbol, String}(:user => "Ayu"))
-
   resp = get(api, Path("/users"); payload)
-  exp = DSA(
-    :user => DSA(
-      :name => "Ayu",
-      :owes => DSA(),
-      :owed_by => DSA()
-    ),
-    :balance => 0.0
-  )
+  exp = cons_user("Ayu")
   act = JSON.parse(resp.body; dicttype=DSA)
 
   @test resp.status == 200
@@ -63,10 +60,7 @@ end
 @testset "add user" begin
   api, _ = prep_test([])
   payload = JSON.json(Dict{Symbol, String}(:user => "Adam"))
-  exp = DSA(
-    :user => DSA(:name => "Adam", :owes => DSA(), :owed_by => DSA()),
-    :balance => 0.0
-  )
+  exp = cons_user("Adam")
   resp = post(api, Path("/add"), payload)
   act = JSON.parse(resp.body; dicttype=DSA)
 
@@ -80,10 +74,8 @@ end
   resp = post(api, Path("/iou"), payload)
 
   exp  = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(:Bob => 5.5), :name => "Adam", :owes => DSA()),
-        :balance => 5.5),
-    DSA(:user => DSA(:owed_by => DSA(), :name => "Bob", :owes => DSA(:Adam => 5.5)),
-        :balance => -5.5),
+    cons_user("Adam"; owed_by = DSA(:Bob => 5.5), bal = 5.5),
+    cons_user("Bob"; owes = DSA(:Adam => 5.5), bal = -5.5),
   ])
   act = JSON.parse(resp.body; dicttype=DSA)
 
@@ -100,10 +92,8 @@ end
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 3.0))
   resp = post(api, Path("/iou"), payload)
   exp  = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(:Bob => 3.0), :name => "Adam", :owes => DSA()),
-        :balance => 3.0)
-    DSA(:user => DSA(:owed_by => DSA(),:name => "Bob", :owes => DSA(:Adam => 3.0, :Chuck => 3.0)),
-        :balance => -6.0)
+    cons_user("Adam"; owed_by = DSA(:Bob => 3.0), bal = 3.0),
+    cons_user("Bob"; owes = DSA(:Adam => 3.0, :Chuck => 3.0), bal = -6.),
   ])
   act = JSON.parse(resp.body; dicttype=DSA)
 
@@ -119,10 +109,8 @@ end
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 2.0))
   resp = post(api, Path("/iou"), payload)
   exp  = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(),:name => "Adam", :owes => DSA(:Bob => 1.0)),
-        :balance => -1.0),
-    DSA(:user =>  DSA(:owed_by => DSA(:Adam => 1.0),:name => "Bob",:owes => DSA()),
-        :balance => 1.0)
+    cons_user("Adam"; owes = DSA(:Bob => 1.0), bal = -1.0),
+    cons_user("Bob"; owed_by = DSA(:Adam => 1.0), bal = 1.),
   ])
   act = JSON.parse(resp.body; dicttype=DSA)
 
@@ -140,12 +128,9 @@ end
   ])
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 4.0))
   resp = post(api, Path("/iou"), payload)
-
   exp = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(:Bob => 1.0), :name => "Adam", :owes => DSA()),
-        :balance => 1.0),
-    DSA(:user => DSA(:owed_by => DSA(),:name => "Bob", :owes => DSA(:Adam => 1.0)),
-        :balance => -1.0)
+    cons_user("Adam"; owed_by = DSA(:Bob => 1.0), bal = 1.0),
+    cons_user("Bob"; owes = DSA(:Adam => 1.0), bal = -1.0),
   ])
 
   @test resp.status == 201 # created
@@ -160,10 +145,8 @@ end
   payload = JSON.json(DSA(:lender => "Adam", :borrower => "Bob", :amount => 3.0))
   resp = post(api, Path("/iou"), payload)
   exp = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(),:name => "Adam", :owes => DSA()),
-        :balance => 0.0),
-    DSA(:user => DSA(:owed_by => DSA(),:name => "Bob", :owes => DSA()),
-        :balance => 0.0)
+    cons_user("Adam"  ),
+    cons_user("Bob"),
   ])
 
   @test resp.status == 201 # created
@@ -179,10 +162,8 @@ end
   payload = JSON.json(DSA(:lender => "Bob", :borrower => "Adam", :amount => 3.0))
   resp = post(api, Path("/iou"), payload)
   exp = DSA(:users => Any[
-    DSA(:user => DSA(:owed_by => DSA(),:name => "Adam",:owes => DSA(:Bob => 3.0)),
-        :balance => -3.0),
-    DSA(:user => DSA(:owed_by => DSA(:Adam => 3.0),:name => "Bob", :owes => DSA(:Chuck => 3.0)),
-        :balance => 0.0)
+    cons_user("Adam"; owes = DSA(:Bob => 3.0), bal = -3.0),
+    cons_user("Bob"; owed_by = DSA(:Adam => 3.0), owes = DSA(:Chuck => 3.0), bal = 0.0),
   ])
 
   @test resp.status == 201 # created
@@ -199,5 +180,6 @@ end
 
 @testset "post with no payload - problem" begin
   api, _TU = prep_test([])
+
   @test_throws  AssertionError post(api, Path("/iou"), "")
 end

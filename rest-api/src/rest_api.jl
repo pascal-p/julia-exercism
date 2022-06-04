@@ -123,6 +123,7 @@ function get(api::RestAPI, ::Path{Symbol("/users")}; payload::String="")::Respon
   end
 
   ## No payload
+
   ## 1 - query the DB - select all users
   users = fetch_all(api)
 
@@ -170,13 +171,11 @@ function add_to_users!(hdb::Dict{Symbol, Vector{Model.User}}, key::Union{String,
   end
 end
 
-function convert_user_payload(json_payload::String)::Dict{Symbol, String}
+convert_user_payload(json_payload::String)::Dict{Symbol, String} =
   JSON.parse(json_payload; dicttype=Dict{Symbol, String})
-end
 
-function convert_iou_payload(json_payload::String)::Dict{Symbol, Any}
+convert_iou_payload(json_payload::String)::Dict{Symbol, Any} =
   JSON.parse(json_payload; dicttype=Dict{Symbol, Any})
-end
 
 function validate_user(hsh::Dict{Symbol, String})::Dict{Symbol, String}
   @assert haskey(hsh, :user) && !isempty(hsh[:user])
