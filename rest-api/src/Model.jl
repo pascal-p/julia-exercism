@@ -1,80 +1,74 @@
 module Model
 
-import Base: ==   ## import Base: ==, show
+using Parameters
+import Base: ==
 
 const Str = String
 const Money = Float64
 const DSF = Dict{Str, Money}
+
+@with_kw mutable struct NT
+  name::String = ""
+  owes::DSF = DSF()
+  owed_by::DSF = DSF()
+
+  function NT(name::String; owes::DSF=DSF(), owed_by::DSF=DSF())
+    @assert calc_sum(owes) ≥ zero(Money) && calc_sum(owed_by) ≥ zero(Money)
+    if length(owes) > 0 && length(owed_by) > 0
+      new(name, owes, owed_by)
+    elseif length(owes) > 0
+      new(name, owes, DSF())
+    else
+      new(name, DSF(), owed_by)
+    end
+  end
+end
 
 ##
 ## User
 ##
 
 mutable struct User
-  name::String
-  owes::DSF
-  owed_by::DSF
+  user::NT
   balance::Money
 
-  function User(name::String; owes::DSF=DSF(), owed_by::DSF=DSF())
-    @assert calc_sum(owes) ≥ zero(Money)
-    @assert calc_sum(owed_by) ≥ zero(Money)
+  User(user::NT) = new(user, calc_balance(user.owes, user.owed_by))
 
-    new(name, owes, owed_by, calc_balance(owes, owed_by))
+  function User(name::String)
+    user = NT(name)
+    balance = Money(0.0)
+    new(user, balance)
   end
 
-  function User(user::Dict{String,Any})
-    new(user.name,
-        DSF( k => v for (k, v) ∈ user["owes"]),
-        DSF( k => v for (k, v) ∈ user["owed_by"]),
-        Money(user.balance))
+  function User(duser::Dict{String, Any})
+    user = NT(
+      duser.name,
+      DSF(k => v for (k, v) ∈ duser["owes"]),
+      DSF(k => v for (k, v) ∈ duser["owed_by"])
+    )
+    new(user, Money(0.0))
   end
 end
+
+name(u::User) = u.user.name
+owes(u::User) = u.user.owes
+owed_by(u::User) = u.user.owed_by
 
 """
   update!(borrower, lender, amount)
 """
 function update!(; borrower::User, lender::User, amt::Money)
-  # attr_changed =
-  _update!(borrower, lender.name, amt, :owed_by) |>
-    attr_changed -> _post_update!(borrower, lender.name, attr_changed)
+  _update!(borrower, name(lender), amt, :owed_by) |>
+    attr_changed -> _post_update!(borrower, name(lender), attr_changed)
 
-  _update!(lender, borrower.name, amt, :owes) |>
-    attr_changed -> _post_update!(lender, borrower.name, attr_changed)
+  _update!(lender, name(borrower), amt, :owes) |>
+    attr_changed -> _post_update!(lender, name(borrower), attr_changed)
 end
-
-# function update!(; borrower::User, lender::User, amt::Money)
-#   ## borrower part
-#   b_owed_by = get(borrower.owed_by, lender.name, zero(Money))
-#   changed = if b_owed_by > zero(Money)
-#     borrower.owed_by[lender.name] = b_owed_by - amt
-#     :owed_by
-#   else
-#     borrower.owes[lender.name] = get(borrower.owes, lender.name, zero(Money)) + amt
-#     :owes
-#   end
-#   borrower.balance = calc_balance(borrower.owes, borrower.owed_by)
-#   _post_update!(borrower, lender.name, changed)
-#   ##
-#   ## lender part
-#   l_owes = get(lender.owes, borrower.name, zero(Money))
-#   changed = if l_owes > zero(Money)
-#     lender.owes[borrower.name] = l_owes - amt
-#     :owes
-#   else
-#     lender.owed_by[borrower.name] = get(lender.owed_by, borrower.name, zero(Money)) + amt
-#     :owed_by
-#   end
-#   lender.balance = calc_balance(lender.owes, lender.owed_by)
-#   _post_update!(lender, borrower.name, changed)
-# end
 
 function ==(u₁::User, u₂::User)::Bool
   ## relying on cmp of dict.
-  u₁.name == u₂.name &&
-    u₁.owes == u₂.owes &&
-    u₁.owed_by == u₂.owed_by &&
-    u₁.balance ≈ u₂.balance
+  name(u₁) == name(u₂) && owes(u₁) == owes(u₂) &&
+    owed_by(u₁) == owed_by(u₂) && u₁.balance ≈ u₂.balance
 end
 
 
@@ -85,25 +79,14 @@ end
 struct Users
   coll::Dict{Symbol, Vector{User}}
 
-  function Users()
-    new(Dict{Symbol, Vector{User}}(:users => User[]))
-  end
-
-  function Users(users::Vector{User})
-    new(Dict{Symbol, Vector{User}}(:users => users))
-  end
+  Users() = new(Dict{Symbol, Vector{User}}(:users => User[]))
+  Users(users::Vector{User}) = new(Dict{Symbol, Vector{User}}(:users => users))
 end
 
 coll(users::Users) = users.coll[:users]
 
-function add_to_users!(users::Users, user::User)
-  push!(users.coll[:users], user)
-end
+add_to_users!(users::Users, user::User) = push!(users.coll[:users], user)
 
-# function find_user(users::Users; name::String="bar")::Union{Nothing, User}
-#   res = filter(u -> u.name == name, users.coll[:users])
-#   length(res) == ? nothing : res[1]
-# end
 
 ## The user collection
 const YA_users = Ref{Users}(Users())
@@ -114,7 +97,8 @@ const YA_users = Ref{Users}(Users())
 ##
 
 function create_user(name::String; owes::DSF=DSF(), owed_by::DSF=DSF())::User
-  user = User(name; owes, owed_by)
+  nt_user = NT(name; owes, owed_by)
+  user = User(nt_user)# User(name; owes, owed_by)
   push!(YA_users[].coll[:users], user)
   user
 end
@@ -122,10 +106,10 @@ end
 function create_iou(borrower::User, lender::User, amt::Money)
   ## no limit for lender and no limit for borrower
   ## assume it is always possible
-  @assert borrower.name != lender.name
+  @assert borrower.user.name != lender.user.name
 
-  update!(borrower, lender.name, amt; key=:borrower)
-  update!(lender, borrower.name, amt)
+  update!(borrower, lender.user.name, amt, key=:borrower)
+  update!(lender, borrower.user.name, amt)
 end
 
 
@@ -134,7 +118,7 @@ end
 ##
 
 function calc_sum(iou::DSF)::Money
-  values(iou) |> sum
+  Money(values(iou) |> sum)
 end
 
 function calc_balance(owes::DSF, owed_by::DSF)::Money
@@ -151,49 +135,45 @@ function stringify(user::User; attr=:owes)
   return coll
 end
 
-
-function _update!(user::User, name::String, amt::Money, attr::Symbol)::Symbol
-  val = get(getfield(user, attr), name, zero(Money))
+function _update!(tuser::User, name::String, amt::Money, attr::Symbol)::Symbol
+  val = get(getfield(tuser.user, attr), name, zero(Money))
 
   changed = if val > zero(Money)
-    hsh = getfield(user, attr)
+    hsh = getfield(tuser.user, attr)
     hsh[name] = val - amt
-    setfield!(user, attr, hsh)
+    setfield!(tuser.user, attr, hsh)
     attr
   else
-    o_attr = attr == :owed_by ? :owes : :owed_by
-    hsh = getfield(user, o_attr)
+    o_attr = (attr == :owed_by) ? :owes : :owed_by
+    hsh = getfield(tuser.user, o_attr)
     val = get(hsh, name, zero(Money))
     hsh[name] = val + amt
-    setfield!(user, o_attr, hsh)
+    setfield!(tuser.user, o_attr, hsh)
     o_attr
   end
-  user.balance = calc_balance(user.owes, user.owed_by)
+
+  tuser.balance = calc_balance(tuser |> owes, tuser |> owed_by)
   changed
 end
 
 """
-  if field :owed_by becomes < 0. => it becomes a > 0 :owes filed (and conversely)
+  if field :owed_by becomes < 0. => it becomes a > 0 :owes field (and conversely)
   if field :owed_by becomes ≈ 0. => remove it from dictionary (same for :owes)
 """
-function _post_update!(user::User, name::String, attr::Symbol)
-  hsh₁ = getfield(user, attr) # ex. :owed_by
+function _post_update!(tuser::User, name::String, attr::Symbol)
+  hsh₁ = getfield(tuser.user, attr) # ex. :owed_by
 
   if length(hsh₁) > 0 && haskey(hsh₁, name)
-
     if hsh₁[name] < zero(Money)
       o_attr = attr == :owed_by ? :owes : :owed_by
-      hsh₂ = getfield(user, o_attr)
+      hsh₂ = getfield(tuser.user, o_attr)
       hsh₂[name] = -hsh₁[name]
-
       delete!(hsh₁, name)
-
-      setfield!(user, attr, hsh₁) ## update attr as key name wasremove from it
-      setfield!(user, o_attr, hsh₂)
-
+      setfield!(tuser.user, attr, hsh₁) ## update attr as key name was removed from it
+      setfield!(tuser.user, o_attr, hsh₂)
     elseif hsh₁[name] ≈ zero(Money)
       delete!(hsh₁, name)
-      setfield!(user, attr, hsh₁)
+      setfield!(tuser.user, attr, hsh₁)
     end
   end
 end
