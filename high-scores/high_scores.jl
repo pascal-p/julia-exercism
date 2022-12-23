@@ -1,4 +1,4 @@
-TScore = Vector{<: Unsigned}
+TScore = AbstractVector{<: Unsigned}
 
 macro check_scores(fn::Expr)
   local fn_sign = fn.args[1].args
@@ -38,13 +38,13 @@ end
 
 
 @check_scores latest(scores::TScore)::Unsigned = scores[end]
-latest(scores::Vector{<: Integer}) = latest(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
+latest(scores::AbstractVector{<: Integer}) = latest(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
 latest(::Any) = throw(ArgumentError("Expect a vector of (unsigned) Integer"))
 
 @check_scores personal_best(scores::TScore)::Unsigned = maximum(scores)
-personal_best(scores::Vector{<: Integer})::UInt = personal_best(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
+personal_best(scores::AbstractVector{<: Integer})::UInt = personal_best(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
 personal_best(::Any) = throw(ArgumentError("Expect a vector of (unsigned) Integer"))
 
 @check_scores personal_top_3(scores::TScore)::TScore = sort(scores, rev=true)[1:min(3, length(scores))]
-personal_top_3(scores::Vector{<: Integer})::TScore = personal_top_3(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
+personal_top_3(scores::AbstractVector{<: Integer})::TScore = personal_top_3(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
 personal_top_3(::Any) = throw(ArgumentError("Expect a vector of (unsigned) Integer"))
