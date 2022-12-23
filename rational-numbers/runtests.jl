@@ -8,7 +8,7 @@ include("rational-numbers.jl")
 @test RationalNumber <: Real
 @test_throws ArgumentError RationalNumber(0, 0)
 
-@testset "One- & Zero-elements" begin
+@testset "One-element & Zero-element" begin
   @test zero(RationalNumber{Int}) == RationalNumber(0, 1)
   @test one(RationalNumber{Int})  == RationalNumber(1, 1)
 
@@ -279,6 +279,17 @@ end
   @test RationalNumber(2, 3) > RationalNumber(1, 6)
   @test RationalNumber(2, 3) ≥ RationalNumber(2, 3)
   @test RationalNumber(2, 3) == RationalNumber(2, 3)
+  @test RationalNumber(4, 6) == RationalNumber(2, 3)
+
+  @test RationalNumber(1, 1) > RationalNumber(0, 1)
+  @test RationalNumber(1, 1) ≥ RationalNumber(0, 1)
+  @test 1//1 + 2//3 > 1//1
+
+  @test 3 > RationalNumber(2, 3)
+  @test 3.5 > RationalNumber(2, 3)
+  @test π > RationalNumber(2, 3)
+  @test RationalNumber(2, 3) < ℯ
+  @test RationalNumber(2, 3) ≤ ℯ
 
   @test RationalNumber(Int128(typemax(Int)), typemin(Int)) == RationalNumber(Int128(typemax(Int)) << 1, Int128(typemin(Int)) << 1)
   # NOTE: typemin(Int) << 1 == 0!

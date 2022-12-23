@@ -109,22 +109,16 @@ end
 
 for op in (:<, :≤, :>, :≥, :≠)
   @eval begin
-
     ## rational only
-    function ($op)(r₁::RationalNumber, r₂::RationalNumber)::Bool
-      ($op)(r₁.num * r₂.den, r₂.num * r₁.den)
-    end
+    ($op)(r₁::RationalNumber, r₂::RationalNumber)::Bool = ($op)(r₁.num * r₂.den, r₂.num * r₁.den)
 
     ## mix right
-    function ($op)(r::RationalNumber, x::Integer)::Bool
-      ($op)(r, RationalNumber(x))
-    end
+    ($op)(r::RationalNumber, x::Integer)::Bool = ($op)(r, RationalNumber(x))
+    ($op)(r::RationalNumber, x::YaReal)::Bool = ($op)(r.num / r.den, x)
 
     ## mix left
-    function ($op)(x::Integer, r::RationalNumber)::Bool
-      ($op)(RationalNumber(x), r)
-    end
-
+    ($op)(x::Integer, r::RationalNumber)::Bool = ($op)(RationalNumber(x), r)
+    ($op)(x::YaReal, r::RationalNumber)::Bool = ($op)(x, r.num / r.den)
   end
 end
 
