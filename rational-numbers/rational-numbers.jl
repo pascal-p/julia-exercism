@@ -16,8 +16,10 @@ const SIGNED_INT_LE64 = (Int8, Int16, Int32, Int64)
 const STYPES = sort(subtypes(Signed), lt=(x, y) -> ≤(sizeof(x), sizeof(y)), rev=false)
 const AF = AbstractFloat
 const YaReal = Union{AF, AbstractIrrational, Integer} # Real == [ AbstractFloat, AbstractIrrational, Integer, Rational ]
-#                                                     # obviously want to exclude Rational
+#                                                     # obviously we want to exclude Rational
+include("./ya-macros.jl")
 
+#
 struct RationalNumber{T<: Integer} <: Real
   num::T
   den::T
@@ -250,20 +252,18 @@ function Base.:/(r₁::RationalNumber{T}, r₂::RationalNumber{T}) where {T <: I
   RationalNumber(r₁.num * r₂.den, r₁.den * r₂.num)
 end
 
-function Base.:^(r::RationalNumber{T}, x::Integer)::RationalNumber where {T <: Integer}
-  check_undefined_form(r, x)
-  iszero(x) && return one(RationalNumber{T})
+## Power :^
+@check_undefined_form function Base.:^(r::RationalNumber{T}, x::Integer)::RationalNumber where {T <: Integer}
+  iszero(x) && return one(typeof(r))
   RationalNumber(r.num ^ x, r.den ^ x)
 end
 
-function Base.:^(r::RationalNumber{T}, x::YaReal)::YaReal where {T <: Integer}
-  check_undefined_form(r, x)
+@check_undefined_form function Base.:^(r::RationalNumber{T}, x::YaReal)::YaReal where {T <: Integer}
   iszero(x) && return one(YaReal)
   r.num^x / r.den^x
 end
 
-function Base.:^(x::YaReal, r::RationalNumber{T})::YaReal where {T <: Integer}
-  check_undefined_form(r, x)
+@check_undefined_form function Base.:^(x::YaReal, r::RationalNumber{T})::YaReal where {T <: Integer}
   iszero(r) && return one(typeof(x))
   isone(r) && return YaReal(x)
   x ^ (r.num / r.den)
@@ -405,10 +405,3 @@ function promote_f_t(n::Signed)::Signed
   end
   n
 end
-
-function check_undefined_form(r::RationalNumber{T}, x::YaReal) where {T <: Integer}
-  iszero(r) && iszero(x) && throw(ArgumentError("Undefined form 0^0"))
-end
-
-# macro undefined_form(r, x)
-# end
