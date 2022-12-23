@@ -17,8 +17,9 @@ end
 @testset "ending squares" begin
   @test total_after(32) < total_after(64)
 
-  @time @test on_square(64) == 9223372036854775808
-  @time @test total_after(64) == 18446744073709551615
+  N = 64
+  @time @test on_square(N) == UInt(2)^(N - 1)     # ==  9_223_372_036_854_775_808
+  @time @test total_after(N) == UInt128(2)^N - 1  # == 18_446_744_073_709_551_616
 end
 
 @testset "Invalid values" begin
@@ -29,6 +30,7 @@ end
 
   @testset "Negative" begin
     @test_throws DomainError on_square(-1)
+    @test_throws DomainError on_square(-100)
     @test_throws DomainError total_after(-1)
   end
 
