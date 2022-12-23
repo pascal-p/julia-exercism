@@ -45,7 +45,7 @@ function sieve_v2(limit)
     ix += 1
   end
 
-  ## build actuval array
+  ## build actual array
   [ix for ix in 2:limit if ary[ix]]
 end
 
@@ -90,7 +90,7 @@ function sieve_v3(limit)
   ary[1] = false   ## exclude 1
   cand, ix = 2, 3  ## start with 2, and prep. for next candidate
 
-  ## upper limit for canidate prime (cand)
+  ## upper limit for candidate prime (cand)
   rlimit = convert(Int, ceil(√limit))
 
   while cand ≤ rlimit
