@@ -1,4 +1,3 @@
-
 import Base: +, -
 
 const ALPHA = "abcdefghijklmnopqrstuvwxyz"
@@ -9,8 +8,7 @@ const NON_ALPHA_REXP = r"[^a-zA-Z0-9]"
 const GRP_SIZE = 5 + 1 # + 1 for space
 
 """
-  Aim: inject oneliner to check whether the given α (2nd arg of encode/decode function)
-is co-prime with M
+  Aim: inject oneliner to check whether the given α (2nd arg of encode/decode function) is co-prime with M
 
 With: @coprime_checker function encode(plain::AbstractString, α::Integer, β::Integer)::AbstractString
 We have the following:
@@ -31,34 +29,36 @@ macro coprime_checker(fn)
     local var = fn.args[1].args[1].args[3].args[1]                            # access α
     local check = :(!iscoprime($(var)) && throw(ArgumentError("$($(var)) and M=$(M) not coprime")))
 
-    ## Inject checker in body of wrapped function
     fn.args[2] = :(begin
-      $(check)
-      $(fn.args[2])
+      $(check)       # Inject check as first line in the body of the target function
+      $(fn.args[2])  # Copy original function body unchanged
     end)
-
   end
 
-  return fn
+  fn
 end
 
 ##
 ## Public
 ##
+"""
+  encode(plain::AbstractString, α::Integer, β::Integer)
+
+  where encode(x, α, β) = (α × x + β) ≡ m
+"""
 @coprime_checker function encode(plain::AbstractString, α::Integer, β::Integer)::AbstractString
-  """
-  E(x) = (α × x + β) ≡ m
-  """
   |(plain, α, β, +) |>
     ary -> reduce((s, c) -> grouping(s, c), ary, init=" ") |>
     s -> strip(s)
 end
 
+"""
+  decode(ciphered::AbstractString, α::Integer, β::Integer)
+
+  where decode(y, α, β) = α-¹ × (y - β) ≡ m
+"""
 @coprime_checker function decode(ciphered::AbstractString, α::Integer, β::Integer)::AbstractString
-  """
-  D(y) = α-¹ × (y - β) ≡ m
-  """
-  α = xgcd(α, M)[2] # max(xgcd(α, M)[2:3]...)
+  α = xgcd(α, M)[2] # == max(xgcd(α, M)[2:3]...)
 
   |(ciphered, α, β, -) |>
     ary -> join(ary)
@@ -68,15 +68,17 @@ end
 ##
 ## Internals
 ##
-function |(src::AbstractString, α::Integer, β::Integer, op)
-  """
-  define a pipeline which takes
+"""
+  |(src::AbstractString, α::Integer, β::Integer, op)
+
+  defines a pipeline which takes
     - a src (text) and splits it into its characters
     - a filter which excludes the non alpha characters
     - a translator which encode/decode the characters
-  """
+"""
+function |(src::AbstractString, α::Integer, β::Integer, op::Function)
   collect(src) |>
-    ary -> filter((c) -> match(NON_ALPHA_REXP, string(c)) == nothing, ary) |>
+    ary -> filter((c) -> match(NON_ALPHA_REXP, string(c)) === nothing, ary) |>
     ary -> map(x -> '0' ≤ x ≤ '9' ? x : op(x, α, β), ary)
 end
 
