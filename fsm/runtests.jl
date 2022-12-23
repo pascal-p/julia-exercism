@@ -3,7 +3,6 @@ using Test
 include("./fsm.jl")
 
 @testset "States" begin
-
   for state ∈ (Ready, Waiting, Dispense, Refunding, Exit)
     @test genstate(state) !== nothing
   end
