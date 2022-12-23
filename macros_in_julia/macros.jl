@@ -296,13 +296,90 @@ end
 """
 
 # ╔═╡ e3e0b34a-d538-4e6e-9080-55e89006e2ee
+md"""
+### Example 4: Checking grade
+"""
 
+# ╔═╡ c1d2d888-c2cf-4b46-a169-caedffd59d0c
+const SUE = Union{Symbol, Expr}
+
+# ╔═╡ f6f5f2f4-c294-421c-8a25-5d3242447058
+extract_grade_arg(arg::SUE) = typeof(arg[end]) == Symbol ? arg[end] : arg[end].args[1]
+
+# ╔═╡ 9f052122-e838-4d17-9a67-fc0370ecf2e3
+extract_grade_arg(arg::Vector{Any}) = typeof(arg[end]) == Symbol ? arg[end] : arg[end].args[1]
 
 # ╔═╡ f9636c42-13df-4131-a210-fec10aae1fbd
+macro check_grade(fn::Expr)
+  # fn == function with 2 or 3 arguments, interested only in the last argument (grade, pos 3 or 4)
+  local fn_sign = fn.args[1].args
+  println(">> Expr fn.args[1].args: ", fn_sign)
+  local _grade = length(fn_sign) ∈ [3, 4] ? extract_grade_arg(fn_sign) : extract_grade_arg(fn_sign[1].args)
+  
+  println("Found var: ", _grade)
+  ## replace body
+  fn.args[2] = quote
+    $(_grade) ≤ 0 && throw(ArgumentError("Expecting grade to be > 0, got \$($(_grade))"))
+    $(fn.args[2])
+  end
+  fn
+end
 
+# ╔═╡ 6b1778bb-17f2-4749-96c5-5ad03637ff55
+
+
+# ╔═╡ 02c87928-31b0-4e68-987d-df0adb77b1d3
+begin
+	const VS = Vector{String}
+	const DIV = Dict{Integer, VS}
+end
+
+# ╔═╡ ac00a149-6157-41c0-9b9d-8029376c1805
+mutable struct Student
+  # does not matter for the purpose of the macro
+end
+
+# ╔═╡ 47f18735-b489-482a-91a8-ecf552ac1d3b
+struct GradeSchool
+  students::Vector{Student}
+  roster::DIV
+end
 
 # ╔═╡ 99e6445b-e858-482d-a9a7-8dfac2703ea4
+@check_grade function students_in_grade(gr::GradeSchool, grade::Integer)::VS; end
 
+# ╔═╡ c36e2643-1464-49c2-9039-877e4ab3d01f
+@check_grade function students_in_grade(gr, grade::Integer); end
+
+# ╔═╡ 3ebf5774-1d94-4c4e-bcec-ea55f4323ca2
+@check_grade function students_in_grade(gr::GradeSchool, grade::Integer); end
+
+# ╔═╡ b7a357ee-7375-4237-9697-30c0f60d47f6
+@check_grade function students_in_grade(gr::GradeSchool, grade); end
+
+# ╔═╡ a96da069-095c-49af-8b86-d2699f35d699
+@check_grade function students_in_grade(gr, grade); end
+
+# ╔═╡ 5d8bfb95-208a-4d19-9185-3b2710132d39
+@check_grade function students_in_grade(gr, grade)::VS; end
+
+# ╔═╡ 5bc5fe78-28d5-4d82-be4c-30bafb8a6bc0
+@check_grade function students_in_grade(gr, grade::Integer)::VS; end
+
+# ╔═╡ 6d1d0bb3-c406-4557-9d90-83dcc95b346f
+@check_grade function students_in_grade(gr::GradeSchool, grade)::VS; end
+
+# ╔═╡ 6c5b2021-7912-423b-9daf-f512d33b8854
+@check_grade function add_student!(gr::GradeSchool, name::String, grade::Integer)::Nothing; end
+
+# ╔═╡ b6dc3770-1fc4-4740-aa36-dd01f386c3e0
+@check_grade function add_student!(gr::GradeSchool, name::String, grade)::Nothing; end
+
+# ╔═╡ a5d7558b-1d48-4c17-8e9e-0c3708bcf28f
+@check_grade function add_student!(gr::GradeSchool, name::String, grade); end
+
+# ╔═╡ 44268771-432b-42be-96a1-7ac08a8e74ca
+typeof(:Nothing), typeof(Nothing)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -591,8 +668,26 @@ version = "17.4.0+0"
 # ╠═8bd5e851-659c-4fe8-9903-7c678d7c9bfd
 # ╠═e897f4c5-2c51-4d98-a7db-ce4d49a94884
 # ╟─e29c68d8-e5f8-443c-bbec-a857d7dba5a2
-# ╠═e3e0b34a-d538-4e6e-9080-55e89006e2ee
+# ╟─e3e0b34a-d538-4e6e-9080-55e89006e2ee
+# ╠═c1d2d888-c2cf-4b46-a169-caedffd59d0c
+# ╠═f6f5f2f4-c294-421c-8a25-5d3242447058
+# ╠═9f052122-e838-4d17-9a67-fc0370ecf2e3
 # ╠═f9636c42-13df-4131-a210-fec10aae1fbd
+# ╠═6b1778bb-17f2-4749-96c5-5ad03637ff55
+# ╠═02c87928-31b0-4e68-987d-df0adb77b1d3
+# ╠═ac00a149-6157-41c0-9b9d-8029376c1805
+# ╠═47f18735-b489-482a-91a8-ecf552ac1d3b
 # ╠═99e6445b-e858-482d-a9a7-8dfac2703ea4
+# ╠═c36e2643-1464-49c2-9039-877e4ab3d01f
+# ╠═3ebf5774-1d94-4c4e-bcec-ea55f4323ca2
+# ╠═b7a357ee-7375-4237-9697-30c0f60d47f6
+# ╠═a96da069-095c-49af-8b86-d2699f35d699
+# ╠═5d8bfb95-208a-4d19-9185-3b2710132d39
+# ╠═5bc5fe78-28d5-4d82-be4c-30bafb8a6bc0
+# ╠═6d1d0bb3-c406-4557-9d90-83dcc95b346f
+# ╠═6c5b2021-7912-423b-9daf-f512d33b8854
+# ╠═b6dc3770-1fc4-4740-aa36-dd01f386c3e0
+# ╠═a5d7558b-1d48-4c17-8e9e-0c3708bcf28f
+# ╠═44268771-432b-42be-96a1-7ac08a8e74ca
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
