@@ -53,17 +53,14 @@ macro enc_dec_checker(fn)
 end
 
 @enc_dec_checker function encode(msg::String, rails::Int)::String
-  ## check msg, rails
-  msg = replace(msg, NON_LETTERS => "")
+  ## 1 - check msg, rails, distribute the chars on the rails
+  rows = replace(msg, NON_LETTERS => "") |>
+    msg -> fill_rails(msg, rails)
 
-  ## distribute the chars on the rails
-  n = length(msg)
-  rows = fill_rails(msg, rails)
-
-  ## get the non '.' chars from a row(rail)
+  ## 2 - get the non '.' chars from a row(rail)
   λ(r) = filter(ch -> ch != DEFL, rows[r])
 
-  ## accumulate all chars in one array and stringify
+  ## 3 - accumulate all chars in one array and stringify
   foldl((a, jx) -> (push!(a, λ(jx)...); a),
         collect(1:rails);
         init=[]) |>
@@ -71,59 +68,44 @@ end
 end
 
 @enc_dec_checker function decode(msg::String, rails::Int)::String
-  ## 1 - fill with placeholder
-  n = length(msg)
-  rows = fill_rails("?" ^ n, rails)
-
-  ## 2 - replace placeholder
-  repl_placeholder!(msg, rows, rails)
-
-  ## 3 - finally decode
-  read_rails(rows, rails)
+  ## fill with placeholder, and replace it
+  fill_rails("?" ^ length(msg), rails) |>
+    rows -> repl_placeholder!(msg, rows, rails) |>
+    rows -> read_rails(rows, rails)
 end
 
 ##
 ## internals
 ##
 
-function init_rows(n::Int, rails::Int)
-  [fill('.', n) for _ in 1:rails]
-end
+init_rows(n::Int, rails::Int) = [fill('.', n) for _ in 1:rails]
 
 function repl_placeholder!(msg, rows, rails)
   lix = 1
-  for r in 1:rails, ix in 1:length(rows[r])
+  for r ∈ 1:rails, ix ∈ 1:length(rows[r])
     if rows[r][ix] == '?'
       rows[r][ix] = msg[lix]
       lix += 1
     end
-    ix += 1
   end
+  rows
 end
 
 function read_rails(rows, rails::Int)
   n = length(rows[1]) ## Assume all rails have same lengths
   msg = ""
 
-  function read_incr(ix)
-    s, e = 1, rails
-    for r in s:e
+  readfn = function(ix, start_, end_; incr=1)
+    for r ∈ start_:incr:end_
       msg = string(msg, rows[r][ix])
       ix += 1
       ix > n && break
     end
-    return ix
+    ix
   end
 
-  function read_decr(ix)
-    s, e = rails - 1, 2
-    for r in s:-1:e
-      msg = string(msg, rows[r][ix])
-      ix += 1
-      ix > n && break
-    end
-    return ix
-  end
+  read_incr(ix) = readfn(ix, 1, rails)
+  read_decr(ix) = readfn(ix, rails - 1, 2; incr=-1)
 
   @loop(n, read_incr, read_decr)
   msg
@@ -133,24 +115,36 @@ function fill_rails(msg::String, rails::Int; defl=DEFL)
   n = length(msg)
   rows = init_rows(n, rails)
 
-  function fill_incr(ix)
+  # fillfn = function(ix, start_, end_; incr=1)
+  #   for r ∈ start_:incr:end_
+  #     rows[r][ix] = msg[ix]
+  #     ix += 1
+  #     ix > n && break
+  #   end
+  #   ix
+  # end
+
+  # fill_incr(ix) = fillfn(ix, 1, rails)
+  # fill_decr(ix) = fillfn(ix, rails - 1, 2; init = -1)
+
+  fill_incr = function(ix)
     s, e = 1, rails
-    for r in s:e
-      rows[r][ix] = msg[ix]
+    for r ∈ s:e
+      rows[r][ix] = msg[ix] # side-effect rows for fill_decr
       ix += 1
       ix > n && break
     end
-    return ix
+    ix
   end
 
-  function fill_decr(ix)
+  fill_decr = function(ix)
     s, e = rails - 1, 2
-    for r in s:-1:e
-      rows[r][ix] = msg[ix]
+    for r ∈ s:-1:e
+      rows[r][ix] = msg[ix] # side-effect rows for fill_incr
       ix += 1
       ix > n && break
     end
-    return ix
+    ix
   end
 
   @loop(n, fill_incr, fill_decr)
