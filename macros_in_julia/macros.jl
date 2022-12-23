@@ -4,6 +4,9 @@
 using Markdown
 using InteractiveUtils
 
+# ╔═╡ 555272c1-e494-40b2-a01b-702af7b6c0dc
+using InteractiveUtils
+
 # ╔═╡ cb14a767-31b0-4cec-a3d6-8d83a3c9d19c
 begin
 	using PlutoUI
@@ -26,7 +29,7 @@ html"""
 
 # ╔═╡ 776d65e7-49ab-47c9-83de-3aa928e1a2b0
 md"""
-### First Example
+### Example 1: score checker 
 
 Context: define 3 basic functions taking a vector of integer (named `scores`) as an argument and returning the following:
   1. `latest(scores)` == latest added score (last element of the vector)
@@ -122,18 +125,18 @@ TScore = Vector{<: Unsigned}
 begin
 	## working as expected:
 	
-	# @check_scores latest(scores::TScore = Unsigned[])::Unsigned  = scores[end]
-	# @check_scores latest(scores)::Unsigned = scores[end]
-	# @check_scores latest(scores::TScore) = scores[end]
-	# @check_scores latest(scores) = scores[end]
-	# @check_scores latest(scores::TScore = Unsigned[]) = scores[end]
-	# @check_scores latest(scores = Unsigned[])::Unsigned = scores[end]
-	# @check_scores latest(scores = Unsigned[]) = scores[end]
+	@check_scores latest(scores::TScore = Unsigned[])::Unsigned  = scores[end]
+	@check_scores latest(scores)::Unsigned = scores[end]
+	@check_scores latest(scores::TScore) = scores[end]
+	@check_scores latest(scores) = scores[end]
+	@check_scores latest(scores::TScore = Unsigned[]) = scores[end]
+	@check_scores latest(scores = Unsigned[])::Unsigned = scores[end]
+	@check_scores latest(scores = Unsigned[]) = scores[end]
 end
 
 # ╔═╡ e35649a8-6fc0-420f-b206-bfcb2c51618b
 md"""
-### Second Example
+### Example 2: check for undefined form
 """
 
 # ╔═╡ b556af00-e40b-4d46-8a5b-5634c642ebd1
@@ -226,16 +229,71 @@ end
 end
 
 # ╔═╡ a1e270fd-9d0d-4268-aab8-6e550339f112
-typeof(2//3)
+md"""
+### Example 3 - Co-prime checker
+"""
 
 # ╔═╡ f2fd3d36-7062-4df1-896e-4bb81b6f6e5b
+"""
+  Aim: inject oneliner to check whether the given α (2nd arg of encode/decode function) is co-prime with M
 
+With: @coprime_checker function encode(plain::AbstractString, α::Integer, β::Integer)::AbstractString
+We have the following:
+
+  fn.args[1]                         == encode(plain::AbstractString, α::Integer, β::Integer)::AbstractString
+  fn.args[1].args[1]                 == encode(plain::AbstractString, α::Integer, β::Integer)
+  fn.args[1].args[2]                 == AbstractString
+  fn.args[1].args[1].args[1]         == encode
+  fn.args[1].args[1].args[2]         == plain::AbstractString
+  fn.args[1].args[1].args[3]         == α::Integer
+  fn.args[1].args[1].args[3].args[1] == α
+  fn.args[2]                         == whole body of fn
+"""
+macro coprime_checker(fn)
+  if typeof(fn) == Expr
+    ## extract var and build checker
+    # local var = expr.args[1].args[3] # w/o any type annotation
+    local var = fn.args[1].args[1].args[3].args[1]                            # access α
+    local check = :(!iscoprime($(var)) && throw(ArgumentError("$($(var)) and M=$(M) not coprime")))
+
+    fn.args[2] = :(begin
+      $(check)       # Inject check as first line in the body of the target function
+      $(fn.args[2])  # Copy original function body unchanged
+    end)
+  end
+
+  fn
+end
+
+# ╔═╡ 8bd5e851-659c-4fe8-9903-7c678d7c9bfd
+Base.isinteractive()
 
 # ╔═╡ e897f4c5-2c51-4d98-a7db-ce4d49a94884
-
+@macroexpand @coprime_checker function encode(plain::AbstractString, α::Integer, β::Integer)::AbstractString
+  |(plain, α, β, +) |>
+    ary -> reduce((s, c) -> grouping(s, c), ary, init=" ") |>
+    s -> strip(s)
+end
 
 # ╔═╡ e29c68d8-e5f8-443c-bbec-a857d7dba5a2
-
+md"""
+The macro expansion:
+```Julia
+function Main.encode(plain::AbstractString, α::.Integer, β::.Integer)::AbstractString
+  !(iscoprime(α)) && throw(ArgumentError("$(α) and M=$(M) not coprime"))	     
+  begin
+	|(plain, α, β, :+) |> ((ary) -> begin
+	  reduce(((s, c) -> begin
+	    grouping(s, c)
+	  end), ary, init = " ") |> 
+	    ((s)->begin
+	      strip(s)
+	    end)
+	end)
+  end
+end
+```
+"""
 
 # ╔═╡ e3e0b34a-d538-4e6e-9080-55e89006e2ee
 
@@ -249,6 +307,7 @@ typeof(2//3)
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
@@ -261,7 +320,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "08cc58b1fbde73292d848136b97991797e6c5429"
+project_hash = "a5c8c4e2723c4aeae0704f668327e21c5f9df6b3"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -506,6 +565,7 @@ version = "17.4.0+0"
 
 # ╔═╡ Cell order:
 # ╟─481c19ba-c146-4ecc-a613-05dd2bceda1a
+# ╠═555272c1-e494-40b2-a01b-702af7b6c0dc
 # ╠═cb14a767-31b0-4cec-a3d6-8d83a3c9d19c
 # ╟─468ddd1a-6f26-4e6f-81b2-40e3d60b316f
 # ╟─776d65e7-49ab-47c9-83de-3aa928e1a2b0
@@ -526,10 +586,11 @@ version = "17.4.0+0"
 # ╠═7f902ee4-8a32-4425-bd45-2493a61503f9
 # ╠═a5880efc-7836-49c2-ad92-9638df9c720d
 # ╠═70869412-b16d-40b4-9040-a6c2dc003f56
-# ╠═a1e270fd-9d0d-4268-aab8-6e550339f112
+# ╟─a1e270fd-9d0d-4268-aab8-6e550339f112
 # ╠═f2fd3d36-7062-4df1-896e-4bb81b6f6e5b
+# ╠═8bd5e851-659c-4fe8-9903-7c678d7c9bfd
 # ╠═e897f4c5-2c51-4d98-a7db-ce4d49a94884
-# ╠═e29c68d8-e5f8-443c-bbec-a857d7dba5a2
+# ╟─e29c68d8-e5f8-443c-bbec-a857d7dba5a2
 # ╠═e3e0b34a-d538-4e6e-9080-55e89006e2ee
 # ╠═f9636c42-13df-4131-a210-fec10aae1fbd
 # ╠═99e6445b-e858-482d-a9a7-8dfac2703ea4
