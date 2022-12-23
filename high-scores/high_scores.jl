@@ -1,30 +1,50 @@
-
-TScore = Vector{UInt}
+TScore = Vector{<: Unsigned}
 
 macro check_scores(fn::Expr)
-  local scores = if length(fn.args) ≥ 1 && typeof(fn.args[1].args[1]) != Symbol
-    fn.args[1].args[1].args[2].args[1] # with type hint for args and return value
-  else
-    fn.args[1].args[2]        # w/o any type hint
+  local fn_sign = fn.args[1].args
+  #
+  # NOTE: in each of the following cases we are looking at extracting the function argument: score
+  #
+  local scores = if typeof(fn_sign[1]) == Expr
+    # case - has return type
+    # fn_sign == Any[:(latest(scores::TScore)), :Unsigned] ||
+    #            Any[:(latest(scores)), :Unsigned] ||
+    #            Any[:(latest(scores::TScore = Unsigned[])), :Unsigned]
+    local fn_sign_ext = fn_sign[1].args[2]
+    typeof(fn_sign_ext) == Expr ?
+      (typeof(fn_sign_ext.args[1]) == Symbol ? fn_sign_ext.args[1] : fn_sign_ext.args[1].args[1]) :
+      fn_sign_ext # == no type hint
+  elseif typeof(fn_sign[1]) == Symbol
+    # case - no return type
+    if typeof(fn_sign[end]) == Expr
+      # fn_sign == Any[:latest, :(scores::TScore)] ||                              => fn_sign[2].args[1]
+      #            Any[:latest, :($(Expr(:kw, :(scores::TScore), :(Unsigned[]))))] => fn_sign[2].args[1].args[1]
+      typeof(fn_sign[2].args[1]) == Symbol ?
+        fn_sign[2].args[1] : fn_sign[2].args[1].args[1] # because it is an Expression
+    else
+      # fn_sign = Any[:latest, :scores]
+      fn_sign[2]
+    end
   end
-
-  ## replace body
+  ## replace body which is fn.args[2]
   fn.args[2] = quote
-    length($scores) == 0 && throw(ArgumentError("scores must not be empty"))
+    # inject the check
+    length($scores) == 0 && throw(ArgumentError("scores must be a not empty vector"))
+    # copy back the original function body
     $(fn.args[2])
   end
-
-  return fn
+  fn
 end
 
-@check_scores latest(scores::TScore)::UInt = scores[end]
-@check_scores latest(scores::Vector{<: Integer})::UInt = latest(UInt.(scores))  # will fail if negative score
-latest(::Vector{Any}) = throw(ArgumentError("Expect a vector of Int"))
 
-@check_scores personal_best(scores::TScore)::UInt = maximum(scores)
-@check_scores personal_best(scores::Vector{<: Integer})::UInt = personal_best(UInt.(scores))
-personal_best(::Vector{Any}) = throw(ArgumentError("Expect a vector of Int"))
+@check_scores latest(scores::TScore)::Unsigned = scores[end]
+latest(scores::Vector{<: Integer}) = latest(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
+latest(::Any) = throw(ArgumentError("Expect a vector of (unsigned) Integer"))
+
+@check_scores personal_best(scores::TScore)::Unsigned = maximum(scores)
+personal_best(scores::Vector{<: Integer})::UInt = personal_best(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
+personal_best(::Any) = throw(ArgumentError("Expect a vector of (unsigned) Integer"))
 
 @check_scores personal_top_3(scores::TScore)::TScore = sort(scores, rev=true)[1:min(3, length(scores))]
-@check_scores personal_top_3(scores::Vector{<: Integer})::TScore = personal_top_3(UInt.(scores))
-personal_top_3(::Vector{Any}) = throw(ArgumentError("Expect a vector of Int"))
+personal_top_3(scores::Vector{<: Integer})::TScore = personal_top_3(Unsigned.(scores)) # from Signed ≥ 0 to Unsigned
+personal_top_3(::Any) = throw(ArgumentError("Expect a vector of (unsigned) Integer"))
