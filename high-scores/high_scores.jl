@@ -29,7 +29,7 @@ macro check_scores(fn::Expr)
   ## replace body which is fn.args[2]
   fn.args[2] = quote
     # inject the check
-    length($scores) == 0 && throw(ArgumentError("scores must be a not empty vector"))
+    length($scores) == 0 && throw(ArgumentError("scores must be a non empty vector"))
     # copy back the original function body
     $(fn.args[2])
   end
