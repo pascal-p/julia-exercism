@@ -38,8 +38,8 @@ GradeSchool()::GradeSchool = GradeSchool(Vector{Student}[], DIV())
 function student_roster(gr::GradeSchool)::DIV
   println("gr.roster |> collect: ", gr.roster |> collect;)
   foldl(
-    (d, pair) -> ((k, v) = pair;  d[k] = [v...]; d), # (d, ((k, v) = pair...)) -> (d[k] = [v...]; d),
-    gr.roster |> collect;  # list of Pair{Integer, Vector{String}}
+    (d, pair) -> ((k, v) = pair;  d[k] = [v...]; d), # equiv. (d, ((k, v) = pair...)) -> (d[k] = [v...]; d),
+    gr.roster |> collect; # list of Pair{Integer, Vector{String}}
     init=DIV()
   )
 end
@@ -62,6 +62,7 @@ end
   ## update
   _update_roster!(gr, name, grade, ix)
   gr.students[ix].grade = grade
+
   nothing
 end
 
