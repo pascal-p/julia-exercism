@@ -8,15 +8,15 @@
 
 using InteractiveUtils
 
-
 import Base: <, ≤, >, ≥, ==, ≠
 import Base: +, -, *, /, //
 import Base: promote_rule, typemin, typemax, show, write, read
 
-
 const SIGNED_INT_LE64 = (Int8, Int16, Int32, Int64)
 const STYPES = sort(subtypes(Signed), lt=(x, y) -> ≤(sizeof(x), sizeof(y)), rev=false)
-
+const AF = AbstractFloat
+const YaReal = Union{AF, AbstractIrrational, Integer} # Real == [ AbstractFloat, AbstractIrrational, Integer, Rational ]
+#                                                     # obviously want to exclude Rational
 
 struct RationalNumber{T<: Integer} <: Real
   num::T
@@ -74,7 +74,7 @@ end
 ##
 promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer,S<:Integer} = RationalNumber{promote_type(T,S)}
 promote_rule(::Type{RationalNumber{T}}, ::Type{RationalNumber{S}}) where {T<:Integer, S<:Integer} = RationalNumber{promote_type(T,S)}
-promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer,S<:AbstractFloat} = promote_type(T, S)
+promote_rule(::Type{RationalNumber{T}}, ::Type{S}) where {T<:Integer,S<:AF} = promote_type(T, S)
 
 
 ##
@@ -135,20 +135,14 @@ end
 ##
 ## Arithmetic
 ##
-function mul_checked(x::Integer, y::Integer)::Integer
-  """Signed integers ONLY"""
-  r = op_checked(*, x, y)
-  r
-end
+ """mul_checked for signed integers ONLY"""
+mul_checked(x::Integer, y::Integer)::Integer = op_checked(*, x, y)
 
-function add_checked(x::Integer, y::Integer)::Integer
-  """Signed integers ONLY"""
-  r = op_checked(+, x, y)
-  r
-end
+"""add_checked for signed integers ONLY"""
+add_checked(x::Integer, y::Integer)::Integer = op_checked(+, x, y)
 
+"""sub_checked for signed integers ONLY"""
 function sub_checked(x::Integer, y::Integer)
-  """Signed integers ONLY"""
   r = x - y
 
   if typeof(x) ∈ SIGNED_INT_LE64 && typeof(y) ∈ SIGNED_INT_LE64 && r == Int128(x) - y # y will be promoted
@@ -159,6 +153,7 @@ function sub_checked(x::Integer, y::Integer)
 
   elseif x == 0 || y == 0
     r
+
   elseif x < 0 && y > 0 && r > 0  # r should be <0!
     r = _retry(-, r, x, y)
 
@@ -199,7 +194,8 @@ function op_checked(op, x::Integer, y::Integer)::Integer
       throw(MethodError("op $(op) not yet implemented"))
     end
 
-  else  # x ≤ 0 && y ≤ 0 => overflow will wrap onto positive interval
+  else
+    # x ≤ 0 && y ≤ 0 => overflow will wrap onto positive interval
     if r ≥ 0  ## overflow!
       typeof(r) == Int64 && (r = op(Int128(x), Int128(y)))
       r ≥ 0 && typeof(r) == Int128 && (r = op(BigInt(x), BigInt(y)))
@@ -219,7 +215,7 @@ function _retry(op, r::Integer, x::Integer, y::Integer)::Integer
 
     (r < x || r < y) && typeof(r) == Int128 && (r = op(BigInt(x), BigInt(y)))  # Redo with BigInt
   else
-    r  # looks ok
+    # NOOP looks ok
   end
 
   r
@@ -228,8 +224,9 @@ end
 ## Avoid overflow whenever possible...
 for (op, opchk) in ((:+, add_checked), (:-, sub_checked))
   @eval begin
-    ($op)(r₁::RationalNumber, r₂::RationalNumber) = RationalNumber(($opchk)(mul_checked(r₁.num, r₂.den), mul_checked(r₁.den, r₂.num)),
-                                                                   mul_checked(r₁.den, r₂.den))
+    ($op)(r₁::RationalNumber, r₂::RationalNumber) =
+      RationalNumber(($opchk)(mul_checked(r₁.num, r₂.den), mul_checked(r₁.den, r₂.num)),
+                     mul_checked(r₁.den, r₂.den))
 
     ($op)(r::RationalNumber, x::Integer) = ($op)(r, RationalNumber(Integer(x)))
 
@@ -253,36 +250,33 @@ function Base.:/(r₁::RationalNumber{T}, r₂::RationalNumber{T}) where {T <: I
   RationalNumber(r₁.num * r₂.den, r₁.den * r₂.num)
 end
 
-function Base.:^(r::RationalNumber{T}, x::Integer) where {T <: Integer}
-  iszero(r) && iszero(x) && throw(ArgumentError("Undefined from 0^0"))
+function Base.:^(r::RationalNumber{T}, x::Integer)::RationalNumber where {T <: Integer}
+  check_undefined_form(r, x)
   iszero(x) && return one(RationalNumber{T})
-
   RationalNumber(r.num ^ x, r.den ^ x)
 end
 
-function Base.:^(r::RationalNumber{T}, x::AbstractFloat) where {T <: Integer}
-  iszero(r) && iszero(x) && throw(ArgumentError("Undefined from 0^0"))
-  iszero(x) && return one(AbstractFloat)
-
+function Base.:^(r::RationalNumber{T}, x::YaReal)::YaReal where {T <: Integer}
+  check_undefined_form(r, x)
+  iszero(x) && return one(YaReal)
   r.num^x / r.den^x
 end
 
-function Base.:^(x::Integer, r::RationalNumber{T}) where {T <: Integer}
-  iszero(x) && iszero(r) && throw(ArgumentError("Undefined from 0^0"))
-  iszero(r) && return AbstractFloat(1)
-  isone(r) && return AbstractFloat(x)
-
+function Base.:^(x::YaReal, r::RationalNumber{T})::YaReal where {T <: Integer}
+  check_undefined_form(r, x)
+  iszero(r) && return one(typeof(x))
+  isone(r) && return YaReal(x)
   x ^ (r.num / r.den)
 end
 
-function Base.:^(x::AbstractFloat, r::RationalNumber{T}) where {T <: Integer}
-  iszero(x) && iszero(r) && throw(ArgumentError("Undefined from 0^0"))
-  iszero(r) && return AbstractFloat(1)
-  isone(r) && return x
-
-  (x ^ r.num) ^ (1 / r.den)
+#
+# Special case - handling ℯ
+#
+function Base.:^(::Irrational{:ℯ}, r::RationalNumber{T})  where {T <: Integer}
+  iszero(r) && return one(typeof(ℯ))
+  isone(r) && return ℯ
+  ℯ ^ (r.num / r.den)
 end
-
 
 """
     //(num, den)
@@ -411,3 +405,10 @@ function promote_f_t(n::Signed)::Signed
   end
   n
 end
+
+function check_undefined_form(r::RationalNumber{T}, x::YaReal) where {T <: Integer}
+  iszero(r) && iszero(x) && throw(ArgumentError("Undefined form 0^0"))
+end
+
+# macro undefined_form(r, x)
+# end

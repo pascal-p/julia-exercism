@@ -1,6 +1,9 @@
+using Base: default_color_error
 using Test
 
 include("rational-numbers.jl")
+
+# import Base: ℯ
 
 @test RationalNumber <: Real
 @test_throws ArgumentError RationalNumber(0, 0)
@@ -158,6 +161,15 @@ end
       @test_throws ArgumentError RationalNumber( 0, 10)^0
     end
 
+    @testset "Exponentiation of a rational number with real" begin
+      @test RationalNumber( 1, 2)^0.0 ≈ 1.0
+      @test RationalNumber( 2, 3)^2.0 ≈ 0.4444444444444444
+      @test RationalNumber( 2, 3)^2.1 ≈ 0.4267842225743191
+      @test RationalNumber( 1, 10)^100.0 ≈ 1.0e-100
+
+      @test_throws ArgumentError RationalNumber( 0, 1)^0.0 # undefined form
+    end
+
     @testset "Exponentiation of a integer number to a rational number" begin
       @test 8^RationalNumber( 4, 3) ≈ 15.999999999999998
       @test 9^RationalNumber(-1, 2) ≈ 0.3333333333333333
@@ -168,24 +180,31 @@ end
       @test_throws ArgumentError 0^RationalNumber( 0, 1)
     end
 
-    @testset "Exponentiation of a rational number with real" begin
-      @test RationalNumber( 1, 2)^0.0 ≈ 1.0
-      @test RationalNumber( 2, 3)^2.0 ≈ 0.4444444444444444
-      @test RationalNumber( 2, 3)^2.1 ≈ 0.4267842225743191
-      @test RationalNumber( 1, 10)^100.0 ≈ 1.0e-100
-
-      @test_throws ArgumentError RationalNumber( 0, 1)^0.0 # undefined form
-    end
-
     @testset "Exponentiation of a real number to a rational number" begin
       @test 8.0^RationalNumber( 4, 3) ≈ 15.999999999999998
       @test 9.0^RationalNumber(-1, 2) ≈ 0.3333333333333333
-      @test 2.0^RationalNumber( 0, 1) ≈ 1.0
+      @test 2.5^RationalNumber( 0, 1) ≈ 1.0
       @test 2.0^RationalNumber( 1, 1) ≈ 2.0
       @test 100.0^RationalNumber( 2, 2) ≈ 100.0
       @test 2.0^RationalNumber( -100, 3) ≈ 9.239890216664653e-11
 
       @test_throws ArgumentError 0.0^RationalNumber( 0, 1)
+    end
+
+    @testset "Exponentiation of an irrational to a rational number" begin
+      @test ℯ^RationalNumber( 0, 1) ≈ 1.0
+      @test (√2)^RationalNumber( 0, 1) ≈ 1.0
+      @test (π)^RationalNumber( 0, 1) ≈ 1.0
+      @test ℯ^RationalNumber( 1, 1) ≈ ℯ
+      @test ℯ^RationalNumber( 2, 1) ≈ ℯ * ℯ
+
+  # Test threw exception
+  # Expression: ℯ ^ RationalNumber(0, 1) ≈ 1.0
+  # MethodError: ^(::Irrational{:ℯ}, ::RationalNumber{Int64}) is ambiguous. Candidates:
+  #   ^(x::Union{AbstractIrrational, AbstractFloat, Integer}, r::RationalNumber{T}) where T<:Integer in Main at /home/pascal/Projects/Exercism/julia/rational-numbers/rational-numbers.jl:266
+  #   ^(::Irrational{:ℯ}, x::Number) in Base.MathConstants at mathconstants.jl:119
+  # Possible fix, define
+  #   ^(::Irrational{:ℯ}, ::RationalNumber{T}) where T<:Integer
     end
   end
 
