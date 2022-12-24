@@ -42,3 +42,19 @@ end
   vm = VM(sv)
   @test (patch! ∘ patch!)(vm) |> string == "1.2.5"
 end
+
+
+@testset "rollback" begin
+  vm = VM("10.2.3")
+
+  @test rollback(vm) |> string == "10.2.2"
+  @test (rollback ∘ rollback)(vm) |> string == "10.2.0"
+  @test (rollback ∘ rollback)(vm) |> string == "10.0.0"
+  @test (rollback ∘ rollback)(vm) |> string == "8.0.0"
+  @test (rollback ∘ rollback)(vm) |> string == "6.0.0"
+  @test (rollback ∘ rollback)(vm) |> string == "4.0.0"
+  @test (rollback ∘ rollback)(vm) |> string == "2.0.0"
+  @test (rollback ∘ rollback)(vm) |> string == "0.0.0"
+
+  @test_throws ArgumentError (rollback ∘ rollback)(vm)
+end
