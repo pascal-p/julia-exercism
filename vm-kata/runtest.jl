@@ -65,26 +65,11 @@ end
   @test (release ∘ rollback)(vm) == sv
 end
 
-# @testset "rollback" begin
-#   vm = VM("10.2.3")
-
-#   @test rollback(vm) |> string == "10.2.2"
-#   @test (rollback ∘ rollback)(vm) |> string == "10.2.0"
-#   @test (rollback ∘ rollback)(vm) |> string == "10.0.0"
-#   @test (rollback ∘ rollback)(vm) |> string == "8.0.0"
-#   @test (rollback ∘ rollback)(vm) |> string == "6.0.0"
-#   @test (rollback ∘ rollback)(vm) |> string == "4.0.0"
-#   @test (rollback ∘ rollback)(vm) |> string == "2.0.0"
-#   @test (rollback ∘ rollback)(vm) |> string == "0.0.0"
-
-#   @test rollback(VM()) |> string == "0.0.0"
-
-#   @test_throws ArgumentError (rollback ∘ rollback)(vm)
-#   @test_throws ArgumentError rollback(VM("0"))
-# end
-
 @testset "combine major, minor, patch and rollback/2" begin
-  vm = VM("10.2.3")
+  sv = "10.2.3"
+  vm = VM(sv)
+
+  @test_throws ArgumentError rollback(vm)
 
   @test (release ∘ major!)(vm) == "11.0.0"
   @test (release ∘ minor!)(vm) == "11.1.0"
@@ -94,8 +79,38 @@ end
   end
   @test (release ∘ major!)(vm) == "12.0.0"
 
-  @test (release ∘ rollback)(vm) == "11.2.10"
-  @test (release ∘ rollback)(vm) == "11.2.9"
+  for pv ∈ 10:-1:0;
+    @test (release ∘ rollback)(vm) == "11.2.$(pv)"
+  end
+
+  @test (release ∘ rollback)(vm) == "11.1.0"
+  @test (release ∘ rollback)(vm) == "11.0.0"
+  @test (release ∘ rollback)(vm) == sv
+
+  @test_throws ArgumentError rollback(vm)
+end
+
+@testset "combine major, minor, patch and rollback/3 - limit" begin
+  sv = "10.2.0"
+  vm = VM(sv)
+
+  for pv ∈ 1:99;
+    @test split((release ∘ patch!)(vm), SEP)[end] == "$(pv)"
+  end
+
+  for pv ∈ 99:-1:99 - N;
+    @test (release ∘ rollback)(vm) == string(sv[1:5], "$(pv - 1)")
+  end
+
+  @test_throws ArgumentError rollback(vm) # only N previous values memorized!
+
+  @test (release ∘ major!)(vm) == "11.0.0" # prev == 10.2.78
+  @test (release ∘ major!)(vm) == "12.0.0"
+
+  @test (release ∘ rollback)(vm) == "11.0.0"
+  @test (release ∘ rollback)(vm) == "10.2.78"
+
+  @test_throws ArgumentError rollback(vm) # only N previous values memorized!
 end
 
 @testset "release" begin
