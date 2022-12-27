@@ -13,7 +13,11 @@ function /(x::String, y::String)::Float64
   parse(Int, x) / y |> r -> round(r; digits=2)
 end
 
-%(x::String, y::String)::Integer = parse(Int, x) % parse(Int, y)
+function %(x::String, y::String)::Union{Float64, Integer}
+  y = parse(Int, y)
+  y == 0 && return NaN
+  parse(Int, x) % y
+end
 
 const OpMap = Dict{String, Function}(
   "+" => +,
