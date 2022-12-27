@@ -61,7 +61,14 @@ function yapow(r::Unsigned, x::Unsigned, y::Unsigned)
 end
 
 decr(x::Unsigned)::Unsigned = iszero(x) ? x : (x -= one(Unsigned))
-incr(x::Unsigned)::Unsigned = x += one(Unsigned)
+
+incr(x::Unsigned)::Unsigned = x += one(Unsigned) # no check
+
+# function incr(x::Unsigned)::Unsigned
+#   x += one(Unsigned)
+#   !lesser(Int(x), LIM) && throw(ArgumentError("limit reached"))
+#   x
+# end
 
 """
   lesser(x, y) is true if x is (strictly) less than y
