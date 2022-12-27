@@ -12,7 +12,7 @@ The data listed below are not allowed in your code:
     - Bitwise operators: <<, >>, ^, ~, !, |, &
     - Other operators: <, >, .
  - Brackets: [, ], {, }
- - Numbers: 0-9, NaN
+ - Digits/Numbers: 0-9, NaN
  - Quotations: ", ', `` `
  - Loop commands: for, while
  - Additional libraries/constructors: Array, Math, Number, String
@@ -20,9 +20,10 @@ The data listed below are not allowed in your code:
  - ~Note: arrow function is allowed~
 
 The modules/functions below are also disabled:
- - Bypassing functions: require(), eval(), function constructor
- - Time functions: setTimeout(), setInterval()
- - Modules: fs, vm
+ - Bypassing functions: ~`require()`~, `eval()`, function constructor
+ - JS related
+   - ~Time functions: `setTimeout()`, `setInterval()`~
+   - ~Modules: fs, vm~
 
 Input:
   - x, y as integer from 0 to 5000
@@ -38,13 +39,16 @@ Output:
   return a number with maximum 2 decimal places (rounded down), or NaN if a/0 or a%0
 
 ## Examples:
-`calc(1, 2, "+") == 3` should return true
-`calc(0, 0, "-") == 0` should return true
-`calc(6, 7, "*") == 42` should return true
-`calc(5, 4, "%") == 1`  should return true
-`isNaN(calc(9, 0, "/"))` should return true
+ - `calc(1, 2, "+") == 3` should return true
+ - `calc(0, 0, "-") == 0` should return true
+ - `calc(6, 7, "*") == 42` should return true
+ - `calc(5, 4, "%") == 1`  should return true
+ - `isNaN(calc(9, 0, "/"))` should return true
 
 
 ## Source
 
 ref. https://www.codewars.com/kata/5a42497e55519ef5c5000015
+
+<hr />
+<p><sub><em>Dec 2022, Corto Inc</sub></em></p>
