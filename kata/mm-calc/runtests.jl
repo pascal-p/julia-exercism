@@ -5,6 +5,7 @@ include("mm-calc.jl")
 
 @testset "base cases" begin
   @test calc(1, 2, "+") == 3
+  @test calc(5000, 5000, "+") == 10000
 
   @test calc(0, 0, "-") == 0
   @test calc(6, 0, "-") == 6
@@ -12,6 +13,7 @@ include("mm-calc.jl")
   @test calc(2, 7, "-") == -5
 
   @test calc(6, 7, "*") == 42
+  @test calc(5000, 5000, "*") == 25_000_000
 
 
   @test calc(7, 2, "/") ≈ 3.5
@@ -26,9 +28,28 @@ include("mm-calc.jl")
   end
 end
 
+@testset "" begin
+  @test calc(2, 3, "^") == 8
+  @test calc(2, 10, "^") == 1024
+  @test isnan(calc(0, 0, "^"))
+
+  # exception:
+  # @test calc(5000, 3, "^") == 9765625000000000000000000000000000000
+  @test_throws ArgumentError calc(5000, 3, "^")
+end
 
 @testset "lesser" begin
   @test !lesser(5, 3)
   @test !lesser(5, 5)
   @test lesser(3, 5)
+end
+
+@testset "other exceptions" begin
+  @test_throws AssertionError calc(-10, 1, "+")
+  @test_throws AssertionError calc(-1, 10, "+")
+  @test_throws AssertionError calc(-10, -2, "-")
+
+  @test_throws AssertionError calc(5001, 2, "-")
+
+  @test_throws ArgumentError calc(200, 12, "⋇")
 end

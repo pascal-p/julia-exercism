@@ -25,13 +25,14 @@ The modules/functions below are also disabled:
  - Modules: fs, vm
 
 Input:
-  - a, b as integer from 0 to 5000
+  - x, y as integer from 0 to 5000
   - operator as string of basic mathematical operator as follow:
     - "+" addition
     - "-" substraction
     - "*" multiplication
     - "/" division
     - "%" modulus
+    - "^" power (limited to range of x, y)
 
 Output:
   return a number with maximum 2 decimal places (rounded down), or NaN if a/0 or a%0
