@@ -37,8 +37,13 @@ Output:
   return a number with maximum 2 decimal places (rounded down), or NaN if a/0 or a%0
 
 ## Examples:
-`calc(1, 2, "+") === 3` should return true
-`calc(0, 0, "-") === 0` should return true
-`calc(6, 7, "*") === 42` should return true
-`calc(5, 4, "%") === 1`  should return true
-`isNaN(calc(9, 0, "/")) === true` should return true
+`calc(1, 2, "+") == 3` should return true
+`calc(0, 0, "-") == 0` should return true
+`calc(6, 7, "*") == 42` should return true
+`calc(5, 4, "%") == 1`  should return true
+`isNaN(calc(9, 0, "/"))` should return true
+
+
+## Source
+
+ref. https://www.codewars.com/kata/5a42497e55519ef5c5000015
