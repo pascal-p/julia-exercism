@@ -1,26 +1,28 @@
 
-add(x::Integer, y::Integer)::Integer = x + y
+import Base: +, -, *, /, %
 
-sub(x::Integer, y::Integer)::Integer = x - y
++(x::String, y::String)::Integer = parse(Int, x) + parse(Int, y)
 
-mul(x::Integer, y::Integer)::Integer = x * y
+-(x::String, y::String)::Integer = parse(Int, x) - parse(Int, y)
 
-function fdiv(x::Integer, y::Integer)::Float64
-  y == zero(Integer) && return NaN
+*(x::String, y::String)::Integer = parse(Int, x) * parse(Int, y)
 
-  x / y |> r -> round(r; digits=2)
+function /(x::String, y::String)::Float64
+  y = parse(Int, y)
+  y == 0 && return NaN
+  parse(Int, x) / y |> r -> round(r; digits=2)
 end
 
-mod(x::Integer, y::Integer)::Integer = x % y
+%(x::String, y::String)::Integer = parse(Int, x) % parse(Int, y)
 
 const OpMap = Dict{String, Function}(
-  "+" => add,
-  "-" => sub,
-  "*" => mul,
-  "/" => fdiv,
-  "%" => mod
+  "+" => +,
+  "-" => -,
+  "*" => *,
+  "/" => /,
+  "%" => %
 )
 
 function calc(x::Integer, y::Integer, op::String)
-  OpMap[op](x, y)
+  OpMap[op](string(x), string(y))
 end
