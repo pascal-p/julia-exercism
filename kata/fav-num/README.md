@@ -2,15 +2,30 @@
 
 ## Description
 
-Let f(n) = ( n + 1 )
-           (   2   )
+Let
+$$f(n) = \left(
+  \begin{array}{c}
+   n + 1 \\
+   2
+  \end{array}
+\right)
+$$
 
-( n )
-( k ) is Binomial coefficient.
+where:
 
-You need to represent the given number N like this:
+$$f(n) = \left(
+  \begin{array}{c}
+   n \\
+   k
+  \end{array}
+\right)
+$$
+is Binomial coefficient.
 
-n = f(i) + f(j) + f(k), which is possible ∀ n ∈ N
+You need to represent the given number N like this: $n = f(i) + f(j) + f(k), ∀ n ∈ N$
+
+which is possible if repetition are allowed
+Here we have the _additional constraint on i ≠ j ≠ k, hence some numbers cannot be decomposed...
 
 For example:
 
@@ -21,7 +36,11 @@ As you can see, there can be multiple representations for one n, so return any r
 
 represent(34) = `[0, 6, 28]` or represent(34) = `[3, 10, 21]`
 
-In this kata all the tests will be with 1⩽N⩽2666 1 \leqslant N \leqslant 2^{666} 1⩽N⩽2666
+
+However:
+`0, 1, 2, 3, 5, 6, 8, 12, 15, 20 have no decomposition...`
+
+In this kata all the tests will be with $1 ≤  N ≤ 2^{666}$
 
 
 ## Source

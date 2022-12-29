@@ -5,6 +5,7 @@ include("fav-num.jl")
 @testset "base cases" begin
   @test decompose(4) ∈ [(0, 1, 2)]
   @test decompose(7) ∈ [(0, 1, 3)]
+  @test decompose(24) ∈ [(0, 2, 6)]
 
   @test decompose(34) ∈ [(0, 6, 28), (3, 10, 21), (0, 3, 7)]
   @test decompose(10) ∈ [(1, 2, 3)]
@@ -18,8 +19,12 @@ include("fav-num.jl")
   @test decompose(70) ∈ [(1, 2, 11)]
   @test decompose(72) ∈ [(0, 3, 11)]
 
+  @test decompose(101) ∈ [(0, 4, 13)]
+  @test decompose(111) ∈ [(0, 3, 14)]
+
   @test decompose(2010) ∈ [(3, 26, 57)]
 
+  @test decompose(10101) ∈ [(0, 21, 140)]
 end
 
 @testset "more cases" begin
@@ -42,4 +47,10 @@ end
   end
 
   @test_throws AssertionError decompose(8)
+
+  @test_throws AssertionError decompose(12)
+
+  @test_throws AssertionError decompose(15)
+
+  @test_throws AssertionError decompose(20)
 end
