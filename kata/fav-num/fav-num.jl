@@ -1,4 +1,4 @@
-using Base: base36digits, base62digits
+const LENBASE = 3
 
 fₙ(n::Unsigned) = n == zero(Unsigned) ? zero(Unsigned) : fact_by(n + 1)
 
@@ -10,89 +10,71 @@ end
 fact_by(n::Unsigned, x = unsigned(2)) = (n * (n - 1)) ÷ x
 
 function decompose(n::Unsigned)
-  f = floor(Unsigned, (1 + √(1 + 8*n)) / 2) # highest factor base
-  base = Unsigned[]
-  cn = n
+  @assert n > zero(Unsigned)
+  f = factor(n)
+  cn, base = n, Unsigned[]
+
   while true
     x = fₙ(f)
-    # println(" -- start with f: $(f) and x: $(x) >? cn: $(cn) // base: $(base)")
     while x > cn
-      f -= 1
-      x = fₙ(f)
+      (f, x) = next_factor(f)
     end
-    # println("- Found factor $(f) value $(x) and cn - x ≥ 0 ? $(cn - x ≥ 0) && f ∉ base: $(f ∉ base)")
+
     if cn - x ≥ 0 && f ∉ base
-      cn -= x
-      push!(base, f)
-
-      if cn == 0 && sum(fₙ.(base)) == n && length(base) == 3
-        # println("- Success/1a - base is $(base)")
-        return base |> vb -> Int.(vb) |> sort |> Tuple
-      elseif cn == 0 && length(base) == 2
-        if zero(Unsigned) ∉ base
-          # println("- Success/1b - base is $([base..., 0])")
-          return [base..., zero(Unsigned)] |> vb -> Int.(vb) |> sort |> Tuple
-        end
-        (cn, f, base) = redo(n, base)
-        # println("- redo/1bb - with new factor $(f)")
-        continue
-      elseif cn ≥ 0 && length(base) < 3
-        f = floor(Unsigned, (1 + √(1 + 8*cn)) / 2) # highest factor base
-        # println("- Next/1c - with factor $(f)")
-        continue
-      else
-        (cn, f, base) = redo(n, base)
-        # println("- redo/1d - with new factor $(f)")
-        continue
-      end
-      #
-    else # cn - x < 0
-      println("- // with factor: $(f) value $(x) and cn - x < 0...")
-      f -= 1
-      x = fₙ(f)
-
-      while f > 0 && cn - x < 0
-        f -= 1
-        x = fₙ(f)
-      end
-      println("- // now we have factor: $(f) value $(x) - f ≥ 0? $(f ≥ 0) ")
-
-      #if f ≥ 0
-      cn -= x
-      push!(base, f)
-
-      if cn == 0 && sum(fₙ.(base)) == n && length(base) == 3
-        println("- Success/2a - base is $(base)")
-        return base |> vb -> Int.(vb) |> sort |> Tuple
-      elseif cn == 0 && length(base) == 2
-        if zero(Unsigned) ∉ base
-          println("- Success/2b - base is $([base..., 0])")
-          return [base..., zero(Unsigned)] |> vb -> Int.(vb) |> sort |> Tuple
-        else
-          (cn, f, base) = redo(n, base)
-          println("- redo/2bb - with new factor $(f)")
-          continue
-        end
-      elseif cn ≥ 0 && length(base) < 3
-        f = floor(Unsigned, (1 + √(1 + 8*cn)) / 2) # highest factor base
-        println("- Next/2c - with factor $(f)")
-        continue
-      else
-        (cn, f, base) = redo(n, base)
-        println("- redo/2d - with new factor $(f)")
-        continue
-      end
+      (cont, cn, f, base) = decision(cn, f, x, n, base)
+      cont ? continue : return base
     end
+
+    ## cn - x < 0
+    (f, x) = next_factor(f)
+    while x > cn
+      (f, x) = next_factor(f)
+    end
+
+    (cont, cn, f, base) = decision(cn, f, x, n, base)
+    cont ? continue : return base
   end
 end
 
 function decompose(n::Integer)
-  @assert n ≥ 0
+  @assert n > 0
   decompose(unsigned(n))
 end
 
+Σ(base::AbstractVector{<: Unsigned}) = sum(fₙ.(base))
+
+# highest factor base: solving p ⨱ (p - 1) = 2n
+factor(n::Unsigned)::Unsigned = floor(Unsigned, (one(Unsigned) + √(one(Unsigned) + unsigned(8)*n)) / unsigned(2))
+
+@inline function next_factor(f::Unsigned)
+  f -= 1
+  x = fₙ(f)
+  (f, x)
+end
+
+function process_cases(cn::Unsigned, f::Unsigned, n::Unsigned, base::AbstractVector{<: Unsigned})
+  cn == 0 && Σ(base) == n && length(base) == LENBASE && return (false, cn , f, base |> transform)
+  if cn == 0 && Σ(base) == n && length(base) == LENBASE - 1
+    zero(Unsigned) ∉ base && return (false, cn , f, [base..., zero(Unsigned)] |> transform)
+    return (true, redo(n, base)...)
+  elseif cn ≥ 0 && length(base) < LENBASE
+    f = factor(cn)
+    return (true, cn, f, base)
+  end
+  (true, redo(n, base)...)
+end
+
+function decision(cn::Unsigned, f::Unsigned, x::Unsigned, n::Unsigned, base::AbstractVector{<: Unsigned})
+  cn -= x
+  push!(base, f)
+  process_cases(cn, f, n, base) # => (cont, cn, f, base)
+end
+
+transform(base::AbstractVector{<: Unsigned})::Tuple{Integer, Integer, Integer} = base |> sort |> v -> Int.(v) |> Tuple
+
 function redo(n, base)
   f = base[1] - 1
+  @assert f > zero(Unsigned) "factor f must be positive or zero"
   base = Unsigned[]
   (n, f, base)
 end
