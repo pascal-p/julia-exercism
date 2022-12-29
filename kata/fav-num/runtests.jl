@@ -5,10 +5,10 @@ include("fav-num.jl")
 @testset "base cases" begin
   @test decompose(4) ∈ [(0, 1, 2)]
   @test decompose(7) ∈ [(0, 1, 3)]
-  @test decompose(24) ∈ [(0, 2, 6)]
-
-  @test decompose(34) ∈ [(0, 6, 28), (3, 10, 21), (0, 3, 7)]
   @test decompose(10) ∈ [(1, 2, 3)]
+
+  @test decompose(24) ∈ [(0, 2, 6)]
+  @test decompose(34) ∈ [(0, 3, 7), (2, 4, 6)]
 
   @test decompose(69) ∈ [(0, 2, 11)]
   @test decompose(68) ∈ [(2, 4, 10)]
