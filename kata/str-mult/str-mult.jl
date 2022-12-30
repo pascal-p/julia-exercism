@@ -1,4 +1,4 @@
-using Base: InvasiveLinkedListSynchronized
+const T = Int16
 
 #
 # Using BigInt makes it too easy (and why using string then?)
@@ -20,21 +20,23 @@ function mul_cheat(s₁::String, s₂::String)::String
 end
 
 
-const T = Int16
 #
 # String only version
 #
 function mul(s₁::String, s₂::String) # ::String
-  # deal with sign
-  # deal with extra 0
-  s₁ = replace(s₁, r"^(?:0+)?" => "")
-  s₂ = replace(s₂, r"^(?:0+)?" => "")
+  ## pre-processing: deal with sign, extra 0, and "."
+  (s₁, pos₁, sign₁) = preprocessing(s₁)
+  (s₂, pos₂, sign₂) = preprocessing(s₂)
 
-  r = 0
   s₁, s₂ = s₁ < s₂ ? (s₁, s₂) : (s₂, s₁)
+  # println("s₁: [$(s₁)] / s₂: [$(s₂)]")
+  length(s₁) == 0 && return "0" # only contaions 0 and therefore was compress to empty string
+  length(s₁) == 1 && s₂ == "1" && return s₁
+
   xs = split(s₁, "") |> v -> parse.(T, v)
   ys = split(s₂, "") |> v -> parse.(T, v)
 
+  ## processing, i.e. multiplication
   vv = []
   shift = 0
   for x ∈ xs |> reverse
@@ -44,7 +46,6 @@ function mul(s₁::String, s₂::String) # ::String
       (c, m) = m > T(9) ? divrem(m, T(10)) : (zero(T), m)
       push!(v, m)
     end
-
     c > zero(T) && push!(v, c)
     for _ ∈ 1:shift
       pushfirst!(v, zero(T))
@@ -69,5 +70,30 @@ function mul(s₁::String, s₂::String) # ::String
     (c, sv[ix]) = sv[ix] > T(9) ? divrem(sv[ix], T(10)) : (zero(T), sv[ix])
   end
   c > zero(T) && push!(sv, c)
-  sv |> reverse |> v -> join(v, "")
+
+  s = sv |> reverse |> v -> join(v, "") # stringify
+
+  ## place the "." if required
+  l = length(s)
+  s = (pos₁ > 0 || pos₂ > 0) ? string(SubString(s, 1, l - pos₁ - pos₂),
+                                      ".",
+                                      SubString(s, l - pos₁ - pos₂ + 1, l)) : s
+
+  ## sign
+  sign₁ * sign₂ == -1 ? string("-", s) : s
+end
+
+function preprocessing(s::String)
+  (s, sign) = startswith(s, "-") ? (s[2:end], -1) : (s, 1)
+  s = replace(s, r"^(?:0+)?" => "")
+  pos = occursin(r"\.", s) ? find_ix(s) - 1 : -1
+  s = pos ≥ 0 ? filter(s_ -> s_ != '.', s) : s
+  (s, pos, sign)
+end
+
+function find_ix(s::String; ch = '.')
+  for (ix, c) ∈ (enumerate ∘ reverse)(s)
+    c == ch && return ix
+  end
+  nothing
 end

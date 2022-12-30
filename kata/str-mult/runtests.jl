@@ -2,13 +2,14 @@ using Test
 
 include("str-mult.jl")
 
-@testset "base cases" begin
+@testset "mult. base cases" begin
   for x ∈ 1:1000, y ∈ x:1000
     @test mul(string(x), string(y)) == string(x * y)
   end
 
   @test mul("123", "456") == "56088"
   @test mul("1234", "5678") == "7006652"
+  @test mul("05678.", "1234") == "7006652"
 
   @test mul("123456789", "987654321") == "121932631112635269"
   @test mul("1234567890", "9870654321") == "12185992877996352690"
@@ -22,9 +23,36 @@ include("str-mult.jl")
              "22051781461994366240279172246014824933434062154193060433240735730181916066612170720692732913081395555397466176743312790078596480"
 end
 
-@testset "leading and trailing zeros" begin
+@testset "mult special casses" begin
+  @test mul("123456789012345678901234567890", "00000000000000000000000000001") == "123456789012345678901234567890"
+  @test mul("0000000000000001", "123456789012345678901234567890") == "123456789012345678901234567890"
+
+  @test mul("123456789012345678901234567890", "00000000000000000000000000000") == "0"
+  @test mul("00000000000000000000000000000", "123456789012345678901234567890") == "0"
+end
+
+@testset "mult negative factors" begin
+  @test mul("-123", "456") == "-56088"
+  @test mul("-4567", "-1456") == "6649552"
+
+  @test mul("-45.67", "-145.6") == "6649.552" # compund with decimal
+  @test mul("-4.567", "-14.56") == "66.49552" # compund with decimal
+end
+
+@testset "mult. leading and trailing zeros" begin
   @test mul("0123", "0456") == "56088"
   @test mul("00000001234", "05678") == "7006652"
+
+end
+
+@testset "mult. with decimal value" begin
+  @test mul("1.23", "4.56") == "5.6088"
+
+  @test mul("123.4", "0.5678") == "70.06652"
+  @test mul("1.234567890", "9.870654321") == "12.185992877996352690"
+
+  @test mul("1234.", "05678.") == "7006652"
+  @test mul("1234", "05678.") == "7006652"
 end
 
 @testset "exception" begin
