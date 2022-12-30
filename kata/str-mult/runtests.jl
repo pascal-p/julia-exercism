@@ -38,19 +38,35 @@ end
 
   @test mul("-45.67", "-145.6") == "6649.552" # compund with decimal
   @test mul("-4.567", "-14.56") == "66.49552" # compund with decimal
+
+  @test mul("-4.567", "0.0000") == "0"
+  @test mul("-0.0", "0.0000") == "0"
+  @test mul("-0.0", "-0.0000") == "0"
+  @test mul("-0.", "0.00") == "0"
+
+  @test mul("-0.", "1.00") == "0"
+  @test mul("-1.", "1.00") == "-1"
+  @test mul("-1.", "-1.00") == "1"
+
+  @test mul("-1000", "-0.001") == "1"
+  @test mul("-112", "-0.001") == "0.112"
+  @test mul("-112", "0.000001") == "-0.000112"
 end
 
 @testset "mult. leading and trailing zeros" begin
   @test mul("0123", "0456") == "56088"
   @test mul("00000001234", "05678") == "7006652"
-
 end
 
 @testset "mult. with decimal value" begin
+  for x ∈ 0.:0.1:10., y ∈ x:0.2:10.
+    @test mul(string(x), string(y)) == string((x * 10) * (y * 10) / 100) |> s -> replace(s, r"(?:\.0+)?$" => "")
+  end
+
   @test mul("1.23", "4.56") == "5.6088"
 
   @test mul("123.4", "0.5678") == "70.06652"
-  @test mul("1.234567890", "9.870654321") == "12.185992877996352690"
+  @test mul("1.234567890", "9.870654321") == "12.18599287799635269"
 
   @test mul("1234.", "05678.") == "7006652"
   @test mul("1234", "05678.") == "7006652"

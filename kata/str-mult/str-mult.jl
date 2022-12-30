@@ -9,18 +9,15 @@ function mul(s₁::String, s₂::String)::String
   (s₂, pos₂, sign₂) = preprocessing(s₂)
 
   s₁, s₂ = s₁ < s₂ ? (s₁, s₂) : (s₂, s₁) # re-roder
-
   length(s₁) == 0 && return "0" # only contaions 0 and therefore was compress to empty string
-  length(s₁) == 1 && s₂ == "1" && return s₁
+  length(s₁) == 1 && s₁ == "1" && return postprocessing(s₂, pos₁, pos₂, sign₁, sign₂)
 
   ## processing, i.e. multiplication
   xs = split(s₁, "") |> reverse |> v -> parse.(T, v)
   ys = split(s₂, "") |> reverse |> v -> parse.(T, v)
   vv = mul(xs, ys)
-  # println("before vv: <$(vv)>")
   alignseq!(vv)
-  # println(" after vv: <$(vv)>")
-  s = sumseq(vv) |> reverse |> v -> join(v, "") # sum && stringify
+  s = sumseq(vv) |> reverse |> v -> join(v, "") ## sum && stringify
 
   postprocessing(s, pos₁, pos₂, sign₁, sign₂)
 end
@@ -35,7 +32,7 @@ function mul(xs::Vector{T}, ys::Vector{T})::Vector
 end
 
 function alignseq!(vv::Vector)
-  l = length(vv[end]) # this is the longest sequence by construction
+  l = length(vv[end]) ## this is the longest sequence by construction
   for v ∈ vv
     lᵥ = length(v)
     for _ ∈ 1:(l - lᵥ)
@@ -51,7 +48,7 @@ function sumseq(vv::Vector)::Vector{T}
     sv[ix] += c
     (c, sv[ix]) = sv[ix] > T(9) ? divrem(sv[ix], T(10)) : (zero(T), sv[ix])
   end
-  c > zero(T) && push!(sv, c) # carry
+  c > zero(T) && push!(sv, c) ## carry
   sv
 end
 
@@ -59,17 +56,25 @@ function preprocessing(s::String)
   ## deal with sign, extra 0, and "."
   (s, sign) = startswith(s, "-") ? (s[2:end], -1) : (s, 1)
   s = replace(s, r"^(?:0+)?" => "")
-  pos = occursin(r"\.", s) ? find_ix(s) - 1 : -1
+  pos = occursin(r"\.", s) ? find_ix(s) - 1 : 0
   s = pos ≥ 0 ? filter(s_ -> s_ != '.', s) : s
+  s = replace(s, r"^(?:0+)?" => "") ## 2nd pass after sign, dec. removal
   (s, pos, sign)
 end
 
 function postprocessing(s::String, pos₁, pos₂, sign₁, sign₂)
-  ## place the "." if required
-  l = length(s)
-  s = (pos₁ > 0 || pos₂ > 0) ? string(SubString(s, 1, l - pos₁ - pos₂),
-                                      ".",
-                                      SubString(s, l - pos₁ - pos₂ + 1, l)) : s
+  ## place the "." and adjust if required
+  if  pos₁ > 0 || pos₂ > 0
+    pos = pos₁ + pos₂
+    s = pos > length(s) ? string(repeat("0", pos - length(s)), s) : s ## need to prefix with 0s
+    l = length(s)
+    s = string(SubString(s, 1, l - pos),
+               ".",
+               SubString(s, l - pos + 1, l))
+    s = startswith(s, ".") ? string("0", s) : s
+    s = occursin(r"\.", s) &&  endswith(s, "0") ? replace(s, r"(?:0+)?$" => "") : s ## remove superfluous 0 after dec point
+    s = endswith(s, ".") ? s[1:end-1] : s
+  end
 
   ## sign
   sign₁ * sign₂ == -1 ? string("-", s) : s
