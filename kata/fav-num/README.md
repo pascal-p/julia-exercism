@@ -1,4 +1,4 @@
-# Next VersionFavorite Number
+# Favorite Number
 
 ## Description
 
