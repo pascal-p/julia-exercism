@@ -1,10 +1,10 @@
 
 const LETTER2CODE = Dict{Char, Int8}(
-  l => i for (i, l) ∈ enumerate('A':'Z' |> collect)
+  l => i - 1 for (i, l) ∈ enumerate('A':'Z' |> collect)
 )
 
 const CODE2LETTER = Dict{Int8, Char}(
-  i => l for (i, l) ∈ enumerate('A':'Z' |> collect)
+  i - 1 => l for (i, l) ∈ enumerate('A':'Z' |> collect)
 )
 
 macro compkey(fn::Expr)
@@ -32,7 +32,7 @@ end
   # slen, nkey injected by macro
   ciphered = fill("", slen) # pre-alloc
   for (ix, (l, k)) in enumerate(zip(s, nkey))
-    ciphered[ix] = CODE2LETTER[(LETTER2CODE[l] + LETTER2CODE[k] - 1) % 26] |> string
+    ciphered[ix] = CODE2LETTER[(LETTER2CODE[l] + LETTER2CODE[k]) % 26] |> string
   end
 
   join(ciphered, "")
@@ -42,7 +42,7 @@ end
   # slen, nkey injected by macro
   deciphered = fill("", slen) # pre-alloc
   for (ix, (l, k)) in enumerate(zip(s, nkey))
-    deciphered[ix] = CODE2LETTER[(LETTER2CODE[l] - LETTER2CODE[k] + 27) % 26] |> string
+    deciphered[ix] = CODE2LETTER[(LETTER2CODE[l] - LETTER2CODE[k] + 26) % 26] |> string
   end
 
   join(deciphered, "")

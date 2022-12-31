@@ -5,6 +5,8 @@ include("vig-cipher.jl")
 @testset "encode" begin
   @test encode("HELLOWORLD", "ABCXYZ") == "HFNIMVOSNA"
 
+  @test encode("THEQUICKBROWNFOXJUMPSOVERTHELAZYDOG", "LION") == "EPSDFQQXMZCJYNCKUCACDWJRCBVRWINLOWU"
+  @test encode("ATTACKATDAWN", "GO") == "GHZOIYGHJOCB"
 end
 
 @testset "more cases" begin
@@ -13,10 +15,12 @@ end
 @testset "decode" begin
   @test decode("HFNIMVOSNA", "ABCXYZ") == "HELLOWORLD"
 
+  @test decode("EPSDFQQXMZCJYNCKUCACDWJRCBVRWINLOWU", "LION") == "THEQUICKBROWNFOXJUMPSOVERTHELAZYDOG"
+  @test decode("GHZOIYGHJOCB", "GO") == "ATTACKATDAWN"
 end
 
 @testset "decode ∘ encode ≡ id" begin
-  # @test (decode ∘ encode)("WEAREDISCOVEREDFLEEATONCE") == "WEAREDISCOVEREDFLEEATONCE"
+  @test decode(encode("WEAREDISCOVEREDFLEEATONCE", "FOOBAR"), "FOOBAR") == "WEAREDISCOVEREDFLEEATONCE"
 end
 
 @testset "complement" begin
