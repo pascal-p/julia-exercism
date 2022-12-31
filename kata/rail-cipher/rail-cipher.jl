@@ -1,38 +1,47 @@
-const N = 3 # number of rails
+const N = 3 # number of rails by default
 
-function encode(s::String; n = N)::String
+function encode(s::AbstractString; n = N)::AbstractString
   @assert n ≥ 2
+  s == "" && return ""
+
   rails = fill("", n)
   offset = 1
   for (ix, seq) ∈ enumerate(sequences(n=n))
     k, iseq = offset, 1
     while k ≤ length(s)
-      # println("offset: $(offset) / lim: $(length(s) - offset + 1) / ix: $(ix) / seq: $(seq) / s[k:$(k)]: $(s[k])")
       rails[ix] = string(rails[ix], s[k])
-      seq[iseq] == 0 && (iseq = 3 - iseq)
-      k += seq[iseq]
-      iseq = 3 - iseq
+      (iseq, k) = nextcharseq(seq, iseq, k)
     end
     offset += 1
   end
-  rails |> v -> join(v, "")
+  rails |> ary2str
 end
 
-function decode(s::String; n = N):: String
-  ds = fill("", length(s)) # repeat(" ", length(s))
+function decode(s::AbstractString; n = N)::AbstractString
+  @assert n ≥ 2
+  s == "" && return ""
+
+  ds = fill("", length(s)) # pre-allocate
   ix, offset = 1, 1
   for seq ∈ sequences(n=n)
     k, iseq = offset, 1
     while k ≤ length(s)
       ds[k] = string(s[ix])
-      seq[iseq] == 0 && (iseq = 3 - iseq)
-      k += seq[iseq]
-      iseq = 3 - iseq
+      (iseq, k) = nextcharseq(seq, iseq, k)
       ix += 1
     end
     offset += 1
   end
-  ds |> v -> join(v, "")
+  ds |> ary2str
+end
+
+ary2str(src::Vector)::AbstractString =  src |> v -> join(v, "")
+
+@inline function nextcharseq(seq::Tuple, iseq, k)
+  seq[iseq] == 0 && (iseq = 3 - iseq)
+  k += seq[iseq]
+  iseq = 3 - iseq
+  (iseq, k)
 end
 
 function sequences(;n = N)
@@ -40,13 +49,3 @@ function sequences(;n = N)
   seed = 2 * n - 2
   zip(seed:-2:0, 0:2:seed) |> collect
 end
-
-# julia> decode("WECRLTEERDSOEEFEAOCAIVDEN")
-# ERROR: MethodError: no method matching setindex!(::String, ::Char, ::Int64)
-# Stacktrace:
-#  [1] decode(s::String; n::Int64)
-#    @ Main ~/Projects/Exercism/julia/kata/rail-cipher/rail-cipher.jl:28
-#  [2] decode(s::String)
-#    @ Main ~/Projects/Exercism/julia/kata/rail-cipher/rail-cipher.jl:21
-#  [3] top-level scope
-#    @ REPL[2]:1
