@@ -39,7 +39,7 @@ result:    H    E    L    L    O    W    O    R    L    D
 
 ## Tasks
 
-Write encode and decode function, generating the key
+Write encode and decode function, given a key
 
 Write a function that can deduce which key was used during a Vigenere cipher encryption, given the resulting ciphertext, and the length of that key. (cf. [wikipedia VIgenere code](https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher) in particular key elimination)
 
@@ -49,7 +49,7 @@ Notes:
 
 Examples:
 
-Given ciphered sequence: `HFNIMVOSNA` and (original) length of the key used, here 6, deduce that the key used was "ABCXYZ" (??)
+Given ciphered sequence: `HFNIMVOSNA` and (original) length of the key used, here 6, deduce that the key used was "ABCXYZ" (...)
 
 
 ## Source
