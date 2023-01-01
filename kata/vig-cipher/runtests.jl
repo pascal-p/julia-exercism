@@ -24,8 +24,8 @@ end
 end
 
 @testset "complement" begin
-  @test complement("FOO", 7, 3) == "FOOFOOFOOF"
-  @test complement("FOOBAR", 4, 6) == "FOOBARFOOB"
-  @test complement("ABRACADA", 2, 8) == "ABRACADAAB"
-  @test complement("ABRACADAB", 1, 9) == "ABRACADABA"
+  @test complement("FOO", 7) == "FOOFOOFOOF"
+  @test complement("FOOBAR", 4) == "FOOBARFOOB"
+  @test complement("ABRACADA", 2) == "ABRACADAAB"
+  @test complement("ABRACADAB", 1) == "ABRACADABA"
 end
