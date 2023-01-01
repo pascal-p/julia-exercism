@@ -2,8 +2,8 @@ import Base: -
 
 const T = UInt8
 
-struct ByteMatrix
-  matrix::Vector{Vector{Char}} # or T?
+struct CharMatrix
+  matrix::Vector{Vector{Char}} # or T? => ByteMatrix
   size::UInt
 end
 
@@ -45,14 +45,17 @@ function -(s₁::AbstractString, s₂::AbstractString)::AbstractString
   join(diff, "")
 end
 
-function grouping(s::AbstractString, klen::UInt)
+function splitbygroup(s::AbstractString, klen::UInt)::CharMatrix
   v = [Char[] for _ ∈ 1:klen]
 
   for (ix, ch) ∈ enumerate(s)
     push!(v[(ix % klen) == 0 ? klen : ix % klen], ch)
   end
 
-  ByteMatrix(v, klen)
+  CharMatrix(v, klen)
 end
 
-grouping(s::AbstractString, klen::Integer) = grouping(s, UInt(klen))
+splitbygroup(s::AbstractString, klen::Integer) = splitbygroup(s, UInt(klen))
+
+function joinfromgroup()
+end
