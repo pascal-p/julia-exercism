@@ -16,11 +16,11 @@ decode(s::AbstractString, key::AbstractString)::AbstractString = transcode(s, ke
 
 function transcode(s, key, op)
   key = complement(key, length(s) - length(key))
-  transcription = fill("", length(s))
-  for (ix, (l, k)) in enumerate(zip(s, key))
-    transcription[ix] = CODE2LETTER[(op(LETTER2CODE[l], LETTER2CODE[k]) + ALPHALEN) % ALPHALEN] |> string
-  end
-  join(transcription, "")
+  foldl(
+    (a, (ix, (l, k))) -> (a[ix] = (CODE2LETTER[(op(LETTER2CODE[l], LETTER2CODE[k]) + ALPHALEN) % ALPHALEN] |> string); a),
+    enumerate(zip(s, key));
+    init=fill("", length(s))
+  ) |> v -> join(v, "")
 end
 
 function complement(key::AbstractString, n::Integer)::AbstractString
