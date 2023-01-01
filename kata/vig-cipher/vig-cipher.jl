@@ -57,5 +57,16 @@ end
 
 splitbygroup(s::AbstractString, klen::Integer) = splitbygroup(s, UInt(klen))
 
-function joinfromgroup()
+function joinfromgroup(v::CharMatrix)::AbstractString
+  n = sum(length, v.matrix) ## tot. num. of chars
+  vs = fill("", n)
+
+  ix = 1
+  for cix ∈ 1:maximum(length, v.matrix), gix ∈ 1:length(v.matrix)
+    cix >  length(v.matrix[gix]) && continue
+    vs[ix] = v.matrix[gix][cix] |> string
+    ix += 1
+  end
+
+  join(vs, "")
 end

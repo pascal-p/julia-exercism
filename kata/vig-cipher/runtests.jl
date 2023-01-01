@@ -31,7 +31,7 @@ end
 end
 
 
-@testset "grouping" begin
+@testset "split by group" begin
   act, exp = splitbygroup("HFNIMVOSNA", 6), CharMatrix([['H', 'O'], ['F', 'S'], ['N', 'N'], ['I', 'A'], ['M'], ['V']], 0x0000000000000006)
   @test act.matrix == exp.matrix && act.size == exp.size
 
@@ -40,4 +40,12 @@ end
 
   act, exp = splitbygroup("EPSDFQQXMZCJYNCKUCACDWJRCBVRWINLOWU", 4), CharMatrix([['E', 'F', 'M', 'Y', 'U', 'D', 'C', 'W', 'O'], ['P', 'Q', 'Z', 'N', 'C', 'W', 'B', 'I', 'W'], ['S', 'Q', 'C', 'C', 'A', 'J', 'V', 'N', 'U'], ['D', 'X', 'J', 'K', 'C', 'R', 'R', 'L']], 0x0000000000000004)
   @test act.matrix == exp.matrix && act.size == exp.size
+end
+
+@testset "re-assemble" begin
+  @test joinfromgroup(CharMatrix([['H', 'O'], ['F', 'S'], ['N', 'N'], ['I', 'A'], ['M'], ['V']], 0x0000000000000006)) == "HFNIMVOSNA"
+
+  @test joinfromgroup(CharMatrix([['G', 'Z', 'I', 'G', 'J', 'C'], ['H', 'O', 'Y', 'H', 'O', 'B']], 0x0000000000000002)) == "GHZOIYGHJOCB"
+
+  @test joinfromgroup(CharMatrix([['E', 'F', 'M', 'Y', 'U', 'D', 'C', 'W', 'O'], ['P', 'Q', 'Z', 'N', 'C', 'W', 'B', 'I', 'W'], ['S', 'Q', 'C', 'C', 'A', 'J', 'V', 'N', 'U'], ['D', 'X', 'J', 'K', 'C', 'R', 'R', 'L']], 0x0000000000000004)) == "EPSDFQQXMZCJYNCKUCACDWJRCBVRWINLOWU"
 end
