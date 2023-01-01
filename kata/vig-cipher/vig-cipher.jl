@@ -1,5 +1,12 @@
 import Base: -
 
+const T = UInt8
+
+struct ByteMatrix
+  matrix::Vector{Vector{Char}} # or T?
+  size::UInt
+end
+
 const LETTER2CODE = Dict{Char, Int8}(
   l => i - 1 for (i, l) ∈ enumerate('A':'Z' |> collect)
 )
@@ -37,3 +44,15 @@ function -(s₁::AbstractString, s₂::AbstractString)::AbstractString
   end
   join(diff, "")
 end
+
+function grouping(s::AbstractString, klen::UInt)
+  v = [Char[] for _ ∈ 1:klen]
+
+  for (ix, ch) ∈ enumerate(s)
+    push!(v[(ix % klen) == 0 ? klen : ix % klen], ch)
+  end
+
+  ByteMatrix(v, klen)
+end
+
+grouping(s::AbstractString, klen::Integer) = grouping(s, UInt(klen))

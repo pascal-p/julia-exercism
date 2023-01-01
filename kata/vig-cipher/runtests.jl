@@ -29,3 +29,15 @@ end
   @test complement("ABRACADA", 2) == "ABRACADAAB"
   @test complement("ABRACADAB", 1) == "ABRACADABA"
 end
+
+
+@testset "grouping" begin
+  act, exp = grouping("HFNIMVOSNA", 6), ByteMatrix([['H', 'O'], ['F', 'S'], ['N', 'N'], ['I', 'A'], ['M'], ['V']], 0x0000000000000006)
+  @test act.matrix == exp.matrix && act.size == exp.size
+
+  act, exp = grouping("GHZOIYGHJOCB", 2), ByteMatrix([['G', 'Z', 'I', 'G', 'J', 'C'], ['H', 'O', 'Y', 'H', 'O', 'B']], 0x0000000000000002)
+  @test act.matrix == exp.matrix && act.size == exp.size
+
+  act, exp = grouping("EPSDFQQXMZCJYNCKUCACDWJRCBVRWINLOWU", 4), ByteMatrix([['E', 'F', 'M', 'Y', 'U', 'D', 'C', 'W', 'O'], ['P', 'Q', 'Z', 'N', 'C', 'W', 'B', 'I', 'W'], ['S', 'Q', 'C', 'C', 'A', 'J', 'V', 'N', 'U'], ['D', 'X', 'J', 'K', 'C', 'R', 'R', 'L']], 0x0000000000000004)
+  @test act.matrix == exp.matrix && act.size == exp.size
+end
