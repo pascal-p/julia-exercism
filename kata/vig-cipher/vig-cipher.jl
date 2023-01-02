@@ -17,6 +17,37 @@ const CODE2LETTER = Dict{Int8, Char}(
 
 const ALPHALEN = LETTER2CODE |> length
 
+# src: https://en.wikipedia.org/wiki/Letter_frequency
+# Relative frequency in the English language in Texts
+LETTERFREQ = Dict{Char, Float32}(
+  'A' => 0.082f0,
+  'B' => 0.015f0,
+  'C' => 0.028f0,
+  'D' => 0.043f0,
+  'E' => 0.13f0,
+  'F' => 0.022f0,
+  'G' => 0.02f0,
+  'H' => 0.061f0,
+  'I' => 0.07f0,
+  'J' => 0.0015f0,
+  'K' => 0.0077f0,
+  'L' => 0.04f0,
+  'M' => 0.024f0,
+  'N' => 0.067f0,
+  'O' => 0.075f0,
+  'P' => 0.019f0,
+  'Q' => 0.00095f0,
+  'R' => 0.06f0,
+  'S' => 0.063f0,
+  'T' => 0.091f0,
+  'U' => 0.028f0,
+  'V' => 0.0098f0,
+  'W' => 0.024f0,
+  'X' => 0.0015f0,
+  'Y' => 0.02f0,
+  'Z' => 0.00074f0,
+)
+
 
 encode(s::AbstractString, key::AbstractString)::AbstractString = transcode(s, key, +)
 
@@ -70,3 +101,50 @@ function joinfromgroup(v::CharMatrix)::AbstractString
 
   join(vs, "")
 end
+
+function calc_freq(s::AbstractString)
+  dfreq = Dict{Char, Number}()
+  for ch ∈ s
+    if haskey(dfreq, ch)
+      dfreq[ch] += 1
+    else
+      dfreq[ch] = 1
+    end
+  end
+  n = length(dfreq)
+  for k ∈ keys(dfreq)
+    dfreq[k] /= n
+  end
+  dfreq
+end
+
+#
+# Brute Force Approach - what does it mean for dec to "make sense"?
+#
+function recoverkey(s::AbstractString, klen::UInt)
+  cm =  splitbygroup(s, klen)
+  found, fkey = false, nothing # final key
+
+  function unroll(gix, prevgps, pkey) # potential key
+    if gix > cm.size
+      pcm = CharMatrix(prevgps, klen) # potential cm
+      dec = joinfromgroup(pcm)
+      # if dec "make sense" => stop
+      return dec[1:6] == "HELLOW" # "ATTA" # dec "make sense"
+    end
+
+    for k ∈ 0:(ALPHALEN - 1)
+      cg = map(ch -> transcode(ch |> string, CODE2LETTER[k] |> string, -)[1], cm.matrix[gix])
+      found = unroll(gix + 1, [prevgps..., cg], string(pkey, CODE2LETTER[k]))
+      !found && continue
+      fkey = fkey === nothing ? string(pkey, CODE2LETTER[k]) : fkey
+      break
+    end
+    found
+  end
+
+  unroll(1, [], "") && return fkey
+  throw(ArgumentError("key could not be found"))
+end
+
+recoverkey(s::AbstractString, klen::Integer) = recoverkey(s, UInt(klen))
