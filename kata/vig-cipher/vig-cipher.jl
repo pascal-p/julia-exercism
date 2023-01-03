@@ -130,7 +130,7 @@ function recoverkey(s::AbstractString, klen::UInt)
       pcm = CharMatrix(prevgps, klen) # potential cm
       dec = joinfromgroup(pcm)
       # if dec "make sense" => stop
-      return dec[1:6] == "HELLOW" # "ATTA" # dec "make sense"
+      return dec[1:6] == "HELLOW" # "ATTA"
     end
 
     for k ∈ 0:(ALPHALEN - 1)
@@ -148,3 +148,72 @@ function recoverkey(s::AbstractString, klen::UInt)
 end
 
 recoverkey(s::AbstractString, klen::Integer) = recoverkey(s, UInt(klen))
+
+#
+# this part is from ChatGPT - redacted as it was not working and requires
+# more work to make if work
+#
+# ChatGPT is inventing some functions, such as ord, chr, indmax (=> Python)
+# Style is really Python-like
+#
+# Interesting
+#
+function decode_vigenere(message::String, key::String)
+  # Convert message and key to arrays of integers
+  message_int = split(message, "") |> vm -> map(ch -> ch[1], vm)
+  key_int = split(key, "") |> vm -> map(ch -> ch[1], vm)
+
+  # Repeat the key as needed to match the length of the message
+  n = length(message)
+  key_int = repeat(key_int, outer=(div(n,length(key)) + 1))[1:n]
+
+  # Subtract key from message to get decoded message
+  decoded_int = [
+    (c_ = Int((26 + c - k) % 26)) == 0 ? 1 : c_ for (c, k) ∈ zip(message_int, key_int)
+  ]
+
+  # Convert decoded message back to a string
+  join([string(c + 'A') for c in decoded_int], "") # String([chr(c + 65) for c in decoded_int])
+end
+
+function recover_vigenere_key(ciphered::String)
+  # Find the key length using the index of coincidence
+  n = length(ciphered)
+  iocs = []
+  for k ∈ 2:floor(Int, n/2)
+    # Split the message into k substrings
+    substrings = [ciphered[i:(i+k < n ? i+k : i)] for i in 1:k:n]
+
+    # Calculate the index of coincidence for each substring
+    iocs_k = sum([sum([ciphered[i] == ciphered[i+k < n ? i+k : i] for i in 1:k]) for k in 1:length(substrings)]) / (k * (k-1))
+
+    # Store the index of coincidence for this key length
+    push!(iocs, iocs_k)
+  end
+  # Find the key length that gives the highest index of coincidence
+  println("iocs: $(iocs)")
+  key_length = argmax(iocs) + 4 # indmax(iocs) + 1
+  println("key_length: $(key_length)")
+
+  # Split the message into key_length substrings
+  substrings = [ciphered[i:(i+key_length < n ? (i+key_length) : i)] for i in 1:key_length:n]
+  println("substrings: $(substrings)")
+
+  # Recover the key by solving for the key for each substring
+  key = ""
+  for substring in substrings
+    # Calculate the frequencies of each letter in the substring
+    frequencies = Dict()
+    for c in substring
+      haskey(frequencies, c) ? frequencies[c] += 1 : frequencies[c] = 1
+    end
+
+    # Find the letter with the highest frequency
+    most_frequent_letter = argmax(p -> p[2], frequencies)[2]
+    key_char = string(most_frequent_letter + 'A')
+
+    # Add the key character to the key string
+    key = string(key, key_char)
+  end
+  key
+end
