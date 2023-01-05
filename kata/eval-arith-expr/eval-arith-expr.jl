@@ -16,8 +16,7 @@ const DEBUG = false
 function parseexpr(expr::String)
   cstate, pstate = :start, :start
   operand_stack, operator_stack = [], []
-  token, oper = "", ""
-  forbiden = '_'
+  token, oper, forbiden = "", "", '_'
 
   for ch ∈ strip(expr)
     DEBUG && println(" ", ch, " ", typeof(ch))
@@ -29,17 +28,17 @@ function parseexpr(expr::String)
       pstate = cstate
       cstate = :number
       token = string(token, ch)
+      continue
+    end
 
-    elseif ch == ' '
+    if ch == ' '
       pstate = cstate
-      # cstate = :space # DO NOTY CHANGE current state
-      if pstate == :number
-        # we finish reading a number
-        pushfirst!(operand_stack, token |> parse_num)
-        token = "" # reset
-      end
+      # cstate = :space # DO NOT CHANGE current state
+      pstate == :number && token != "" && (token = number!(operand_stack, token))
+      continue
+    end
 
-    elseif ch ∈ OPS
+    if ch ∈ OPS
       if ch == '-' && pstate == :start
         # not an operator, but sign
         DEBUG && println("set forbidden char...")
@@ -58,21 +57,24 @@ function parseexpr(expr::String)
           continue
         end
       elseif pstate == :number && token != ""
-        # we finish reading a number
-        pushfirst!(operand_stack, token |> parse_num)
-        token = "" # reset
+        token = number!(operand_stack, token)
       end
       oper = string(ch)
       pushfirst!(operator_stack, Symbol(oper))
+      continue
+    end
 
-    elseif ch == '('
+    if ch == '('
       # TODO
+      continue
+    end
 
-    elseif ch == ')'
+    if ch == ')'
       # TODO
-
+      continue
     end
   end
+
   DEBUG && println("[exit loop] operands: $(operand_stack) / operators: $(operator_stack)")
 
   if cstate == :number # pstate == :number || cstate == :number
@@ -93,6 +95,12 @@ function parseexpr(expr::String)
   pop!(operand_stack)
 end
 
+function number!(operand_stack, token)
+  # we finish reading a number
+  pushfirst!(operand_stack, token |> parse_num)
+  token = "" # reset
+end
+
 function parse_num(token::String)
   # sign (nothing to do) and dot
   if occursin(".", token)
@@ -101,4 +109,3 @@ function parse_num(token::String)
   end
   parse(Int, token)
 end
-
