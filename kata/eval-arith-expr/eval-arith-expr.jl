@@ -13,12 +13,7 @@ const TT = Float32
 
 
 #
-# 1 pass over the entire expression (parse) to build 2 stacks (which enforce evaluation order):
-#  - one for operands and
-#  - one for operatoras
-#
-# 1 pass over the 2 stacks to compute the result of the arithmetic expression
-#
+# 1 pass with reduction  (eval) as soon as possible
 # check for validity of the expression
 #
 # most complicated part is to deal with changes of the eval order within parenthesized expression
@@ -35,6 +30,7 @@ function parseexpr(expr::String)
   operand_stack, operator_stack = [], Symbol[]
   token, forbiden = "", '_'
   porder, order = nothing, :l2r # :r2l
+  limit = nothing
 
   for ch ∈ strip(expr)
     ch == forbiden && throw(ArgumentError("space not allowed at this position"))
@@ -65,8 +61,18 @@ function parseexpr(expr::String)
       end
 
       pstate, cstate = cstate, :operator
+      # before pushing can we eval what we have?
+      if length(operand_stack) ≥ 2 && isnumeric(string(operand_stack[1])) && isnumeric(string(operand_stack[2]))
+        # yes
+        limit === nothing && Symbol("(") ∈ operand_stack && (limit = '(')
+        (oper, x, y) = getops!(operator_stack, operand_stack, limit === nothing ? pop! : popfirst!)
+        r = OPER_MAP[oper](x, y) # FIXME: possible / by 0
+        Base.pushfirst!(operand_stack, r)
+      end
+
       pstate == :number && token != "" && (token = number!(operand_stack, token, order))
       pushfirst!(operator_stack, (Symbol ∘ string)(ch), order)
+      Symbol("(") ∉ operand_stack && (limit = nothing)
       continue
     end
 
@@ -78,18 +84,21 @@ function parseexpr(expr::String)
       Base.pushfirst!(operand_stack, token)
       Base.pushfirst!(operator_stack, token)
       token = ""
+      limit = nothing
       continue
     end
 
     if ch == ')'
+      limit === nothing && Symbol("(") ∈ operand_stack && (limit = '(')
       Symbol("(") ∉ operand_stack && throw(ArgumentError("Arithmetic expression not well formed :)"))
       cstate == :number && length(string(token)) ≥ 1 && (token = number!(operand_stack, token, order))
       ##
-      evalexpr_(operator_stack, operand_stack; limit='(') # need to eval expr up to first matching '('
+      evalexpr_(operator_stack, operand_stack; limit=limit) # need to eval expr up to first matching '('
       ##
       order == :r2l && ((porder, order) = (nothing, :l2r))
       pstate = cstate
       cstate = :close_par
+      Symbol("(") ∉ operand_stack && (limit = nothing)
       continue
     end
   end
@@ -131,14 +140,12 @@ end
 
 function evalexpr_(operator_stack::Vector{Symbol}, operand_stack::Vector; limit=nothing)
   while !isempty(operator_stack)
-
     if length(operator_stack) == 1 && operator_stack[1] == Symbol("(") && length(operand_stack) == 1
       pop!(operator_stack)
       break
     end
 
     (oper, x, y) = getops!(operator_stack, operand_stack, limit === nothing ? pop! : popfirst!)
-
     iszero(y) && oper == :/ && (throw(DivideError())) # in this restricted case only division by zero is problematic
     oper == :/ && ((x, y) = (TT(x), TT(y)))
     r = OPER_MAP[oper](x, y)
@@ -160,13 +167,11 @@ end
 
 function getops!(operator_stack, operand_stack, popoper!)
   oper = popoper!(operator_stack)
-
   # oper == Symbol("(") && (oper = popoper!(operator_stack)) ## ASSUME operator_stack is NOT of length 0
   if oper == Symbol("(")
     @assert !isempty(operator_stack)
     oper = popoper!(operator_stack)
   end
-
   x = popoper!(operand_stack)
   y = popoper!(operand_stack)
   (oper, x, y)
@@ -187,10 +192,4 @@ function push_at!(stack::Vector, ix, token)
   stack[ix + 1] = token      # insert
 end
 
-# Any[3, -2, Symbol("("), Symbol("("), 1, Symbol("("), 2.0f0, Symbol("(")] =>
-# ===    Any[-6, Symbol("("), 1, Symbol("("), 2.0f0, Symbol("(")]
-# Any[2.0f0, -6, Symbol("("), 1, Symbol("("), 2.0f0, Symbol("(")]
-# ===    Any[-4.0f0, 1, Symbol("("), 2.0f0, Symbol("(")]
-# Any[-4.0f0, 1, Symbol("("), 2.0f0, Symbol("(")]
-# ===    Any[-3.0f0, 2.0f0, Symbol("(")]
-# Any[3.0f0, -3.0f0, 2.0f0, Symbol("(")]
+isnumeric(expr::String)::Bool = match(r"\A\-?\d+(?:\.\d*)?\Z", expr) !== nothing

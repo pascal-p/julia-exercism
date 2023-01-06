@@ -7,6 +7,9 @@ include("eval-arith-expr.jl")
   @test evalexpr(" 2 - 1 ") == 1
   @test evalexpr(" 2 + 1 ") == 3
   @test evalexpr(" 2 * 1") == 2
+  @test evalexpr(" 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 * 0") == 0
+  @test evalexpr(" 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 * 10") == 450
+  @test evalexpr(" 1 * 2 * 3 + 4 + 5 + 6 + 7 + 8 + 9") == 45
 
   @test evalexpr(" 2* -1 + -3") == -5
   @test evalexpr(" 2* 1 + -3") == -1
@@ -36,10 +39,19 @@ end
   @test evalexpr(" 5. / 2.") == 2.5f0
   @test evalexpr(" -5. / 2.") == -2.5f0
   @test evalexpr(" 5. / -2.") == -2.5f0
+
+   @test evalexpr("1 / 2 / 3.") ≈ 0.1666667f0
 end
 
 @testset "parenthesized arithmetic evaluation" begin
   @test evalexpr("2 * (1 + 3)") == 8
+  @test evalexpr("(2 + 3) * 4") == 20
+  @test evalexpr("2 * (3 + 4)") == 14
+  @test evalexpr("2 * (3 + 2 + 1)") == 12
+  @test evalexpr("2 * (3 + 2 * 1)") == 10
+  @test evalexpr("2 * (3 * 2 + 1)") == 14
+  @test evalexpr("2 * (3 * (2 + 1))") == 18
+
   @test evalexpr("( 1 - 1 )") == 0
   @test evalexpr("2 * (1 + 3 + -2)") == 4
   @test evalexpr("2 * (1 + 3 + -2) - 2") == 2
@@ -48,7 +60,6 @@ end
   @test evalexpr("2 * (1 + (3 * -2))") == -10
   @test evalexpr("2 * (1 + (3 * -2) + 2)") == -6
   @test evalexpr("2 * (1 + (3 * -2) + 2) + 6") == 0
-
   @test evalexpr("2. * (1 + (3. * -2) + 2) + 6") == 0.0f0
   @test evalexpr("2. * (1 + (3 * -2) + 2.)") == -6.0f0
 
@@ -56,11 +67,13 @@ end
   @test evalexpr("(2. + (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 6.0f0  # correct because order does not matter
 
   ## counter-examples
-  # @test evalexpr("(2. * (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 1.0f0  # assoc left-2-rigth order matters!
-  # @test evalexpr("(2. * (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 12.0f0   # assoc left-2-rigth order matters!
+  @test evalexpr("(2. * (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 1.0f0  # assoc left-2-rigth order matters!
+  @test evalexpr("(2. * (1 + ((3 * -2) + 2.)) + 3.) * 4.") == -12.0f0   # assoc left-2-rigth order matters!
 
   ## associativity is left to right
   @test evalexpr("2 * (2 * -3 * 7 + -4)") == -92  # inside parentheses left to right rule applies (unless modified by another set of parentheses)
+  @test evalexpr("(1 + (2 + (3 + (4 + (5 + 2 + 3 * 2)))))") == 30
+  @test evalexpr("(1 + (2 + (3 + (4 + (5 + 2 + 3 * 2)))) + 2 * 3)") == 96
 
   @test evalexpr("2.1 * (1.5 * -3.4 * 7.1 + -2.89)") ≈ -82.11f0
   @test evalexpr("   2.1 *      ( 1.5  * -3.4 * 7.1 + -2.89 )  ") ≈ -82.11f0
