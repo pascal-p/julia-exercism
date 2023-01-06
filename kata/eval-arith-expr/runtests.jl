@@ -51,6 +51,7 @@ end
 
   @test evalexpr("2. * (1 + (3. * -2) + 2) + 6") == 0.0f0
   @test evalexpr("2. * (1 + (3 * -2) + 2.)") == -6.0f0
+  @test evalexpr("2. * (1 + ((3 * -2) + 2.)) + 3.") == -3.0f0
 
   # associativity is left to right
   @test evalexpr("2 * (2 * -3 * 7 + -4)") == -92  # inside parentheses left to right rule applies (unless modified by another set of parentheses)
@@ -69,6 +70,9 @@ end
   @test_throws ArgumentError evalexpr("- 1- - 1 ")
   @test_throws ArgumentError evalexpr("- 6 + - (4)")
   @test_throws ArgumentError evalexpr("- 6 + -(- 4)")
+  @test_throws ArgumentError evalexpr("- 6 + -(- 4")
+  @test_throws ArgumentError evalexpr("- ((((((6 + -4")
+
   @test_throws DivideError evalexpr(" 1 / 0")
   @test_throws DivideError evalexpr(" 1 / 0.")
 end
