@@ -12,6 +12,12 @@ const OPER_MAP = Dict{Symbol, Function}(
 const TT = Float32
 const DEBUG = false
 
+function evalexpr(expr::String)
+  (operator_stack, operand_stack) = parseexpr(expr)
+  evalexpr_(operator_stack, operand_stack)
+  pop!(operand_stack)
+end
+
 function parseexpr(expr::String)
   cstate, pstate = :start, :start
   operand_stack, operator_stack = [], Symbol[]
@@ -70,7 +76,6 @@ function parseexpr(expr::String)
       Base.pushfirst!(operand_stack, token)
       Base.pushfirst!(operator_stack, Symbol(token))
       token = ""
-
       continue
     end
 
@@ -78,23 +83,17 @@ function parseexpr(expr::String)
       "(" ∉ operand_stack && throw(ArgumentError("Arithmetic expression not well formed :)"))
 
       cstate == :number && length(string(token)) ≥ 1 && (token = number!(operand_stack, token, order))
-      # need to eval expr up to first matching '('
-      evalexpr(operator_stack, operand_stack; limit='(')
+      evalexpr_(operator_stack, operand_stack; limit='(') # need to eval expr up to first matching '('
 
       order == :r2l && ((porder, order) = (nothing, :l2r))
       pstate = cstate
-      cstate = :close_par # :number  # akin to number state...
+      cstate = :close_par
       continue
     end
   end
 
-  if cstate == :number
-    DEBUG && println("[left?] token: <$(token)>")
-    pushfirst!(operand_stack, token |> parse_num, order)
-  end
-
-  evalexpr(operator_stack, operand_stack)
-  pop!(operand_stack)
+  cstate == :number && pushfirst!(operand_stack, token |> parse_num, order)
+  (operator_stack, operand_stack)
 end
 
 function pushfirst!(operator_stack::Vector{Symbol}, token::Symbol, order::Symbol) # for operator
@@ -144,7 +143,7 @@ function parse_num(token::String)::Number
   parse(Int, token)
 end
 
-function evalexpr(operator_stack::Vector{Symbol}, operand_stack::Vector; limit=nothing)
+function evalexpr_(operator_stack::Vector{Symbol}, operand_stack::Vector; limit=nothing)
   while !isempty(operator_stack)
     if length(operator_stack) == 1 && operator_stack[1] == Symbol("(") && length(operand_stack) == 1
       pop!(operator_stack)
