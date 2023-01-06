@@ -51,9 +51,15 @@ end
 
   @test evalexpr("2. * (1 + (3. * -2) + 2) + 6") == 0.0f0
   @test evalexpr("2. * (1 + (3 * -2) + 2.)") == -6.0f0
-  @test evalexpr("2. * (1 + ((3 * -2) + 2.)) + 3.") == -3.0f0
 
-  # associativity is left to right
+  @test evalexpr("2. * (1 + ((3 * -2) + 2.)) + 3.") == -3.0f0
+  @test evalexpr("(2. + (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 6.0f0  # correct because order does not matter
+
+  ## counter-examples
+  # @test evalexpr("(2. * (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 1.0f0  # assoc left-2-rigth order matters!
+  # @test evalexpr("(2. * (1 + ((3 * -2) + 2.)) + 3.) + 4.") == 12.0f0   # assoc left-2-rigth order matters!
+
+  ## associativity is left to right
   @test evalexpr("2 * (2 * -3 * 7 + -4)") == -92  # inside parentheses left to right rule applies (unless modified by another set of parentheses)
 
   @test evalexpr("2.1 * (1.5 * -3.4 * 7.1 + -2.89)") ≈ -82.11f0

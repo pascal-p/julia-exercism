@@ -84,7 +84,9 @@ function parseexpr(expr::String)
     if ch == ')'
       Symbol("(") ∉ operand_stack && throw(ArgumentError("Arithmetic expression not well formed :)"))
       cstate == :number && length(string(token)) ≥ 1 && (token = number!(operand_stack, token, order))
+      ##
       evalexpr_(operator_stack, operand_stack; limit='(') # need to eval expr up to first matching '('
+      ##
       order == :r2l && ((porder, order) = (nothing, :l2r))
       pstate = cstate
       cstate = :close_par
@@ -129,6 +131,7 @@ end
 
 function evalexpr_(operator_stack::Vector{Symbol}, operand_stack::Vector; limit=nothing)
   while !isempty(operator_stack)
+
     if length(operator_stack) == 1 && operator_stack[1] == Symbol("(") && length(operand_stack) == 1
       pop!(operator_stack)
       break
@@ -139,11 +142,14 @@ function evalexpr_(operator_stack::Vector{Symbol}, operand_stack::Vector; limit=
     iszero(y) && oper == :/ && (throw(DivideError())) # in this restricted case only division by zero is problematic
     oper == :/ && ((x, y) = (TT(x), TT(y)))
     r = OPER_MAP[oper](x, y)
+
     if limit !== nothing
       if !isempty(operand_stack) && operand_stack[1] == Symbol("(")
         operand_stack[1] = r
+        popfirst!(operator_stack) # we no longer need Symbol("(")
         break
       end
+
       Base.pushfirst!(operand_stack, r)
       continue
     end
@@ -181,28 +187,10 @@ function push_at!(stack::Vector, ix, token)
   stack[ix + 1] = token      # insert
 end
 
-# parenthesized arithmetic evaluation: Error During Test at /home/pascal/Projects/Exercism/julia/kata/eval-arith-expr/runtests.jl:54
-#   Test threw exception
-#   Expression: evalexpr("2. * (1 + ((3 * -2) + 2.)) + 3.") == -3.0f0
-#   KeyError: key Symbol("(") not found
-#   Stacktrace:
-#    [1] getindex(h::Dict{Symbol, Function}, key::Symbol)
-#      @ Base ./dict.jl:498
-#    [2] evalexpr_(operator_stack::Vector{Symbol}, operand_stack::Vector{Any}; limit::Char)
-#      @ Main ~/Projects/Exercism/julia/kata/eval-arith-expr/eval-arith-expr.jl:141
-#    [3] parseexpr(expr::String)
-#      @ Main ~/Projects/Exercism/julia/kata/eval-arith-expr/eval-arith-expr.jl:87
-#    [4] evalexpr(expr::String)
-#      @ Main ~/Projects/Exercism/julia/kata/eval-arith-expr/eval-arith-expr.jl:28
-#    [5] macro expansion
-#      @ ~/Projects/julia-1.8.4/share/julia/stdlib/v1.8/Test/src/Test.jl:464 [inlined]
-#    [6] macro expansion
-#      @ ~/Projects/Exercism/julia/kata/eval-arith-expr/runtests.jl:54 [inlined]
-#    [7] macro expansion
-#      @ ~/Projects/julia-1.8.4/share/julia/stdlib/v1.8/Test/src/Test.jl:1363 [inlined]
-#    [8] top-level scope
-#      @ ~/Projects/Exercism/julia/kata/eval-arith-expr/runtests.jl:42
-# Test Summary:                       | Pass  Error  Total  Time
-# parenthesized arithmetic evaluation |   15      1     16  1.0s
-# ERROR: LoadError: Some tests did not pass: 15 passed, 0 failed, 1 errored, 0 broken.
-# in expression starting at /home/pascal/Projects/Exercism/julia/kata/eval-arith-expr/runtests.jl:41
+# Any[3, -2, Symbol("("), Symbol("("), 1, Symbol("("), 2.0f0, Symbol("(")] =>
+# ===    Any[-6, Symbol("("), 1, Symbol("("), 2.0f0, Symbol("(")]
+# Any[2.0f0, -6, Symbol("("), 1, Symbol("("), 2.0f0, Symbol("(")]
+# ===    Any[-4.0f0, 1, Symbol("("), 2.0f0, Symbol("(")]
+# Any[-4.0f0, 1, Symbol("("), 2.0f0, Symbol("(")]
+# ===    Any[-3.0f0, 2.0f0, Symbol("(")]
+# Any[3.0f0, -3.0f0, 2.0f0, Symbol("(")]
