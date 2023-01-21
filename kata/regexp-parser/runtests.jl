@@ -23,7 +23,7 @@ end
 @testset "regexp_parser invalid expression" begin
   # @test_throws ArgumentError foo()
 
-  for inv_expr ∈ [ "", ")(", "*", "a(", "()", "a**", "a|a|a", "ab|" ]
+  for inv_expr ∈ [ "", ")(", "*", "a(", "()", "a**", "a|a|a", "ab|", "a+", "a||b" ]
     @test regexp_parser(inv_expr) === nothing
   end
 end

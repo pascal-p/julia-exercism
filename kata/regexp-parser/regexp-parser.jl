@@ -82,23 +82,19 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
     pch = ch
   end
 
-  # println("- Finally $(expr_ary) / ops_ary: $(ops_ary)")
   pch == '|' && return nothing # cannot end with '|' !
 
   if length(ops_ary) == 0
-    if length(expr_ary) == 0
-      nothing
-    elseif length(expr_ary) == 1
-      join(expr_ary, "")
-    else
-      "(" ∈ expr_ary && return nothing  # missing closing ")"
+    length(expr_ary) == 0 && (return nothing)
+    length(expr_ary) == 1 && (return join(expr_ary, ""))
 
-      # 2 more cases: 1. no op, just sequencing 2. expr_ary startswith op
-      if startswith(expr_ary[1], "Normal")
-        string("Str [", join(expr_ary, ", "), "]")
-      else
-        join(expr_ary, " ")
-      end
+    "(" ∈ expr_ary && return nothing  # missing closing ")"
+
+    # 2 more cases: 1. no op startswith Normal,  2. op
+    if startswith(expr_ary[1], "Normal")
+      string("Str [", join(expr_ary, ", "), "]")
+    else
+      join(expr_ary, " ")
     end
   else
     (length(ops_ary) != 1 || ops_ary[end] != "Or") && return nothing
@@ -106,8 +102,6 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
 
     string(ops_ary[end], " (", expr_ary[1], ") (", expr_ary[2], ")")
   end
-
-
 end
 
 istoken(ch::Char)::Bool = ch ∈ Tokens
@@ -132,6 +126,3 @@ function popuntil!(stack::Vector; token= "(")
   pop!(stack)
   exprs
 end
-
-# "Str [Normal 'a', ZeroOrMore (Str [Normal 'c', Normal 'b'])]" ==
-# "Str [Normal 'a', ZeroOrMore (Str [Normal 'b', Normal 'c'])]"
