@@ -1,4 +1,4 @@
-using Base: collect_preferences
+using Base: collect_preferences, byte_string_classify, nothing_sentinel
 
 const Symbols = Set(['*', '|', '.', '(', ')'])
 const Tokens = vcat('a':'z' |> collect, 'A':'Z' |> collect)
@@ -13,71 +13,125 @@ const Priority = Dict{String, Integer}(
 
 const All_Valid_Symbols = vcat(Tokens, Char.(Symbols))
 
-## map?
-# "|" => Or
-# "." => Any
-# "*" => ZeroOrMore
-
 function regexp_parser(regexp::String)::Union{String, Nothing}
-  expr_ary = String[]
-  c_ix = 0
-  insertion_ix, saw_closing_par = -1, false
+  expr_ary, ops_ary = String[], String[]
+  saw_openpar, pch = (false, nothing)
 
   for ch ∈ regexp
     ch ∉ All_Valid_Symbols && return nothing
 
-    # parenthesis '(' => mark index for insertion
-    (ch == '(') && (insertion_ix = c_ix + 1; continue) # (insertion_ix = length(expr_ary); continue)
+    if isdot(ch)
+      push!(expr_ary, "Any")
+    elseif ch == '('
+      push!(expr_ary, string(ch))
+      saw_openpar = true
+      #
+    elseif ch == ')'
+      !saw_openpar && return nothing # did not see a opening "("!
 
-    # parenthesis ')'
-    (ch == ')') && (saw_closing_par = true; continue)
+      exprs = popuntil!(expr_ary)
+      saw_openpar = false
 
-    c_ix += 1
+      if length(ops_ary) > 0
+        last_op = pop!(ops_ary)
 
-    istoken(ch) && (push!(expr_ary, normal_expr(ch)); continue)
-
-    isdot(ch) && (push!(expr_ary, "Any"); continue)
-
-    if isop(ch)
-      if ch == '*'
-        # do we have parenthesis? yes use insertion_ix and reset it
-        if saw_closing_par
-          # ex: ...(bc)*
-          elements = []
-          println("c_ix: $(c_ix), insertion_ix: $(insertion_ix)")
-          for _ in (c_ix - 1):-1:insertion_ix
-            pushfirst!(elements, pop!(expr_ary))
-          end
-          elements_str = string("Str [", join(elements, ", "), "]") # ex. ZeroOrMore (Str [Normal 'b', Normal 'c'])
-          push!(expr_ary, string("ZeroOrMore (", elements_str, ")"))
-          insertion_ix, saw_closing_par = (-1, false)
+        if last_op == "Or"
+          # binary
+          length(exprs) != 2 && return nothing
+          rhs, lhs = exprs
+          push!(expr_ary, string(last_op, " (", lhs, ")", " (", rhs, ")"))
         else
-          # No (no parenthesis)
-          last_expr = pop!(expr_ary)
-          push!(expr_ary,
-              string("ZeroOrMore ", last_expr == "Any" ? "Any" : "($(last_expr))"))
+          throw(ErrorException("Not implemented yet"))
         end
+      else
+        length(exprs) == 0 && return nothing
 
-        continue
+        if length(exprs) == 1
+          push!(expr_ary, exprs[1])
+        else
+          push!(
+            expr_ary,
+            startswith(exprs[1], "Normal") ? string("Str [", join(exprs |> reverse, ", "), "]") :
+              join(exprs, " ")
+          )
+        end
+      end
+    elseif isop(ch)
+      if ch == '*'
+        length(expr_ary) == 0 && return nothing # no operand...
+        pch == ch && return nothing # repeating same op!
+
+
+        last_expr = pop!(expr_ary)
+        push!(expr_ary,
+              string("ZeroOrMore ", last_expr == "Any" ? "Any" : "($(last_expr))"))
+        #
+      elseif ch == '|'
+        pch == ch && return nothing # repeating same op!
+        push!(ops_ary, "Or")
+      else
+        # return nothing
+        throw(ErrorException("do not know what to do with op $(ch)..."))
+      end
+    elseif istoken(ch)
+      push!(expr_ary, normal_expr(ch))
+    else
+      throw(ErrorException("Not implemented yet"))
+    end
+
+    pch = ch
+  end
+
+  # println("- Finally $(expr_ary) / ops_ary: $(ops_ary)")
+  pch == '|' && return nothing # cannot end with '|' !
+
+  if length(ops_ary) == 0
+    if length(expr_ary) == 0
+      nothing
+    elseif length(expr_ary) == 1
+      join(expr_ary, "")
+    else
+      "(" ∈ expr_ary && return nothing  # missing closing ")"
+
+      # 2 more cases: 1. no op, just sequencing 2. expr_ary startswith op
+      if startswith(expr_ary[1], "Normal")
+        string("Str [", join(expr_ary, ", "), "]")
+      else
+        join(expr_ary, " ")
       end
     end
-  end
-
-  println("Found $(expr_ary)")
-
-  if length(expr_ary) == 1
-    join(expr_ary, "")
-  elseif startswith(expr_ary[1], "Normal")
-    string("Str [", join(expr_ary, ", "), "]")
   else
-    join(expr_ary, "")
+    (length(ops_ary) != 1 || ops_ary[end] != "Or") && return nothing
+    length(expr_ary) != 2 && return nothing
+
+    string(ops_ary[end], " (", expr_ary[1], ") (", expr_ary[2], ")")
   end
+
+
 end
 
 istoken(ch::Char)::Bool = ch ∈ Tokens
 
 isop(ch::Char)::Bool = ch ∈ Symbols
 
-isdot(ch::Char)::Bool = ch === '.'
+isdot(ch::Char)::Bool = ch == '.'
 
 normal_expr(ch::Char)::String = "Normal '$(ch)'"
+
+function popuntil!(stack::Vector; token= "(")
+  exprs = []
+
+  while length(stack) > 0 && stack[end] != token
+    push!(exprs, pop!(stack))
+    # println("==> stack: $(stack) / exprs: $(exprs)")
+  end
+
+  length(stack) == 0 && throw(ArgumentError("Empty expression stack"))
+
+  # stack[end] == ")"
+  pop!(stack)
+  exprs
+end
+
+# "Str [Normal 'a', ZeroOrMore (Str [Normal 'c', Normal 'b'])]" ==
+# "Str [Normal 'a', ZeroOrMore (Str [Normal 'b', Normal 'c'])]"
