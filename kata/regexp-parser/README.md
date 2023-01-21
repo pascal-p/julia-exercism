@@ -31,8 +31,8 @@ Operator precedences from highest to lowest are: `*`, sequencing and `|`. Theref
 Some examples:
 ```
 "a"          -> Normal 'a'
-"ab"         -> Str [ Normal 'a', Normal 'b']
-"a.*"        -> Str [ Normal 'a', ZeroOrMore Any ]
+"ab"         -> Str [Normal 'a', Normal 'b']
+"a.*"        -> Str [Normal 'a', ZeroOrMore Any]
 "(a.*)|(bb)" -> Or (Str [Normal a, ZeroOrMore Any]) (Str [Normal 'b', Normal 'b'])
 ```
 
