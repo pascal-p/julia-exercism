@@ -24,35 +24,56 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
       push!(expr_ary, "Any")
     elseif ch == '('
       push!(expr_ary, string(ch))
+      push!(ops_ary, string(ch))
       saw_openpar = true
       #
     elseif ch == ')'
       !saw_openpar && return nothing # did not see a opening "("!
 
       exprs = popuntil!(expr_ary)
+      length(exprs) == 0 && return nothing # something is wrong
+
+      last_ops = popuntil!(ops_ary)
+      # length(last_ops) == 0 && return nothing # something is wrong
+
       saw_openpar = false
 
-      if length(ops_ary) > 0
-        last_op = pop!(ops_ary)
+      if length(last_ops) == 1 # if length(ops_ary) > 0
+        # last_ops = popuntil!(ops_ary)
+        length(last_ops) > 1 && return nothing
 
-        if last_op == "Or"
+        if length(last_ops) == 0
+          if length(exprs) == 1
+            push!(expr_ary, exprs[1]) # as is...
+          else # length(exprs) > 1
+            push!(
+              expr_ary,
+              # startswith(exprs[1], "Normal") ?
+              startswith(exprs[2], "Normal") ? string("Str [", join(exprs |> reverse, ", "), "]") :
+                join(exprs |> reverse, ", ")
+            )
+          end
+
+        elseif last_ops[1] == "Or"
           # binary
           length(exprs) != 2 && return nothing
           rhs, lhs = exprs
-          push!(expr_ary, string(last_op, " (", lhs, ")", " (", rhs, ")"))
+          push!(expr_ary, string(last_ops[1], " (", lhs, ")", " (", rhs, ")"))
         else
           throw(ErrorException("Not implemented yet"))
         end
       else
+        # no op to take into account
         length(exprs) == 0 && return nothing
 
         if length(exprs) == 1
           push!(expr_ary, exprs[1])
         else
+          # length(exprs) > 1
           push!(
             expr_ary,
-            startswith(exprs[1], "Normal") ? string("Str [", join(exprs |> reverse, ", "), "]") :
-              join(exprs, " ")
+            startswith(exprs[2], "Normal") ? string("Str [", join(exprs |> reverse, ", "), "]") :
+              join(exprs |> reverse, ", ")
           )
         end
       end
@@ -60,7 +81,6 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
       if ch == '*'
         length(expr_ary) == 0 && return nothing # no operand...
         pch == ch && return nothing # repeating same op!
-
 
         last_expr = pop!(expr_ary)
         push!(expr_ary,
@@ -86,8 +106,8 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
 
   if length(ops_ary) == 0
     length(expr_ary) == 0 && (return nothing)
-    length(expr_ary) == 1 && (return join(expr_ary, ""))
 
+    length(expr_ary) == 1 && (return expr_ary[1])
     "(" ∈ expr_ary && return nothing  # missing closing ")"
 
     # 2 more cases: 1. no op startswith Normal,  2. op
