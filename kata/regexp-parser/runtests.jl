@@ -6,7 +6,10 @@ include("regexp-parser.jl")
   @test regexp_parser("a") == "Normal 'a'"
   @test regexp_parser("ab") == "Str [Normal 'a', Normal 'b']"
 
-  # @test regexp_parser("a.*") == "Str [ Normal 'a', ZeroOrMore Any ]"
+  @test regexp_parser("a.*") == "Str [Normal 'a', ZeroOrMore Any]"
+  @test regexp_parser("ab*") == "Str [Normal 'a', ZeroOrMore (Normal 'b')]"
+  @test regexp_parser("a(bc)*") == "Str [Normal 'a', ZeroOrMore (Str [Normal 'b', Normal 'c'])]"
+
   # @test regexp_parser("(a.*)|(bb)") == "ZeroOrMore (Or (Normal 'a') (Normal 'b'))"
 end
 
