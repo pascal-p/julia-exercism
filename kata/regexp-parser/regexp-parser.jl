@@ -26,7 +26,6 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
       push!(expr_ary, string(ch))
       push!(ops_ary, string(ch))
       saw_openpar = true
-      #
     elseif ch == ')'
       !saw_openpar && return nothing # did not see a opening "("!
 
@@ -34,30 +33,26 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
       length(exprs) == 0 && return nothing # something is wrong
 
       last_ops = popuntil!(ops_ary)
-      # length(last_ops) == 0 && return nothing # something is wrong
-
       saw_openpar = false
 
-      if length(last_ops) == 1 # if length(ops_ary) > 0
-        # last_ops = popuntil!(ops_ary)
+      if length(last_ops) == 1
         length(last_ops) > 1 && return nothing
 
         if length(last_ops) == 0
           if length(exprs) == 1
             push!(expr_ary, exprs[1]) # as is...
-          else # length(exprs) > 1
+          else
+            # length(exprs) > 1
             push!(
               expr_ary,
-              # startswith(exprs[1], "Normal") ?
-              startswith(exprs[2], "Normal") ? string("Str [", join(exprs |> reverse, ", "), "]") :
-                join(exprs |> reverse, ", ")
+              startswith(exprs[1], "Normal") ? string("Str [", join(exprs, ", "), "]") :
+                join(exprs, ", ")
             )
           end
-
         elseif last_ops[1] == "Or"
-          # binary
+          # binary case
           length(exprs) != 2 && return nothing
-          rhs, lhs = exprs
+          lhs, rhs = exprs
           push!(expr_ary, string(last_ops[1], " (", lhs, ")", " (", rhs, ")"))
         else
           throw(ErrorException("Not implemented yet"))
@@ -72,8 +67,8 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
           # length(exprs) > 1
           push!(
             expr_ary,
-            startswith(exprs[2], "Normal") ? string("Str [", join(exprs |> reverse, ", "), "]") :
-              join(exprs |> reverse, ", ")
+            startswith(exprs[1], "Normal") ? string("Str [", join(exprs, ", "), "]") :
+              join(exprs, ", ")
           )
         end
       end
@@ -136,8 +131,7 @@ function popuntil!(stack::Vector; token= "(")
   exprs = []
 
   while length(stack) > 0 && stack[end] != token
-    push!(exprs, pop!(stack))
-    # println("==> stack: $(stack) / exprs: $(exprs)")
+    pushfirst!(exprs, pop!(stack))
   end
 
   length(stack) == 0 && throw(ArgumentError("Empty expression stack"))

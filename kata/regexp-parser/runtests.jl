@@ -24,6 +24,11 @@ end
 
 @testset "regexp_parser beyond base  cases" begin
   @test regexp_parser("(a.*)|(bb)") == "Or (Str [Normal 'a', ZeroOrMore Any]) (Str [Normal 'b', Normal 'b'])"
+
+  @test regexp_parser("(ab.*)|(cc)") == "Or (Str [Normal 'a', Normal 'b', ZeroOrMore Any]) (Str [Normal 'c', Normal 'c'])"
+
+  @test regexp_parser("(ab.*)|(c*c)") == "Or (Str [Normal 'a', Normal 'b', ZeroOrMore Any]) (ZeroOrMore (Normal 'c'), Normal 'c')"
+  @test regexp_parser("(ab.*)|(c*c.*)") == "Or (Str [Normal 'a', Normal 'b', ZeroOrMore Any]) (ZeroOrMore (Normal 'c'), Normal 'c', ZeroOrMore Any)"
 end
 
 @testset "regexp_parser invalid expression" begin
