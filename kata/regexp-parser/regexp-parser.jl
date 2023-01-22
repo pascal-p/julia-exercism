@@ -1,5 +1,3 @@
-using Base: collect_preferences, byte_string_classify, nothing_sentinel
-
 const Symbols = Set(['+', '*', '|', '?', '.', '(', ')'])
 const Tokens = vcat('a':'z' |> collect, 'A':'Z' |> collect)
 
@@ -10,13 +8,36 @@ const Map_Op_Str = Dict{Char, Union{String, Function}}(
   '.' => "Any",
   '?' => "Optional",
   '_' => x -> "Normal '$(x)'"  # is for any token ∈ Tokens
+  # TODO: support cardinality {1,} == +, {0,} == *, {1,10}
+  # TODO: [a-z], [abc] == (a|b)|c
 )
 
 const All_Valid_Symbols = vcat(Tokens, Char.(Symbols))
 
-normal_expr(ch::Char)::String = Map_Op_Str['_'](ch)
+const UTN = Union{Tuple, Nothing}
+const UCN = Union{Char, Nothing}
+const UBN = Union{Bool, Nothing}
+const USN = Union{String, Nothing}
+const VS = Vector{String}
 
-function regexp_parser(regexp::String)::Union{String, Nothing}
+#
+# Entry point
+#
+function regexp_parser(regexp::String)::USN
+  tuple_res = parser_process(regexp)
+  isnothing(tuple_res) && return nothing
+  (expr_ary, ops_ary, pch) = tuple_res
+
+  pch == '|' && return nothing # cannot end with pch == '|'
+  parser_postprocess(expr_ary, ops_ary)
+end
+
+#
+# Helper functions
+#
+@inline normal_expr(ch::Char)::String = Map_Op_Str['_'](ch)
+
+function parser_process(regexp::String)::UTN
   expr_ary, ops_ary = String[], String[]
   saw_openpar, pch = (false, nothing)
 
@@ -30,7 +51,7 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
       push!(ops_ary, string(ch))
       saw_openpar = true
     elseif ch == ')'
-      result = process_closing_par!(expr_ary, ops_ary, saw_openpar)::Union{Bool, Nothing}
+      result = process_closing_par!(expr_ary, ops_ary, saw_openpar)::UBN
       isnothing(result) && (return nothing)
       saw_openpar = result
     elseif isop(ch)
@@ -44,26 +65,29 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
     pch = ch
   end
 
-  pch == '|' && return nothing # cannot end with '|' !
+  (expr_ary, ops_ary, pch)
+end
 
+function parser_postprocess(expr_ary::VS, ops_ary::VS)::USN
   if length(ops_ary) == 0
     "(" ∈ expr_ary && return nothing  # missing closing ")"
     length(expr_ary) == 0 && return nothing
     length(expr_ary) == 1 && return expr_ary[1]
 
-    # 2 more cases: 1. no op startswith Normal,  2. op
+    # 2 more cases: 1. no op startswith Normal,
+    #               2. any other op
     startswithnormal(expr_ary[1]) && return tostr(expr_ary)
-    join(expr_ary, " ")
-  else
-    (length(ops_ary) != 1 || ops_ary[end] != "Or") && return nothing
-    length(expr_ary) != 2 && return nothing
-
-    string(ops_ary[end], " " , parenthesize_expr.(expr_ary) |> vs -> join(vs, " "))
+    return join(expr_ary, " ")
   end
+
+  (length(ops_ary) != 1 || ops_ary[end] != "Or") && return nothing
+  length(expr_ary) != 2 && return nothing
+
+  string(ops_ary[end], " ", parenthesize.(expr_ary) |> vs -> join(vs, " "))
 end
 
-function process_closing_par!(expr_ary::Vector, ops_ary::Vector, saw_openpar::Bool)::Union{Bool, Nothing}
-  !saw_openpar && return nothing # did not see a opening "("!
+function process_closing_par!(expr_ary::VS, ops_ary::VS, saw_openpar::Bool)::UBN
+  !saw_openpar && return nothing # did not see an opening "("!
 
   exprs = popuntil!(expr_ary)
   length(exprs) == 0 && return nothing # something is wrong
@@ -73,7 +97,6 @@ function process_closing_par!(expr_ary::Vector, ops_ary::Vector, saw_openpar::Bo
 
   if length(last_ops) == 1
     length(last_ops) > 1 && return nothing
-
     length(last_ops) == 0 && return no_ops!(expr_ary, exprs)
 
     last_ops[1] == "Or" && return or_ops!(expr_ary, exprs, last_ops[1])
@@ -88,7 +111,7 @@ function process_closing_par!(expr_ary::Vector, ops_ary::Vector, saw_openpar::Bo
   saw_openpar
 end
 
-function no_ops!(expr_ary::Vector, exprs::Vector)
+function no_ops!(expr_ary::VS, exprs::VS)
   length(exprs) == 1 && (push!(expr_ary, exprs[1]); return) # as is...
 
   push!(
@@ -97,17 +120,15 @@ function no_ops!(expr_ary::Vector, exprs::Vector)
   )
 end
 
-function or_ops!(expr_ary::Vector, exprs::Vector, op::String)
+function or_ops!(expr_ary::VS, exprs::VS, op::String)::Bool
   length(exprs) != 2 && return nothing
-  lhs, rhs = exprs
-  push!(expr_ary, string(op, " (", lhs, ")", " (", rhs, ")"))
+  push!(expr_ary, string(op, " ", parenthesize.(exprs) |> vs -> join(vs, " ")))
   false # NOTE need to return a bool to comply with process_closing_par!
 end
 
-function process_op!(expr_ary::Vector, ops_ary::Vector, ch::Char, pch::Union{Char, Nothing})::Union{Char, Nothing}
+function process_op!(expr_ary::VS, ops_ary::VS, ch::Char, pch::UCN)::UCN
   if ch == '*' || ch == '+'
     length(expr_ary) == 0 && return nothing # no operand...
-
     pch == ch && return nothing # repeating same op!
     ch == '+' && pch == '*' && return nothing
     ch == '*' && pch == '+' && return nothing
@@ -120,7 +141,9 @@ function process_op!(expr_ary::Vector, ops_ary::Vector, ch::Char, pch::Union{Cha
     (pch == '*' || pch == '+') && return nothing
 
     last_expr = pop!(expr_ary)
-    push!(expr_ary, string(Map_Op_Str[ch], " ", last_expr == "Any" ? "Any" : "($(last_expr))"))
+    push!(expr_ary, string(Map_Op_Str[ch],
+                           " ",
+                           last_expr == "Any" ? "Any" : parenthesize(last_expr)))
     #
   elseif ch == '|'
     pch == ch && return nothing # repeating same op!
@@ -139,8 +162,14 @@ isdot(ch::Char)::Bool = ch == '.'
 
 @inline startswithnormal(expr::String)::Bool = startswith(expr, "Normal")
 
-function popuntil!(stack::Vector; token= "(")
-  exprs = []
+@inline parenthesize(expr::String) = string("(", expr, ")")
+
+@inline extractfromstr(expr::String)::String = SubString(expr, 6, length(expr) - 1)
+
+@inline tostr(expr::VS; sep=", ")::String = string("Str [", join(expr, sep), "]")
+
+function popuntil!(stack::VS; token= "(")::VS
+  exprs = String[]
 
   while length(stack) > 0 && stack[end] != token
     pushfirst!(exprs, pop!(stack))
@@ -156,11 +185,5 @@ end
 function op_expr(expr::String)::String
   expr == "Any" && return "Any"
   # startswith(expr, "Str") && return (parenthesize_expr ∘ extractfromstr)(expr)
-  expr |> parenthesize_expr
+  expr |> parenthesize
 end
-
-@inline parenthesize_expr(expr::String) = string("(", expr, ")")
-
-@inline extractfromstr(expr::String)::String = SubString(expr, 6, length(expr) - 1)
-
-@inline tostr(expr::Vector; sep=", ")::String = string("Str [", join(expr, sep), "]")

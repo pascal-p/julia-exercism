@@ -69,4 +69,12 @@ end
   end
 
   @test regexp_parser("(a|b)|*") === nothing
+
+  @test regexp_parser("(a|b))") === nothing
+
+  @test regexp_parser("+(a|b)") === nothing
+
+  @test regexp_parser("a/b") === nothing
+
+  @test regexp_parser("a + b * c") === nothing
 end
