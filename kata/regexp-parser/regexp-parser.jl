@@ -1,6 +1,6 @@
 using Base: collect_preferences, byte_string_classify, nothing_sentinel
 
-const Symbols = Set(['*', '|', '.', '(', ')'])
+const Symbols = Set(['+', '*', '|', '.', '(', ')'])
 const Tokens = vcat('a':'z' |> collect, 'A':'Z' |> collect)
 # const Priority = Dict{String, Integer}(
 #   "*" => 3, # unary op
@@ -12,6 +12,7 @@ const Tokens = vcat('a':'z' |> collect, 'A':'Z' |> collect)
 # )
 
 const Map_Op_Str = Dict{Char, Union{String, Function}}(
+  '+' => "OneOrMore",
   '*' => "ZeroOrMore",
   '|' => "Or",
   '.' => "Any",
@@ -123,14 +124,16 @@ function process_closing_par!(expr_ary::Vector, ops_ary::Vector, saw_openpar::Bo
 end
 
 function process_op!(expr_ary::Vector, ops_ary::Vector, ch::Char, pch::Union{Char, Nothing})::Union{Char, Nothing}
-  if ch == '*'
+  if ch == '*' || ch == '+'
     length(expr_ary) == 0 && return nothing # no operand...
+
     pch == ch && return nothing # repeating same op!
+    ch == '+' && pch == '*' && return nothing
+    ch == '*' && pch == '+' && return nothing
 
     last_expr = pop!(expr_ary)
     push!(expr_ary,
           string(Map_Op_Str[ch], " ", last_expr == "Any" ? "Any" : "($(last_expr))"))
-          # string("ZeroOrMore ", last_expr == "Any" ? "Any" : "($(last_expr))"))
     #
   elseif ch == '|'
     pch == ch && return nothing # repeating same op!
