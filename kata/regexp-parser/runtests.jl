@@ -7,6 +7,11 @@ include("regexp-parser.jl")
   @test regexp_parser("ab") == "Str [Normal 'a', Normal 'b']"
   @test regexp_parser("a.") == "Str [Normal 'a', Any]"
 
+  @test regexp_parser("a?") == "Optional (Normal 'a')"
+  @test regexp_parser("ab?") == "Str [Normal 'a', Optional (Normal 'b')]"
+  @test regexp_parser("aa?") == "Str [Normal 'a', Optional (Normal 'a')]"
+  @test regexp_parser("a.?") == "Str [Normal 'a', Optional Any]"
+
   @test regexp_parser("a.*") == "Str [Normal 'a', ZeroOrMore Any]"
   @test regexp_parser("(a.*)") == "Str [Normal 'a', ZeroOrMore Any]"
 
@@ -44,6 +49,8 @@ end
   @test regexp_parser("(ab.+)|(c+c.+)") == "Or (Str [Normal 'a', Normal 'b', OneOrMore Any]) (OneOrMore (Normal 'c'), Normal 'c', OneOrMore Any)"
 
   @test regexp_parser("(ab.+)|(c*c)") == "Or (Str [Normal 'a', Normal 'b', OneOrMore Any]) (ZeroOrMore (Normal 'c'), Normal 'c')"
+
+  # add mix with optional
 end
 
 @testset "regexp_parser invalid expression" begin

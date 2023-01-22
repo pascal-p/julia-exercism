@@ -1,6 +1,6 @@
 using Base: collect_preferences, byte_string_classify, nothing_sentinel
 
-const Symbols = Set(['+', '*', '|', '.', '(', ')'])
+const Symbols = Set(['+', '*', '|', '?', '.', '(', ')'])
 const Tokens = vcat('a':'z' |> collect, 'A':'Z' |> collect)
 # const Priority = Dict{String, Integer}(
 #   "*" => 3, # unary op
@@ -16,6 +16,7 @@ const Map_Op_Str = Dict{Char, Union{String, Function}}(
   '*' => "ZeroOrMore",
   '|' => "Or",
   '.' => "Any",
+  '?' => "Optional",
   '_' => x -> "Normal '$(x)'"  # is for any token ∈ Tokens
 )
 
@@ -134,6 +135,13 @@ function process_op!(expr_ary::Vector, ops_ary::Vector, ch::Char, pch::Union{Cha
     last_expr = pop!(expr_ary)
     push!(expr_ary,
           string(Map_Op_Str[ch], " ", last_expr == "Any" ? "Any" : "($(last_expr))"))
+    #
+  elseif ch == '?'
+    pch == ch && return nothing # repeating same op!
+    (pch == '*' || pch == '+') && return nothing
+
+    last_expr = pop!(expr_ary)
+    push!(expr_ary, string(Map_Op_Str[ch], " ", last_expr == "Any" ? "Any" : "($(last_expr))"))
     #
   elseif ch == '|'
     pch == ch && return nothing # repeating same op!
