@@ -52,13 +52,13 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
     length(expr_ary) == 1 && return expr_ary[1]
 
     # 2 more cases: 1. no op startswith Normal,  2. op
-    startswithnormal(expr_ary[1]) && return string("Str [", join(expr_ary, ", "), "]")
+    startswithnormal(expr_ary[1]) && return tostr(expr_ary)
     join(expr_ary, " ")
   else
     (length(ops_ary) != 1 || ops_ary[end] != "Or") && return nothing
     length(expr_ary) != 2 && return nothing
 
-    string(ops_ary[end], " (", expr_ary[1], ") (", expr_ary[2], ")")
+    string(ops_ary[end], " " , parenthesize_expr.(expr_ary) |> vs -> join(vs, " "))
   end
 end
 
@@ -93,8 +93,7 @@ function no_ops!(expr_ary::Vector, exprs::Vector)
 
   push!(
     expr_ary,
-    startswithnormal(exprs[1]) ? string("Str [", join(exprs, ", "), "]") :
-      join(exprs, ", ")
+    startswithnormal(exprs[1]) ? tostr(exprs) : join(exprs, ", ")
   )
 end
 
@@ -162,4 +161,6 @@ end
 
 @inline parenthesize_expr(expr::String) = string("(", expr, ")")
 
-extractfromstr(expr::String)::String = SubString(expr, 6, length(expr) - 1)
+@inline extractfromstr(expr::String)::String = SubString(expr, 6, length(expr) - 1)
+
+@inline tostr(expr::Vector; sep=", ")::String = string("Str [", join(expr, sep), "]")
