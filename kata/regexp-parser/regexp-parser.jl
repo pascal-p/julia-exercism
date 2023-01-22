@@ -2,14 +2,6 @@ using Base: collect_preferences, byte_string_classify, nothing_sentinel
 
 const Symbols = Set(['+', '*', '|', '?', '.', '(', ')'])
 const Tokens = vcat('a':'z' |> collect, 'A':'Z' |> collect)
-# const Priority = Dict{String, Integer}(
-#   "*" => 3, # unary op
-#   "|" => 2, # binary
-#   "(" => 1,
-#   ")" => 1,
-#   "." => 1,
-#   # sequence is implicit
-# )
 
 const Map_Op_Str = Dict{Char, Union{String, Function}}(
   '+' => "OneOrMore",
@@ -47,26 +39,21 @@ function regexp_parser(regexp::String)::Union{String, Nothing}
     elseif istoken(ch)
       push!(expr_ary, normal_expr(ch))
     else
-      throw(ErrorException("Not implemented yet"))
+      return nothing
     end
-
     pch = ch
   end
 
   pch == '|' && return nothing # cannot end with '|' !
 
   if length(ops_ary) == 0
-    length(expr_ary) == 0 && (return nothing)
-
-    length(expr_ary) == 1 && (return expr_ary[1])
     "(" ∈ expr_ary && return nothing  # missing closing ")"
+    length(expr_ary) == 0 && return nothing
+    length(expr_ary) == 1 && return expr_ary[1]
 
     # 2 more cases: 1. no op startswith Normal,  2. op
-    if startswith(expr_ary[1], "Normal")
-      string("Str [", join(expr_ary, ", "), "]")
-    else
-      join(expr_ary, " ")
-    end
+    startswithnormal(expr_ary[1]) && return string("Str [", join(expr_ary, ", "), "]")
+    join(expr_ary, " ")
   else
     (length(ops_ary) != 1 || ops_ary[end] != "Or") && return nothing
     length(expr_ary) != 2 && return nothing
@@ -87,41 +74,35 @@ function process_closing_par!(expr_ary::Vector, ops_ary::Vector, saw_openpar::Bo
   if length(last_ops) == 1
     length(last_ops) > 1 && return nothing
 
-    if length(last_ops) == 0
-      if length(exprs) == 1
-        push!(expr_ary, exprs[1]) # as is...
-      else
-        # length(exprs) > 1
-        push!(
-          expr_ary,
-          startswith(exprs[1], "Normal") ? string("Str [", join(exprs, ", "), "]") :
-            join(exprs, ", ")
-        )
-      end
-    elseif last_ops[1] == "Or"
-      # binary case
-      length(exprs) != 2 && return nothing
-      lhs, rhs = exprs
-      push!(expr_ary, string(last_ops[1], " (", lhs, ")", " (", rhs, ")"))
-    else
-      throw(ErrorException("Not implemented yet"))
-    end
-  else
-    # no op to take into account
-    length(exprs) == 0 && return nothing
+    length(last_ops) == 0 && return no_ops!(expr_ary, exprs)
 
-    if length(exprs) == 1
-      push!(expr_ary, exprs[1])
-    else
-      # length(exprs) > 1
-      push!(
-        expr_ary,
-        startswith(exprs[1], "Normal") ? string("Str [", join(exprs, ", "), "]") :
-          join(exprs, ", ")
-      )
-    end
+    last_ops[1] == "Or" && return or_ops!(expr_ary, exprs, last_ops[1])
+
+    throw(ErrorException("Not implemented yet"))
   end
+
+  # no op to take into account
+  length(exprs) == 0 && return nothing
+
+  no_ops!(expr_ary, exprs)
   saw_openpar
+end
+
+function no_ops!(expr_ary::Vector, exprs::Vector)
+  length(exprs) == 1 && (push!(expr_ary, exprs[1]); return) # as is...
+
+  push!(
+    expr_ary,
+    startswithnormal(exprs[1]) ? string("Str [", join(exprs, ", "), "]") :
+      join(exprs, ", ")
+  )
+end
+
+function or_ops!(expr_ary::Vector, exprs::Vector, op::String)
+  length(exprs) != 2 && return nothing
+  lhs, rhs = exprs
+  push!(expr_ary, string(op, " (", lhs, ")", " (", rhs, ")"))
+  false # NOTE need to return a bool to comply with process_closing_par!
 end
 
 function process_op!(expr_ary::Vector, ops_ary::Vector, ch::Char, pch::Union{Char, Nothing})::Union{Char, Nothing}
@@ -133,8 +114,7 @@ function process_op!(expr_ary::Vector, ops_ary::Vector, ch::Char, pch::Union{Cha
     ch == '*' && pch == '+' && return nothing
 
     last_expr = pop!(expr_ary)
-    push!(expr_ary,
-          string(Map_Op_Str[ch], " ", last_expr == "Any" ? "Any" : "($(last_expr))"))
+    push!(expr_ary, string(Map_Op_Str[ch], " ", op_expr(last_expr)))
     #
   elseif ch == '?'
     pch == ch && return nothing # repeating same op!
@@ -158,6 +138,8 @@ isop(ch::Char)::Bool = ch ∈ Symbols
 
 isdot(ch::Char)::Bool = ch == '.'
 
+@inline startswithnormal(expr::String)::Bool = startswith(expr, "Normal")
+
 function popuntil!(stack::Vector; token= "(")
   exprs = []
 
@@ -167,7 +149,17 @@ function popuntil!(stack::Vector; token= "(")
 
   length(stack) == 0 && throw(ArgumentError("Empty expression stack"))
 
-  # stack[end] == ")"
+  # case stack[end] == ")"
   pop!(stack)
   exprs
 end
+
+function op_expr(expr::String)::String
+  expr == "Any" && return "Any"
+  # startswith(expr, "Str") && return (parenthesize_expr ∘ extractfromstr)(expr)
+  expr |> parenthesize_expr
+end
+
+@inline parenthesize_expr(expr::String) = string("(", expr, ")")
+
+extractfromstr(expr::String)::String = SubString(expr, 6, length(expr) - 1)

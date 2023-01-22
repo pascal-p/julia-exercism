@@ -19,11 +19,18 @@ include("regexp-parser.jl")
   @test regexp_parser("(a.+)") == "Str [Normal 'a', OneOrMore Any]"
 
   @test regexp_parser("ab*") == "Str [Normal 'a', ZeroOrMore (Normal 'b')]"
+
   @test regexp_parser("a(bc)*") == "Str [Normal 'a', ZeroOrMore (Str [Normal 'b', Normal 'c'])]"
+
   @test regexp_parser("ab+") == "Str [Normal 'a', OneOrMore (Normal 'b')]"
   @test regexp_parser("a(bc)+") == "Str [Normal 'a', OneOrMore (Str [Normal 'b', Normal 'c'])]"
 
   @test regexp_parser("(abcd)") == "Str [Normal 'a', Normal 'b', Normal 'c', Normal 'd']"
+  @test regexp_parser("(abc?d)") == "Str [Normal 'a', Normal 'b', Optional (Normal 'c'), Normal 'd']"
+
+  @test regexp_parser("(abc?d)+") == "OneOrMore (Str [Normal 'a', Normal 'b', Optional (Normal 'c'), Normal 'd'])"
+  @test regexp_parser("abc?d+") == "Str [Normal 'a', Normal 'b', Optional (Normal 'c'), OneOrMore (Normal 'd')]"
+
   @test regexp_parser("a|b") == "Or (Normal 'a') (Normal 'b')"
 
   @test regexp_parser("(a|b)|c") == "Or (Or (Normal 'a') (Normal 'b')) (Normal 'c')"
@@ -51,6 +58,7 @@ end
   @test regexp_parser("(ab.+)|(c*c)") == "Or (Str [Normal 'a', Normal 'b', OneOrMore Any]) (ZeroOrMore (Normal 'c'), Normal 'c')"
 
   # add mix with optional
+  @test regexp_parser("(a.+)?|(bb)") == "Or (Optional (Str [Normal 'a', OneOrMore Any])) (Str [Normal 'b', Normal 'b'])"
 end
 
 @testset "regexp_parser invalid expression" begin
@@ -59,4 +67,6 @@ end
   for inv_expr ∈ [ "", ")(", "*", "a(", "()", "a**", "a|a|a", "ab|", "a||b", "ab*+" ]
     @test regexp_parser(inv_expr) === nothing
   end
+
+  @test regexp_parser("(a|b)|*") === nothing
 end
