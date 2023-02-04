@@ -52,7 +52,7 @@ function parser(expr::String)::D2Expr
 
     if pstate == :symbol && (isspace(ch) || ch == ')')
       symb = Symbol(token)
-      DEBUG && println("... Symbol: $(symb)")
+      DEBUG && println("... Symbol: $(symb) | sign: $(sign) | ch: [$(ch)]")
       if symb ∈ FNS
         push!(opstack, symb)
       else
@@ -86,7 +86,7 @@ function parser(expr::String)::D2Expr
     elseif ch == '-'
       # take a peek at the next char?
       if ix < length(expr)
-        if isspace(expr[ix])
+        if isspace(expr[ix + 1])
           # OK binary ops -
           push!(opstack, ch)
         elseif expr[ix + 1] ∈ 'a':'z' || isdigit(expr[ix + 1])
