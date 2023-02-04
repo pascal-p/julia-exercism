@@ -2,21 +2,21 @@ using Test
 
 include("symb-diff.jl")
 
-# @testset "symbolic differentiation base cases" begin
-#   @test differentiate("2") == 0
-#   @test differentiate("(+ x 2)") == "x"
+@testset "symbolic differentiation base cases" begin
+  @test differentiate("2") == Atom(0)
+  @test differentiate("(+ x 2)") == Atom(1)
 
-#   @test differentiate("(* (+ x 3) 5)") == 5
-#   @test differentiate("(^ x 3)") ==  "(* 3 (^ x 2))"
+  # @test differentiate("(* (+ x 3) 5)") == 5
+  # @test differentiate("(^ x 3)") ==  "(* 3 (^ x 2))"
 
-#   @test differentiate("(cos x)") == "(* -1 (sin x))"
-#   @test differentiate("(sin x)") == "(cos x)"
-#   @test differentiate("(tan x)") == "(/ 1 (^ (cos x) 2)"
+  # @test differentiate("(cos x)") == "(* -1 (sin x))"
+  # @test differentiate("(sin x)") == "(cos x)"
+  # @test differentiate("(tan x)") == "(/ 1 (^ (cos x) 2)"
 
-#   @test differentiate("e^x") == "e^x"
-#   @test differentiate("(ln x)") == "(/ 1 x)"
+  # @test differentiate("e^x") == "e^x"
+  # @test differentiate("(ln x)") == "(/ 1 x)"
 
-# end
+end
 
 # @testset "symbolic differentiation beyond base  cases" begin
 
@@ -36,6 +36,7 @@ include("symb-diff.jl")
   @test parser("(+ -x 2)") == D2Expr(:+, D2Expr(:*, Atom(-1), Atom(:x)), Atom(2)) ## which can be further simplify/transform
   @test parser("(/ x -2)") == D2Expr(:/, Atom(:x), Atom(-2))
   @test parser("(/ -1 y)") == D2Expr(:/, Atom(-1), Atom(:y))
+  @test parser("(+ (+ x y) z)") ==  D2Expr(:+, D2Expr(:+, Atom(:x), Atom(:y)), Atom(:z))
 
   @test parser("(* 2 (+ y 5))") == D2Expr(:*, Atom(2), D2Expr(:+, Atom(:y), Atom(5)))
   @test parser("(* 3 (- -5 y))") == D2Expr(:*, Atom(3), D2Expr(:-, Atom(-5), Atom(:y)))
@@ -46,14 +47,6 @@ include("symb-diff.jl")
   @test parser("ln(+ 1 e(x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:e, Atom(:x))))
   @test parser("ln(+ 1 e(-x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:e, D2Expr(:*, Atom(-1), Atom(:x)))))
 
-
+  @test parser("(/ sin(x) cos(x)") == D2Expr(:/, D2Expr(:sin, Atom(:x)), D2Expr(:cos, Atom(:x)))
+  @test parser("(/ (^ sin(x) 2) (^ cos(x) 2)") == D2Expr(:/, D2Expr(:^, D2Expr(:sin, Atom(:x)), Atom(2)), D2Expr(:^, D2Expr(:cos, Atom(:x)), Atom(2)))
 end
-
-# ERROR: BoundsError: attempt to access Bool at index [2]
-# Stacktrace:
-#  [1] indexed_iterate(I::Bool, i::Int64, state::Nothing)
-#    @ Base ./tuple.jl:97
-#  [2] parser(expr::String)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:97
-#  [3] top-level scope
-#    @ REPL[2]:1

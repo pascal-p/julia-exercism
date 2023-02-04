@@ -1,9 +1,12 @@
 
-const OPS = [:+, :-, :*, :/, :^]
+const SUM_OPS = [:+, :-]
+const MUL_OPS = [:*, :/]
+const OPS = [SUM_OPS..., MUL_OPS..., :^]
 const FNS = [:cos, :sin, :tan, :e, :exp, :ln]
 const UNARY_OPS_FNS = [:-, FNS...]
 const ALL_OPS = [OPS..., FNS...]
 
+const DEBUG = false
 const DExpr = Union{Number, Symbol}
 
 struct Atom
@@ -12,6 +15,7 @@ struct Atom
 end
 
 Base.show(io::IO, atom::Atom) = print(io, atom.value)
+Base.length(sym::Atom) = 1
 
 struct D2Expr
   op::Symbol
@@ -24,24 +28,37 @@ struct D2Expr
   end
 end
 
-D2Expr(op::Symbol, lhs::T1) where {T1 <: Union{D2Expr, Atom}} = D2Expr(op, lhs, nothing)
+D2Expr(op::Symbol, lhs::D2Expr) = D2Expr(op, lhs, nothing)
+
+function D2Expr(op::Symbol, lhs::Atom)
+  if op == :+
+    lhs
+  elseif op == :-
+    Atom(-lhs.value)
+  elseif op ∈ UNARY_OPS_FNS
+    D2Expr(op, lhs, nothing)
+  else
+    throw(ArgumentError("bad expression: $(op) $(lhs)"))
+  end
+end
+
 
 D2Expr(op::Symbol, lhs::DExpr, rhs::DExpr) = D2Expr(op, lhs.value, rhs.value)
 D2Expr(op::String, lhs::DExpr, rhs::DExpr) = D2Expr(Symbol(op), lhs.value, rhs.value)
 
-# recursive
+## recursive
 Base.show(io::IO, expr::D2Expr) =
   expr.rhs === nothing ? print(io, "($(expr.op) ", expr.lhs, ")") : print(io, "($(expr.op) ", expr.lhs, " ", expr.rhs, ")")
 
-const DEBUG = false
+oper(dexpr::D2Expr) = dexpr.op
+lhs(dexpr::D2Expr) = dexpr.lhs
+rhs(dexpr::D2Expr) = dexpr.rhs
+Base.length(dexpr::D2Expr) = dexpr.rhs === nothing ? 2 : 3
 
-function differentiate(expr::String; wrt="x")
-  # 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
 
-  # 2. differentiate and simplify
-
-  # 3. stringify back
-end
+# 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
+# 2. differentiate and simplify
+# 3. stringify back
 
 function parser(expr::String)::Union{D2Expr, Atom}
   reset_state()::Tuple = ("", 1, nothing)
@@ -49,25 +66,23 @@ function parser(expr::String)::Union{D2Expr, Atom}
   opstack, argstack = Symbol[], Union{D2Expr, Atom, Nothing}[]
   token, sign, pstate = reset_state()
 
+  ## Inner helper function
   function build_expr!() # closure
     op = pop!(opstack)
-    DEBUG && println("<< dealing with op: $(op) | $(argstack) | $(opstack)")
 
     if op ∈ OPS # binary case
       rhs, lhs = pop!(argstack), pop!(argstack)
-      DEBUG && println("typeof(op: $(op) | typeof(rhs): $(typeof(rhs)) | typeof(lhs): $(typeof(lhs))")
       push!(argstack, D2Expr(op, lhs, rhs))
       return
     end
 
     if op ∈ UNARY_OPS_FNS # unary case
       lhs = pop!(argstack)
-      DEBUG && println("typeof(op: $(op) | lhs: $(lhs)| typeof(lhs): $(typeof(lhs))")
       push!(argstack, D2Expr(op, lhs))
       return
     end
 
-    throw(ArgumentError("invalid expression/1 starting with op: $(op)"))
+    throw(ArgumentError("invalid expression: starting with op: $(op)"))
   end
 
   function build_symb(ch::Char) # closure
@@ -76,8 +91,8 @@ function parser(expr::String)::Union{D2Expr, Atom}
       return (string(token, ch), pstate)
     end
 
-    pstate == :number && throw(ArgumentError("invalid expression/3: mix of number and char"))
-    pstate != :symbol && throw(ArgumentError("invalid expression/4: unknown state $(pstate)"))
+    pstate == :number && throw(ArgumentError("invalid expression: mix of number and char"))
+    pstate != :symbol && throw(ArgumentError("invalid expression: unknown state $(pstate)"))
     (string(token, ch), pstate)
   end
 
@@ -91,7 +106,7 @@ function parser(expr::String)::Union{D2Expr, Atom}
         sign = -1
       end
     else
-      throw(ArgumentError("invalid expression/2: starting from '-'"))
+      throw(ArgumentError("invalid expression: starting from '-'"))
     end
     sign
   end
@@ -105,10 +120,8 @@ function parser(expr::String)::Union{D2Expr, Atom}
     end
   end
 
-
+  ## main parser loop
   for (ix, ch) ∈ expr |> enumerate
-    DEBUG && println(">> Processing ix: $(ix), ch: $(ch) | pstate: $(pstate) | opstack: $(opstack) | argstack: $(argstack)")
-
     if pstate == :symbol && (isspace(ch) || ch == '(' || ch == ')')
       proc_symbol(token |> Symbol)
       token, sign, pstate = reset_state()
@@ -142,10 +155,11 @@ function parser(expr::String)::Union{D2Expr, Atom}
       token = string(token, ch)
 
     else
-      throw(ArgumentError("invalid expression/5"))
+      throw(ArgumentError("invalid expression: non expected character $(ch)"))
     end
   end
 
+  ## Conclusion
   @assert length(opstack) ≤ 1 "opstack should be at most 1 opeartor"
   length(opstack) == 1 && build_expr!()
 
@@ -155,29 +169,136 @@ function parser(expr::String)::Union{D2Expr, Atom}
     elseif pstate == :number
       return Atom(parse(Int, token))
     else
-      throw(ArgumentError("invalid expression/6"))
+      throw(ArgumentError("invalid expression: unknown state $(pstate)"))
     end
   end
 
   pop!(argstack)
 end
 
-function differentiate(expr::DExpr; wrt="x")::DExpr
+function differentiate(expr::String; wrt=:x)::Union{D2Expr, Atom}
   # dispatch on the oper
-  expr
+  dexpr = parser(expr)
+  diff_on_op(dexpr; wrt)
 end
 
-simplify(expr::DExpr)::DExpr = expr # identity for now
+differentiate(dexpr::D2Expr; wrt=:x)::Union{D2Expr, Atom} = diff_on_op(dexpr; wrt)
 
-diffsum(lhs::DExpr, rhs::DExpr) = DExpr("+", (simplify ∘ differentiate)(lhs), (simplify ∘ differentiate)(rhs))
+differentiate(expr::Atom; wrt=:x)::Atom = diffsym(expr; wrt)
+
+function diff_on_op(dexpr::D2Expr; wrt=:x)
+  if dexpr.op == :+
+    D2Expr(dexpr.op, (simplify ∘ diffsum)(dexpr.lhs, dexpr.rhs; wrt))
+  elseif dexpr.op == :-
+    D2Expr(dexpr.op, diffsub(dexpr.lhs, dexpr.rhs; wrt))
+  else
+    # TODO ...
+  end
+end
+
+diff_on_op(sym::Atom; wrt=:x) = diffsym(sym; wrt)
+
+## derivative rules
+diffsum(lhs::D2Expr, rhs::D2Expr; wrt=:x) = sumrule(:-, lhs, rhs; wrt)
+
+# ... D2Expr, Atom
+# ... Atom, D2Expr
+
+diffsum(lhs::Atom, rhs::Atom; wrt=:x) = sumrule(:-, lhs, rhs; wrt)
 
 
-# > Processing ix: 1, ch: x | pstate: nothing | opstack: Symbol[] | argstack: Union{Nothing, Atom, D2Expr}[]
-# ERROR: ArgumentError: array must be non-empty
-# Stacktrace:
-#  [1] pop!
-#    @ ./array.jl:1314 [inlined]
-#  [2] parser(expr::String)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:151
-#  [3] top-level scope
-#    @ REPL[2]:1
+diffsub(lhs::D2Expr, rhs::D2Expr; wrt=:x) = sumrule(:+, lhs, rhs; wrt)
+
+diffsym(sym::Atom; wrt=:x) = sym.value == wrt ? Atom(1) : Atom(0)
+
+sumrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
+  # TODO: assert op is :+ or :- ?
+  op,
+  (simplify ∘ differentiate)(lhs; wrt),
+  (simplify ∘ differentiate)(rhs; wrt)
+)
+
+sumrule(op::Symbol, lhs::D2Expr, rhs::Atom; wrt=:x)::D2Expr = D2Expr(
+  op,
+  (simplify ∘ differentiate)(lhs; wrt),
+  diffsym(rhs; wrt)
+)
+
+sumrule(op::Symbol, lhs::Atom, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
+  op,
+  diffsym(lhs; wrt),
+  (simplify ∘ differentiate)(rhs; wrt)
+)
+
+sumrule(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x) = D2Expr(
+  op,
+  diffsym(lhs; wrt),
+  diffsym(rhs; wrt)
+)
+
+
+## simplification rules
+
+function simplify(dexpr::D2Expr; _wrt=:x)::Union{D2Expr, Atom}
+  if dexpr.op == :+
+    simplify_add(dexpr.lhs, dexpr.rhs)
+  elseif dexpr.op == :-
+    simplify_sub(dexpr.lhs, dexpr.rhs)
+  end
+end
+
+simplify(sym::Atom; wrt=:x)::Atom = sym
+
+simplify_add(lhs::D2Expr, rhs::D2Expr; wrt=:x) = D2Expr(:+, simplify(lhs; wrt), simplify(rhs; wrt))
+
+function simplify_add(lhs::Atom, rhs::D2Expr; wrt=:x)
+  if  isinteger(lhs.value) && iszero(lhs.value)
+    rhs
+  else
+    D2Expr(:+, simplify(lhs; wrt), simplify(rhs; wrt))
+  end
+end
+
+function simplify_add(lhs::D2Expr, rhs::Atom; wrt=:x)
+  if isinteger(rhs.value) && iszero(rhs.value)
+    lhs
+  else
+    D2Expr(:+, simplify(lhs; wrt), simplify(rhs; wrt))
+  end
+end
+
+function simplify_add(lhs::Atom, rhs::Atom; wrt=:x)::Union{D2Expr, Atom}
+  if isinteger(lhs.value) && isinteger(rhs.value)
+    Atom(lhs.value + rhs.value)
+  elseif isinteger(lhs.value) && iszero(lhs.value)
+    rhs
+  elseif isinteger(rhs.value) && iszero(rhs.value)
+    lhs
+  else
+    D2Expr(:+, lhs, rhs)
+  end
+end
+
+simplify_sub(lhs::D2Expr, rhs::D2Expr; wrt=:x) = D2Expr(:-, simplify(lhs; wrt), simplify(rhs; wrt))
+
+function simplify_sub(lhs::Atom, rhs::D2Expr; wrt=:x)
+  # TODO...
+end
+
+function simplify_sub(lhs::D2Expr, rhs::Atom; wrt=:x)
+  # TODO...
+end
+
+function simplify_sub(lhs::Atom, rhs::Atom; wrt=:x)
+  if isinteger(lhs.value) && isinteger(rhs.value)
+    Atom(lhs.value - rhs.value)
+  elseif isinteger(lhs.value) && iszero(lhs.value)
+    rhs
+  elseif isinteger(rhs.value) && iszero(rhs.value)
+    lhs
+  else
+    D2Expr(:-, lhs, rhs)
+  end
+end
+
+# TODO: same for sub
