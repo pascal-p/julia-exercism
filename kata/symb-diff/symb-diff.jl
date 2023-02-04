@@ -33,7 +33,7 @@ D2Expr(op::String, lhs::DExpr, rhs::DExpr) = D2Expr(Symbol(op), lhs.value, rhs.v
 Base.show(io::IO, expr::D2Expr) =
   expr.rhs === nothing ? print(io, "($(expr.op) ", expr.lhs, ")") : print(io, "($(expr.op) ", expr.lhs, " ", expr.rhs, ")")
 
-const DEBUG = true
+const DEBUG = false
 
 function differentiate(expr::String; wrt="x")
   # 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
@@ -43,7 +43,7 @@ function differentiate(expr::String; wrt="x")
   # 3. stringify back
 end
 
-function parser(expr::String)::D2Expr
+function parser(expr::String)::Union{D2Expr, Atom}
   reset_state()::Tuple = ("", 1, nothing)
 
   opstack, argstack = Symbol[], Union{D2Expr, Atom, Nothing}[]
@@ -148,6 +148,17 @@ function parser(expr::String)::D2Expr
 
   @assert length(opstack) ≤ 1 "opstack should be at most 1 opeartor"
   length(opstack) == 1 && build_expr!()
+
+  if length(argstack) == 0
+    if pstate == :symbol
+      return Atom(token |> Symbol)
+    elseif pstate == :number
+      return Atom(parse(Int, token))
+    else
+      throw(ArgumentError("invalid expression/6"))
+    end
+  end
+
   pop!(argstack)
 end
 
@@ -159,3 +170,14 @@ end
 simplify(expr::DExpr)::DExpr = expr # identity for now
 
 diffsum(lhs::DExpr, rhs::DExpr) = DExpr("+", (simplify ∘ differentiate)(lhs), (simplify ∘ differentiate)(rhs))
+
+
+# > Processing ix: 1, ch: x | pstate: nothing | opstack: Symbol[] | argstack: Union{Nothing, Atom, D2Expr}[]
+# ERROR: ArgumentError: array must be non-empty
+# Stacktrace:
+#  [1] pop!
+#    @ ./array.jl:1314 [inlined]
+#  [2] parser(expr::String)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:151
+#  [3] top-level scope
+#    @ REPL[2]:1

@@ -28,8 +28,8 @@ include("symb-diff.jl")
 
 
 @testset "parser" begin
-  # @test parser("2") == Atom(2)
-  # @test parser("x") == Atom(:x)
+  @test parser("2") == Atom(2)
+  @test parser("x") == Atom(:x)
 
   @test parser("(+ x 2)") == D2Expr(:+, Atom(:x), Atom(2))
   @test parser("(+ x -2)") == D2Expr(:+, Atom(:x), Atom(-2))
