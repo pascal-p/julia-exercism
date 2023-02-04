@@ -1,17 +1,9 @@
 
-# struct D2Expr; end
-# struct D1Expr; end
-# struct D0Expr; end
-
 const OPS = [:+, :-, :*, :/, :^]
 const FNS = [:cos, :sin, :tan, :e, :exp, :ln]
 const UNARY_OPS_FNS = [:-, [FNS]...]
 
-# abstract type DExpr end
 const DExpr = Union{Number, Symbol}
-
-# abstract type Number <: DExpr end
-# abstract type Symbol <: DExpr end
 
 struct Atom
   value::DExpr
@@ -31,11 +23,15 @@ struct D2Expr
   end
 end
 
+D2Expr(op::Symbol, lhs::T1) where {T1 <: Union{D2Expr, Atom}} = D2Expr(op, lhs, nothing)
+
 D2Expr(op::Symbol, lhs::DExpr, rhs::DExpr) = D2Expr(op, lhs.value, rhs.value)
 D2Expr(op::String, lhs::DExpr, rhs::DExpr) = D2Expr(Symbol(op), lhs.value, rhs.value)
 
 # recursive
 Base.show(io::IO, expr::D2Expr) = print(io, "($(expr.op) ", expr.lhs, " ", expr.rhs, ")")
+
+const DEBUG = true
 
 function differentiate(expr::String; wrt="x")
   # 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
@@ -52,25 +48,29 @@ function parser(expr::String)::D2Expr
   token, sign = "", 1
 
   for (ix, ch) ∈ expr |> enumerate
-    # isspace(ch) && continue
-    println(">> Processing ix: $(ix), ch: $(ch) | pstate: $(pstate) | opstack: $(opstack) | argstack: $(argstack)")
+    DEBUG && println(">> Processing ix: $(ix), ch: $(ch) | pstate: $(pstate) | opstack: $(opstack) | argstack: $(argstack)")
 
     if pstate == :symbol && (isspace(ch) || ch == ')')
       symb = Symbol(token)
-      println("... Symbol: $(symb)")
+      DEBUG && println("... Symbol: $(symb)")
       if symb ∈ FNS
         push!(opstack, symb)
       else
-        push!(argstack, Atom(symb))
+        # take into account sign
+        if sign == -1
+          push!(argstack, D2Expr(:*, Atom(-1), Atom(symb)))
+        else
+          push!(argstack, Atom(symb))
+        end
       end
-      token = ""
+      token, sign = "", 1
       pstate = nothing
       ch == ')' && build_expr!(opstack, argstack)
 
     elseif pstate == :number && (isspace(ch) || ch == ')')
       n = parse(Int, token)
-      push!(argstack, Atom(n))
-      token = ""
+      push!(argstack, Atom(n * sign))
+      token, sign = "", 1
       pstate = nothing
       ch == ')' && build_expr!(opstack, argstack)
 
@@ -89,7 +89,7 @@ function parser(expr::String)::D2Expr
         if isspace(expr[ix])
           # OK binary ops -
           push!(opstack, ch)
-        elseif expr[ix] ∈ 'a':'z'
+        elseif expr[ix + 1] ∈ 'a':'z' || isdigit(expr[ix + 1])
           sign = -1
         end
       else
@@ -117,8 +117,7 @@ function parser(expr::String)::D2Expr
     end
   end
 
-  println("=>  opstack: ", opstack)
-  println("=> argstack: ", argstack)
+  DEBUG && println("=>  opstack: ", opstack, " argstack: ", argstack)
 
   @assert length(opstack) == 0 "opstack should be empty"
   robj = pop!(argstack)
@@ -127,22 +126,21 @@ function parser(expr::String)::D2Expr
 end
 
 function build_expr!(opstack, argstack)
-  # mark end of current expr - pop and build depending on whether op is unary or binary...
   op = pop!(opstack) |> Symbol
-  println("<< dealing with op: $(op) / $(OPS) / typeof of op ", typeof(op))
+  DEBUG && println("<< dealing with op: $(op) / $(OPS) / typeof of op ", typeof(op))
   if op ∈ OPS
     rhs, lhs = pop!(argstack), pop!(argstack)
-    println("typeof(op: $(op) | typeof(rhs): $(typeof(rhs)) | typeof(lhs): $(typeof(lhs))")
+    DEBUG && println("typeof(op: $(op) | typeof(rhs): $(typeof(rhs)) | typeof(lhs): $(typeof(lhs))")
     push!(argstack, D2Expr(op, lhs, rhs))
   elseif op ∈ UNARY_OPS_FNS
     # unary
     lhs = pop!(argstack)
-    push!(argstack, D1Expr(op, lhs))
+    push!(argstack, D2Expr(op, lhs))
   else
     throw(ArgumentError("invalid expression/1"))
   end
 
-  println(">> opstack: $(opstack) | argstack: $(argstack)")
+  DEBUG && println(">> opstack: $(opstack) | argstack: $(argstack)")
 end
 
 function differentiate(expr::DExpr; wrt="x")::DExpr
@@ -153,14 +151,3 @@ end
 simplify(expr::DExpr)::DExpr = expr # identity for now
 
 diffsum(lhs::DExpr, rhs::DExpr) = DExpr("+", (simplify ∘ differentiate)(lhs), (simplify ∘ differentiate)(rhs))
-
-# ERROR: MethodError: Cannot `convert` an object of type
-#   D2Expr to an object of type
-#   Union{Number, Symbol}
-# Closest candidates are:
-#   convert(::Type{T}, ::T) where T at Base.jl:61
-# Stacktrace:
-#  [1] parser(expr::String)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:124
-#  [2] top-level scope
-#    @ REPL[2]:1
