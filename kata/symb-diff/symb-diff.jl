@@ -6,16 +6,20 @@ const FNS = [:cos, :sin, :tan, :e, :exp, :ln]
 const UNARY_OPS_FNS = [:-, FNS...]
 const ALL_OPS = [OPS..., FNS...]
 
+# At the moment we only deal with integer, later we will introduce decimal, real...
+const DExpr = Union{Integer, Symbol}
+
 const DEBUG = false
-const DExpr = Union{Number, Symbol}
 
 struct Atom
   value::DExpr
   # Atom(s::DExpr) = new(s)
 end
 
+Atom(::Any) = throw(ArgumentError("For now Atom are either Symbol or Integer"))
+
 Base.show(io::IO, atom::Atom) = print(io, atom.value)
-Base.length(sym::Atom) = 1
+Base.length(::Atom) = 1
 
 struct D2Expr
   op::Symbol
@@ -41,10 +45,6 @@ function D2Expr(op::Symbol, lhs::Atom)
     throw(ArgumentError("bad expression: $(op) $(lhs)"))
   end
 end
-
-
-D2Expr(op::Symbol, lhs::DExpr, rhs::DExpr) = D2Expr(op, lhs.value, rhs.value)
-D2Expr(op::String, lhs::DExpr, rhs::DExpr) = D2Expr(Symbol(op), lhs.value, rhs.value)
 
 ## recursive
 Base.show(io::IO, expr::D2Expr) =
@@ -206,14 +206,49 @@ diff_on_op(sym::Atom; wrt=:x) = diffsym(sym; wrt)
 ## derivative rules
 for (key, op) ∈ [(:diffsub, :-), (:diffsum, :+)]
   @eval begin
-    ($(key))(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = sumrule(Symbol($(op)), lhs, rhs; wrt)
+    ($(key))(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = D2Expr(
+      Symbol($(op)),
+      (simplify ∘ differentiate)(lhs; wrt),
+      (simplify ∘ differentiate)(rhs; wrt)
+    )
   end
 end
 
-diffmul(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = mulrule(:*, lhs, rhs; wrt)
+# duv/dx = du/dx ⨱ v + dv/dx ⨱ u
+diffmul(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = D2Expr(
+    :+,
+    D2Expr(:*,
+           (simplify ∘ differentiate)(lhs; wrt),
+           rhs),
+    D2Expr(:*,
+           lhs,
+           (simplify ∘ differentiate)(rhs; wrt))
+)
 
-diffdiv(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = divrule(:/, lhs, rhs; wrt )
+# (du/dx)/(dv/dx) = (du/dx ⨱ v - dv/dx ⨱ u) / v^2
+diffdiv(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x)  = D2Expr(
+  :/,
+  D2Expr(
+    :-,
+    D2Expr(
+      :*,
+      (simplify ∘ differentiate)(lhs; wrt),
+      rhs,
+    ),
+    D2Expr(
+      :*,
+      lhs,
+      (simplify ∘ differentiate)(rhs; wrt),
+    )
+  ),
+  D2Expr(
+    :^,
+    rhs,
+    Atom(2)
+  )
+)
 
+diffsym(sym::Atom; wrt=:x) = sym.value == wrt ? Atom(1) : Atom(0)
 
 const DISPATCH_MAP = Dict{Symbol, Function}(
   :+ => diffsum,
@@ -223,66 +258,6 @@ const DISPATCH_MAP = Dict{Symbol, Function}(
   # ...
 )
 
-diffsym(sym::Atom; wrt=:x) = sym.value == wrt ? Atom(1) : Atom(0)
-
-sumrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
-  op,
-  (simplify ∘ differentiate)(lhs; wrt),
-  (simplify ∘ differentiate)(rhs; wrt)
-)
-
-sumrule(op::Symbol, lhs::D2Expr, rhs::Atom; wrt=:x)::D2Expr = D2Expr(
-  op,
-  (simplify ∘ differentiate)(lhs; wrt),
-  diffsym(rhs; wrt)
-)
-
-sumrule(op::Symbol, lhs::Atom, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
-  op,
-  diffsym(lhs; wrt),
-  (simplify ∘ differentiate)(rhs; wrt)
-)
-
-sumrule(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x) = D2Expr(
-  op,
-  diffsym(lhs; wrt),
-  diffsym(rhs; wrt)
-)
-
-function mulrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr
-  D2Expr(
-    :+,
-    D2Expr(op,
-           (simplify ∘ differentiate)(lhs; wrt),
-           rhs),
-    D2Expr(op,
-           lhs,
-           (simplify ∘ differentiate)(rhs; wrt))
-  )
-end
-
-# mulrule(op::Symbol, lhs::D2Expr, rhs::Atom; wrt=:x)::D2Expr = D2Expr(
-#   op,
-#   (simplify ∘ differentiate)(lhs; wrt),
-#   diffsym(rhs; wrt)
-# )
-
-# mulrule(op::Symbol, lhs::Atom, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
-#   op,
-#   diffsym(lhs; wrt),
-#   (simplify ∘ differentiate)(rhs; wrt)
-# )
-
-# mulrule(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x) = D2Expr(
-#   op,
-#   diffsym(lhs; wrt),
-#   diffsym(rhs; wrt)
-# )
-
-function divrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr
-  # TODO...
-end
-
 ## simplification rules
 
 function simplify(dexpr::D2Expr; _wrt=:x)::Union{D2Expr, Atom}
@@ -290,6 +265,11 @@ function simplify(dexpr::D2Expr; _wrt=:x)::Union{D2Expr, Atom}
     simplify_add(dexpr.lhs, dexpr.rhs)
   elseif dexpr.op == :-
     simplify_sub(dexpr.lhs, dexpr.rhs)
+  elseif dexpr.op == :*
+    simplify_mul(dexpr.lhs, dexpr.rhs)
+  elseif dexpr.op == :/
+    # simplify_div(dexpr.lhs, dexpr.rhs)
+    dexpr
   end
 end
 
@@ -298,7 +278,7 @@ simplify(sym::Atom; wrt=:x)::Atom = sym
 simplify_add(lhs::D2Expr, rhs::D2Expr; wrt=:x) = D2Expr(:+, simplify(lhs; wrt), simplify(rhs; wrt))
 
 function simplify_add(lhs::Atom, rhs::D2Expr; wrt=:x)
-  if  isinteger(lhs.value) && iszero(lhs.value)
+  if isinteger(lhs.value) && iszero(lhs.value)
     rhs
   else
     D2Expr(:+, simplify(lhs; wrt), simplify(rhs; wrt))
@@ -344,6 +324,52 @@ function simplify_sub(lhs::Atom, rhs::Atom; wrt=:x)
     lhs
   else
     D2Expr(:-, lhs, rhs)
+  end
+end
+
+simplify_mul(lhs::D2Expr, rhs::D2Expr; wrt=:x) = D2Expr(:*, simplify(lhs; wrt), simplify(rhs; wrt))
+
+function simplify_mul(lhs::Atom, rhs::D2Expr; wrt=:x)
+  if isinteger(lhs.value)
+    if iszero(lhs.value)
+      Atom(0)
+    elseif isone(lhs.value)
+      rhs
+    end
+  else
+    D2Expr(:*, simplify(lhs; wrt), simplify(rhs; wrt))
+  end
+end
+
+function simplify_mul(lhs::D2Expr, rhs::Atom; wrt=:x)
+  if isinteger(rhs.value)
+    if iszero(rhs.value)
+      Atom(0)
+    elseif isone(rhs.value)
+      lhs
+    end
+  else
+    D2Expr(:*, simplify(lhs; wrt), simplify(rhs; wrt))
+  end
+end
+
+function simplify_mul(lhs::Atom, rhs::Atom; wrt=:x)
+  if isinteger(lhs.value) && isinteger(rhs.value)
+    Atom(lhs.value * rhs.value)
+  elseif isinteger(rhs.value)
+     if iszero(rhs.value)
+      Atom(0)
+    elseif isone(rhs.value)
+      lhs
+     end
+  elseif isinteger(lhs.value)
+     if iszero(lhs.value)
+      Atom(0)
+    elseif isone(lhs.value)
+      rhs
+    end
+  else
+    D2Expr(:*, simplify(lhs; wrt), simplify(rhs; wrt))
   end
 end
 

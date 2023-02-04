@@ -6,7 +6,10 @@ include("symb-diff.jl")
   @test differentiate("2") == Atom(0)
   @test differentiate("(+ x 2)") == Atom(1)
 
-  # @test differentiate("(* (+ x 3) 5)") == 5
+  @test differentiate("(+ y 2)") == Atom(0)  # because default is to differentiate wrt :x
+  @test differentiate("(+ y 2)"; wrt=:y) == Atom(1)
+
+  @test differentiate("(* (+ x 3) 5)") == Atom(5)
   # @test differentiate("(^ x 3)") ==  "(* 3 (^ x 2))"
 
   # @test differentiate("(cos x)") == "(* -1 (sin x))"
@@ -16,7 +19,6 @@ include("symb-diff.jl")
   # @test differentiate("e^x") == "e^x"
   # @test differentiate("(ln x)") == "(/ 1 x)"
 end
-
 
 # @testset "symbolic differentiation beyond base  cases" begin
 # end
