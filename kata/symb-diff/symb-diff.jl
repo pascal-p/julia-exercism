@@ -31,7 +31,7 @@ D2Expr(op::String, lhs::DExpr, rhs::DExpr) = D2Expr(Symbol(op), lhs.value, rhs.v
 # recursive
 Base.show(io::IO, expr::D2Expr) = print(io, "($(expr.op) ", expr.lhs, " ", expr.rhs, ")")
 
-const DEBUG = true
+const DEBUG = false
 
 function differentiate(expr::String; wrt="x")
   # 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
