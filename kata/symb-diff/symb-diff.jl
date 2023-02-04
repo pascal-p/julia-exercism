@@ -187,32 +187,45 @@ differentiate(dexpr::D2Expr; wrt=:x)::Union{D2Expr, Atom} = diff_on_op(dexpr; wr
 differentiate(expr::Atom; wrt=:x)::Atom = diffsym(expr; wrt)
 
 function diff_on_op(dexpr::D2Expr; wrt=:x)
-  if dexpr.op == :+
-    D2Expr(dexpr.op, (simplify ∘ diffsum)(dexpr.lhs, dexpr.rhs; wrt))
-  elseif dexpr.op == :-
-    D2Expr(dexpr.op, diffsub(dexpr.lhs, dexpr.rhs; wrt))
-  else
-    # TODO ...
-  end
+  D2Expr(dexpr.op, (simplify ∘ DISPATCH_MAP[dexpr.op])(dexpr.lhs, dexpr.rhs; wrt))
+
+  # dexpr.op == :+ && return D2Expr(dexpr.op, (simplify ∘ diffsum)(dexpr.lhs, dexpr.rhs; wrt))
+  # dexpr.op == :- && return D2Expr(dexpr.op, (simplify ∘ diffsub)(dexpr.lhs, dexpr.rhs; wrt))
+  # TODO ...
+
+  ## DOES NOT WORK:
+  # for (key, op) ∈ [(:diffsub, :-), (:diffsum, :+)]
+  #   @eval begin
+  #     dexpr.op == Symbol($(op)) && return D2Expr(dexpr.op, (simplify ∘ ($(key)))(dexpr.lhs, dexpr.rhs; wrt))
+  #   end
+  # end
 end
 
 diff_on_op(sym::Atom; wrt=:x) = diffsym(sym; wrt)
 
 ## derivative rules
-diffsum(lhs::D2Expr, rhs::D2Expr; wrt=:x) = sumrule(:-, lhs, rhs; wrt)
+for (key, op) ∈ [(:diffsub, :-), (:diffsum, :+)]
+  @eval begin
+    ($(key))(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = sumrule(Symbol($(op)), lhs, rhs; wrt)
+  end
+end
 
-# ... D2Expr, Atom
-# ... Atom, D2Expr
+diffmul(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = mulrule(:*, lhs, rhs; wrt)
 
-diffsum(lhs::Atom, rhs::Atom; wrt=:x) = sumrule(:-, lhs, rhs; wrt)
+diffdiv(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = divrule(:/, lhs, rhs; wrt )
 
 
-diffsub(lhs::D2Expr, rhs::D2Expr; wrt=:x) = sumrule(:+, lhs, rhs; wrt)
+const DISPATCH_MAP = Dict{Symbol, Function}(
+  :+ => diffsum,
+  :- => diffsub,
+  :* => diffmul,
+  :/ => diffdiv,
+  # ...
+)
 
 diffsym(sym::Atom; wrt=:x) = sym.value == wrt ? Atom(1) : Atom(0)
 
 sumrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
-  # TODO: assert op is :+ or :- ?
   op,
   (simplify ∘ differentiate)(lhs; wrt),
   (simplify ∘ differentiate)(rhs; wrt)
@@ -236,6 +249,39 @@ sumrule(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x) = D2Expr(
   diffsym(rhs; wrt)
 )
 
+function mulrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr
+  D2Expr(
+    :+,
+    D2Expr(op,
+           (simplify ∘ differentiate)(lhs; wrt),
+           rhs),
+    D2Expr(op,
+           lhs,
+           (simplify ∘ differentiate)(rhs; wrt))
+  )
+end
+
+# mulrule(op::Symbol, lhs::D2Expr, rhs::Atom; wrt=:x)::D2Expr = D2Expr(
+#   op,
+#   (simplify ∘ differentiate)(lhs; wrt),
+#   diffsym(rhs; wrt)
+# )
+
+# mulrule(op::Symbol, lhs::Atom, rhs::D2Expr; wrt=:x)::D2Expr = D2Expr(
+#   op,
+#   diffsym(lhs; wrt),
+#   (simplify ∘ differentiate)(rhs; wrt)
+# )
+
+# mulrule(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x) = D2Expr(
+#   op,
+#   diffsym(lhs; wrt),
+#   diffsym(rhs; wrt)
+# )
+
+function divrule(op::Symbol, lhs::D2Expr, rhs::D2Expr; wrt=:x)::D2Expr
+  # TODO...
+end
 
 ## simplification rules
 

@@ -15,17 +15,15 @@ include("symb-diff.jl")
 
   # @test differentiate("e^x") == "e^x"
   # @test differentiate("(ln x)") == "(/ 1 x)"
-
 end
 
-# @testset "symbolic differentiation beyond base  cases" begin
 
+# @testset "symbolic differentiation beyond base  cases" begin
 # end
 
 # @testset "symbolic differentiation invalid expression" begin
 #   # @test_throws ArgumentError foo()
 # end
-
 
 @testset "parser" begin
   @test parser("2") == Atom(2)
