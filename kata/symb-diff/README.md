@@ -4,7 +4,7 @@
 
 In this kata your task is to differentiate a mathematical expression given as a string in prefix notation. The result should be the derivative of the expression returned in prefix notation.
 
-To simplify things we will use a simple list format made up of parentesis and spaces.
+To simplify things we will use a simple list format made up of parenthesis and spaces.
 
  - The expression format is (func arg1) or (op arg1 arg2) where op means operator, func means function and arg1, arg2 are aguments to the operator or function. For example `(+ x 1)` or `(cos x)`
 
@@ -18,13 +18,21 @@ To simplify things we will use a simple list format made up of parentesis and sp
 
 Examples of prefix notation in this format:
 ```
-+ x 2)        // prefix notation version of x+2
+(+ x 2)        // prefix notation version of x + 2
 
-(* (+ x 3) 5)  // same as 5 * (x + 3)
+(+ x -1)       // prefix notation version of x + -1 == x - 1
 
-(cos (+ x 1))  // same as cos(x+1)
+(* (- x 3) 5)  // same as 5 * (x - 3)
+
+(* (- -x 3) 5)  // same as 5 * (-x - 3), no space in -x
+
+(cos (+ x 1))  // same as cos(x + 1)
+
+(cos (+ -x 1))  // same as cos(-x + 1)
 
 (^ x 2)        // same as x^2 meaning x raised to power of 2
+
+(^ -x 2)        // same as (-x)^2 == x^2
 ```
 
 The operators and functions you are required to implement are `+`, `-`, `*`, `/`, `^`, `cos`, `sin`, `tan`, `exp`, `ln` where `^` means raised to power of. `exp` is the exponential function (same as `e^x`) and `ln` is the natural logarithm (base `e`).

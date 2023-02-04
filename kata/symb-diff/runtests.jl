@@ -2,13 +2,31 @@ using Test
 
 include("symb-diff.jl")
 
-@testset "symbolic differentiation base cases" begin
-end
+# @testset "symbolic differentiation base cases" begin
+#   @test differentiate("2") == 0
+#   @test differentiate("(+ x 2)") == "x"
 
-@testset "symbolic differentiation beyond base  cases" begin
+#   @test differentiate("(* (+ x 3) 5)") == 5
+#   @test differentiate("(^ x 3)") ==  "(* 3 (^ x 2))"
 
-end
+#   @test differentiate("(cos x)") == "(* -1 (sin x))"
+#   @test differentiate("(sin x)") == "(cos x)"
+#   @test differentiate("(tan x)") == "(/ 1 (^ (cos x) 2)"
 
-@testset "symbolic differentiation invalid expression" begin
-  # @test_throws ArgumentError foo()
+#   @test differentiate("e^x") == "e^x"
+#   @test differentiate("(ln x)") == "(/ 1 x)"
+
+# end
+
+# @testset "symbolic differentiation beyond base  cases" begin
+
+# end
+
+# @testset "symbolic differentiation invalid expression" begin
+#   # @test_throws ArgumentError foo()
+# end
+
+
+@testset "parser" begin
+  @test parser("(+ x 2)") == D2Expr(:+, Atom(:x), Atom(2))
 end
