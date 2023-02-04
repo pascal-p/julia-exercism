@@ -28,10 +28,32 @@ include("symb-diff.jl")
 
 
 @testset "parser" begin
+  # @test parser("2") == Atom(2)
+  # @test parser("x") == Atom(:x)
+
   @test parser("(+ x 2)") == D2Expr(:+, Atom(:x), Atom(2))
   @test parser("(+ x -2)") == D2Expr(:+, Atom(:x), Atom(-2))
-  @test parser("(+ -x 2)") == D2Expr(:+, D2Expr(:*, Atom(-1), Atom(:x)), Atom(2)) ## wchih can be simplify/transform
+  @test parser("(+ -x 2)") == D2Expr(:+, D2Expr(:*, Atom(-1), Atom(:x)), Atom(2)) ## which can be further simplify/transform
+  @test parser("(/ x -2)") == D2Expr(:/, Atom(:x), Atom(-2))
+  @test parser("(/ -1 y)") == D2Expr(:/, Atom(-1), Atom(:y))
 
   @test parser("(* 2 (+ y 5))") == D2Expr(:*, Atom(2), D2Expr(:+, Atom(:y), Atom(5)))
   @test parser("(* 3 (- -5 y))") == D2Expr(:*, Atom(3), D2Expr(:-, Atom(-5), Atom(:y)))
+
+  @test parser("(- (+ (^ x 2) (* 2 x)) 5)") == D2Expr(:-, D2Expr(:+, D2Expr(:^, Atom(:x), Atom(2)), D2Expr(:*, Atom(2), Atom(:x))), Atom(5))
+
+  @test parser("cos(+ (* 2 x) 1)") === D2Expr(:cos, D2Expr(:+, D2Expr(:*, Atom(2), Atom(:x)), Atom(1)))
+  @test parser("ln(+ 1 e(x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:e, Atom(:x))))
+  @test parser("ln(+ 1 e(-x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:e, D2Expr(:*, Atom(-1), Atom(:x)))))
+
+
 end
+
+# ERROR: BoundsError: attempt to access Bool at index [2]
+# Stacktrace:
+#  [1] indexed_iterate(I::Bool, i::Int64, state::Nothing)
+#    @ Base ./tuple.jl:97
+#  [2] parser(expr::String)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:97
+#  [3] top-level scope
+#    @ REPL[2]:1

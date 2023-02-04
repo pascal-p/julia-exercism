@@ -1,7 +1,8 @@
 
 const OPS = [:+, :-, :*, :/, :^]
 const FNS = [:cos, :sin, :tan, :e, :exp, :ln]
-const UNARY_OPS_FNS = [:-, [FNS]...]
+const UNARY_OPS_FNS = [:-, FNS...]
+const ALL_OPS = [OPS..., FNS...]
 
 const DExpr = Union{Number, Symbol}
 
@@ -18,7 +19,7 @@ struct D2Expr
   rhs::Union{D2Expr, Atom, Nothing}
 
   function D2Expr(op::Symbol, lhs::T1, rhs::T2) where {T1 <: Union{D2Expr, Atom}, T2 <: Union{D2Expr, Atom, Nothing}}
-    @assert Symbol(op) ∈ OPS
+    @assert Symbol(op) ∈ ALL_OPS
     new(op, lhs, rhs)
   end
 end
@@ -29,9 +30,10 @@ D2Expr(op::Symbol, lhs::DExpr, rhs::DExpr) = D2Expr(op, lhs.value, rhs.value)
 D2Expr(op::String, lhs::DExpr, rhs::DExpr) = D2Expr(Symbol(op), lhs.value, rhs.value)
 
 # recursive
-Base.show(io::IO, expr::D2Expr) = print(io, "($(expr.op) ", expr.lhs, " ", expr.rhs, ")")
+Base.show(io::IO, expr::D2Expr) =
+  expr.rhs === nothing ? print(io, "($(expr.op) ", expr.lhs, ")") : print(io, "($(expr.op) ", expr.lhs, " ", expr.rhs, ")")
 
-const DEBUG = false
+const DEBUG = true
 
 function differentiate(expr::String; wrt="x")
   # 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
@@ -42,37 +44,80 @@ function differentiate(expr::String; wrt="x")
 end
 
 function parser(expr::String)::D2Expr
-  opstack = []
-  argstack = []
-  pstate = nothing
-  token, sign = "", 1
+  reset_state()::Tuple = ("", 1, nothing)
+
+  opstack, argstack = Symbol[], Union{D2Expr, Atom, Nothing}[]
+  token, sign, pstate = reset_state()
+
+  function build_expr!() # closure
+    op = pop!(opstack)
+    DEBUG && println("<< dealing with op: $(op) | $(argstack) | $(opstack)")
+
+    if op ∈ OPS # binary case
+      rhs, lhs = pop!(argstack), pop!(argstack)
+      DEBUG && println("typeof(op: $(op) | typeof(rhs): $(typeof(rhs)) | typeof(lhs): $(typeof(lhs))")
+      push!(argstack, D2Expr(op, lhs, rhs))
+      return
+    end
+
+    if op ∈ UNARY_OPS_FNS # unary case
+      lhs = pop!(argstack)
+      DEBUG && println("typeof(op: $(op) | lhs: $(lhs)| typeof(lhs): $(typeof(lhs))")
+      push!(argstack, D2Expr(op, lhs))
+      return
+    end
+
+    throw(ArgumentError("invalid expression/1 starting with op: $(op)"))
+  end
+
+  function build_symb(ch::Char) # closure
+    if pstate === nothing
+      pstate = :symbol
+      return (string(token, ch), pstate)
+    end
+
+    pstate == :number && throw(ArgumentError("invalid expression/3: mix of number and char"))
+    pstate != :symbol && throw(ArgumentError("invalid expression/4: unknown state $(pstate)"))
+    (string(token, ch), pstate)
+  end
+
+  function proc_minus_op(ix::Integer, ch::Char)
+    sign = 1 # take a peek at the next char?
+    if ix < length(expr)
+      if isspace(expr[ix + 1])
+        # OK binary ops -
+        push!(opstack, ch |> Symbol)
+      elseif expr[ix + 1] ∈ 'a':'z' || isdigit(expr[ix + 1])
+        sign = -1
+      end
+    else
+      throw(ArgumentError("invalid expression/2: starting from '-'"))
+    end
+    sign
+  end
+
+  function proc_symbol(symb::Symbol)
+    if symb ∈ FNS
+      push!(opstack, symb)
+    else
+      # take into account sign
+      sign == -1 ? push!(argstack, D2Expr(:*, Atom(-1), Atom(symb))) : push!(argstack, Atom(symb))
+    end
+  end
+
 
   for (ix, ch) ∈ expr |> enumerate
     DEBUG && println(">> Processing ix: $(ix), ch: $(ch) | pstate: $(pstate) | opstack: $(opstack) | argstack: $(argstack)")
 
-    if pstate == :symbol && (isspace(ch) || ch == ')')
-      symb = Symbol(token)
-      DEBUG && println("... Symbol: $(symb) | sign: $(sign) | ch: [$(ch)]")
-      if symb ∈ FNS
-        push!(opstack, symb)
-      else
-        # take into account sign
-        if sign == -1
-          push!(argstack, D2Expr(:*, Atom(-1), Atom(symb)))
-        else
-          push!(argstack, Atom(symb))
-        end
-      end
-      token, sign = "", 1
-      pstate = nothing
-      ch == ')' && build_expr!(opstack, argstack)
+    if pstate == :symbol && (isspace(ch) || ch == '(' || ch == ')')
+      proc_symbol(token |> Symbol)
+      token, sign, pstate = reset_state()
+      ch == ')' && build_expr!()
 
     elseif pstate == :number && (isspace(ch) || ch == ')')
-      n = parse(Int, token)
-      push!(argstack, Atom(n * sign))
-      token, sign = "", 1
-      pstate = nothing
-      ch == ')' && build_expr!(opstack, argstack)
+      push!(argstack, Atom(parse(Int, token) * sign))
+      token, sign, pstate = reset_state()
+      ch == ')' && build_expr!()
 
     elseif isspace(ch)
       continue
@@ -81,32 +126,16 @@ function parser(expr::String)::D2Expr
       # capture beginning of expression
 
     elseif ch == ')'
-      build_expr!(opstack, argstack)
+      build_expr!() # opstack, argstack)
 
     elseif ch == '-'
-      # take a peek at the next char?
-      if ix < length(expr)
-        if isspace(expr[ix + 1])
-          # OK binary ops -
-          push!(opstack, ch)
-        elseif expr[ix + 1] ∈ 'a':'z' || isdigit(expr[ix + 1])
-          sign = -1
-        end
-      else
-        throw(ArgumentError("invalid expression/2: starting from '-'"))
-      end
+      sign = proc_minus_op(ix, ch)
+
     elseif Symbol(ch) ∈ OPS
-      push!(opstack, ch)
+      push!(opstack, ch |> Symbol)
 
     elseif lowercase(ch) ∈ 'a':'z'
-      if pstate === nothing
-        pstate = :symbol
-      elseif pstate == :number
-        throw(ArgumentError("invalid expression/3: mix of number and char"))
-      elseif  pstate != :symbol
-        throw(ArgumentError("invalid expression/4: unknown state $(pstate)"))
-      end
-      token = string(token, ch)
+      token, pstate = build_symb(ch) # , token, pstate)
 
     elseif isdigit(ch) # NO dot for now...
       pstate = :number
@@ -117,30 +146,9 @@ function parser(expr::String)::D2Expr
     end
   end
 
-  DEBUG && println("=>  opstack: ", opstack, " argstack: ", argstack)
-
-  @assert length(opstack) == 0 "opstack should be empty"
-  robj = pop!(argstack)
-
-  robj
-end
-
-function build_expr!(opstack, argstack)
-  op = pop!(opstack) |> Symbol
-  DEBUG && println("<< dealing with op: $(op) / $(OPS) / typeof of op ", typeof(op))
-  if op ∈ OPS
-    rhs, lhs = pop!(argstack), pop!(argstack)
-    DEBUG && println("typeof(op: $(op) | typeof(rhs): $(typeof(rhs)) | typeof(lhs): $(typeof(lhs))")
-    push!(argstack, D2Expr(op, lhs, rhs))
-  elseif op ∈ UNARY_OPS_FNS
-    # unary
-    lhs = pop!(argstack)
-    push!(argstack, D2Expr(op, lhs))
-  else
-    throw(ArgumentError("invalid expression/1"))
-  end
-
-  DEBUG && println(">> opstack: $(opstack) | argstack: $(argstack)")
+  @assert length(opstack) ≤ 1 "opstack should be at most 1 opeartor"
+  length(opstack) == 1 && build_expr!()
+  pop!(argstack)
 end
 
 function differentiate(expr::DExpr; wrt="x")::DExpr
