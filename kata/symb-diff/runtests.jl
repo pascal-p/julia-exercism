@@ -7,7 +7,7 @@ include("symb-diff.jl")
   @test differentiate("(+ x 2)") == Atom(1)
 
   @test differentiate("(+ y 2)") == Atom(0)  # because default is to differentiate wrt :x
-  @test differentiate("(+ y 2)"; wrt=:y) == Atom(1)
+  @test differentiate("(+ y 2)"; wrt=:y) == Atom(1; wrt=:y)
 
   @test differentiate("(* 0 x)") == Atom(0)
   @test differentiate("(* x 0)") == Atom(0)
@@ -92,9 +92,9 @@ include("symb-diff.jl")
     Atom(:x)
   ) # == "(exp x)"
 
-   @test differentiate("(exp (* 2 x))") == D2Expr(
+  @test differentiate("(exp (* 2 x))") == D2Expr(
     :*,
-     D2Expr(
+    D2Expr(
        :exp,
        D2Expr(
          :*,
@@ -104,6 +104,29 @@ include("symb-diff.jl")
      ),
      Atom(2),
   ) # == "(exp x)"
+
+  @test differentiate("(exp (* 2 y))"; wrt=:y) == D2Expr(
+    :*,
+    D2Expr(
+       :exp,
+       D2Expr(
+         :*,
+         Atom(2; wrt=:y),
+         Atom(:y; wrt=:y);
+         wrt=:y
+       );
+       wrt=:y
+     ),
+    Atom(2; wrt=:y);
+    wrt=:y
+  ) # == "(exp x)"
+
+  @test differentiate("(ln y)"; wrt=:y) == D2Expr(
+    :/,
+    Atom(1; wrt=:y),
+    Atom(:y; wrt=:y);
+    wrt=:y
+  ) # == "(/ 1 y)"
 
   @test differentiate("(ln x)") == D2Expr(
     :/,
@@ -116,9 +139,16 @@ end
 # @testset "symbolic differentiation beyond base  cases" begin
 #end
 
-# @testset "symbolic differentiation invalid expression" begin
-#   # @test_throws ArgumentError foo()
-# end
+@testset "symbolic differentiation invalid expression" begin
+  @test_throws ArgumentError differentiate("(tanh x)")
+  @test_throws ArgumentError differentiate("(÷ x 2)")
+  @test_throws ArgumentError differentiate("(% x 2)")
+
+  @test_throws ArgumentError differentiate("(+ x)")
+  @test_throws ArgumentError differentiate("(+ x (* 2))")
+
+  # @test_throws ArgumentError differentiate("(+ x 1 2 3)") # no error thrown
+end
 
 @testset "parser" begin
   @test parser("2") == Atom(2)
@@ -137,8 +167,8 @@ end
   @test parser("(- (+ (^ x 2) (* 2 x)) 5)") == D2Expr(:-, D2Expr(:+, D2Expr(:^, Atom(:x), Atom(2)), D2Expr(:*, Atom(2), Atom(:x))), Atom(5))
 
   @test parser("cos(+ (* 2 x) 1)") === D2Expr(:cos, D2Expr(:+, D2Expr(:*, Atom(2), Atom(:x)), Atom(1)))
-  @test parser("ln(+ 1 e(x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:e, Atom(:x))))
-  @test parser("ln(+ 1 e(-x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:e, D2Expr(:*, Atom(-1), Atom(:x)))))
+  @test parser("ln(+ 1 exp(x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:exp, Atom(:x))))
+  @test parser("ln(+ 1 exp(-x))") == D2Expr(:ln, D2Expr(:+, Atom(1), D2Expr(:exp, D2Expr(:*, Atom(-1), Atom(:x)))))
 
   @test parser("(/ sin(x) cos(x)") == D2Expr(:/, D2Expr(:sin, Atom(:x)), D2Expr(:cos, Atom(:x)))
   @test parser("(/ (^ sin(x) 2) (^ cos(x) 2)") == D2Expr(:/, D2Expr(:^, D2Expr(:sin, Atom(:x)), Atom(2)), D2Expr(:^, D2Expr(:cos, Atom(:x)), Atom(2)))

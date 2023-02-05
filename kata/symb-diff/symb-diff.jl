@@ -3,7 +3,7 @@ import Base: ==
 const SUM_OPS = [:+, :-]
 const MUL_OPS = [:*, :/]
 const OPS = [SUM_OPS..., MUL_OPS..., :^]
-const FNS = [:cos, :sin, :tan, :e, :exp, :ln]
+const FNS = [:cos, :sin, :tan, :exp, :ln]
 const UNARY_OPS_FNS = [:-, FNS...]
 const ALL_OPS = [OPS..., FNS...]
 
@@ -59,7 +59,7 @@ function D2Expr(op::Symbol, lhs::Atom; wrt=:x)
   if op == :+
     lhs
   elseif op == :-
-    Atom(-lhs.value)
+    Atom(-lhs.value; wrt=lhs.wrt)
   elseif op ∈ UNARY_OPS_FNS
     D2Expr(op, lhs, nothing; wrt)
   elseif op ∈ OPS # binary ops with only one operand => just return the operand
@@ -86,11 +86,13 @@ Base.length(dexpr::D2Expr) = dexpr.rhs === nothing ? 2 : 3
 ## 3. stringify back
 
 function differentiate(expr::String; wrt=:x)::Union{D2Expr, Atom}
+  # println("______________ differentiate wrt: $(wrt)")
+
   dexpr = parser(expr; wrt)
-  # println("______________ $(expr) was parsed as $(dexpr) | dexpr.wrt: $(dexpr.wrt)")
+  # println("______________ $(expr) was parsed as $(dexpr) /wrt: $(dexpr.wrt)")
 
   expr = diff_on_op(dexpr)
-  # println("______________ (simplify ∘ diff)($(dexpr)) => $(expr)")
+  # println("______________ (simplify ∘ diff)($(dexpr)) => $(expr) /wrt: $(expr.wrt)")
 
   expr
 end
@@ -159,7 +161,8 @@ function parser(expr::String; wrt=:x)::Union{D2Expr, Atom}
       push!(opstack, symb)
     else
       # take into account sign
-      sign == -1 ? push!(argstack, D2Expr(:*, Atom(-1; wrt), Atom(symb; wrt); wrt)) : push!(argstack, Atom(symb; wrt))
+      sign == -1 ? push!(argstack, D2Expr(:*, Atom(-1; wrt), Atom(symb; wrt); wrt)) :
+        push!(argstack, Atom(symb; wrt))
     end
   end
 
@@ -219,8 +222,12 @@ function parser(expr::String; wrt=:x)::Union{D2Expr, Atom}
   pop!(argstack)
 end
 
-diff_on_op(dexpr::D2Expr) = isnothing(dexpr.rhs) ? (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs) :
-  (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs, dexpr.rhs)
+function diff_on_op(dexpr::D2Expr)
+  dexpr.op ∉ keys(DIFF_FN) && throw(ArgumentError("operator $(dexpr.op) not (yet?) handled"))
+
+  isnothing(dexpr.rhs) ? (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs) :
+    (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs, dexpr.rhs)
+end
 
 diff_on_op(sym::Atom) = diffsym(sym)
 
@@ -251,29 +258,39 @@ function diff_sub(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom})
   s_rhs = (simplify ∘ differentiate)(rhs)
 
   if s_lhs === nothing
-    D2Expr(:*,
-           Atom(-1),
-           s_rhs)
+    D2Expr(
+      :*,
+      Atom(-1; wrt=lhs.wrt),
+      s_rhs
+    )
   elseif s_rhs === nothing
     s_lhs
   else
     D2Expr(
       :-,
       (simplify ∘ differentiate)(lhs),
-      (simplify ∘ differentiate)(rhs)
+      (simplify ∘ differentiate)(rhs);
+      wrt=lhs.wrt
     )
   end
 end
 
 # duv/dx = du/dx ⨱ v + dv/dx ⨱ u
 diff_mul(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}) = D2Expr(
-    :+,
-    D2Expr(:*,
-           (simplify ∘ differentiate)(lhs),
-           rhs),
-    D2Expr(:*,
-           lhs,
-           (simplify ∘ differentiate)(rhs))
+  :+,
+  D2Expr(
+    :*,
+    (simplify ∘ differentiate)(lhs),
+    rhs;
+    wrt=lhs.wrt
+  ),
+  D2Expr(
+    :*,
+    lhs,
+    (simplify ∘ differentiate)(rhs);
+    wrt=lhs.wrt
+  );
+  wrt=lhs.wrt
 )
 
 # (du/dx)/(dv/dx) = (du/dx ⨱ v - dv/dx ⨱ u) / v^2
@@ -298,7 +315,7 @@ diff_div(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}) = D2Expr(
   D2Expr(
     :^,
     rhs,
-    Atom(2);
+    Atom(2; wrt=lhs.wrt);
     wrt=rhs.wrt
   ); # "(* 3 (^ x 2))"
   wrt=lhs.wrt
@@ -313,7 +330,7 @@ diff_pow(lhs::Union{D2Expr, Atom}, rhs::Atom) = D2Expr(
     D2Expr(
       :^,
       lhs,
-      D2Expr(:-, rhs, Atom(1); wrt=lhs.wrt) |> simplify; # D2Expr(:-, rhs, 1; wrt=lhs.wrt)
+      D2Expr(:-, rhs, Atom(1; wrt=lhs.wrt); wrt=lhs.wrt) |> simplify; # D2Expr(:-, rhs, 1; wrt=lhs.wrt)
       wrt=lhs.wrt
     );
     wrt=rhs.wrt
@@ -327,7 +344,7 @@ diff_cos(lhs::Union{D2Expr, Atom}) = D2Expr(
   :*,
   D2Expr(
     :*,
-    Atom(-1),
+    Atom(-1; wrt=lhs.wrt),
     D2Expr(
       :sin,
       lhs;
@@ -356,7 +373,7 @@ diff_tan(lhs::Union{D2Expr, Atom}) = D2Expr(
   :*,
   D2Expr(
     :/,
-    Atom(1),
+    Atom(1; wrt=lhs.wrt),
     D2Expr(
       :^,
       D2Expr(
@@ -364,7 +381,7 @@ diff_tan(lhs::Union{D2Expr, Atom}) = D2Expr(
         lhs;
         wrt=lhs.wrt
       ),
-      Atom(2);
+      Atom(2; wrt=lhs.wrt);
       wrt=lhs.wrt
     );
     wrt=lhs.wrt
@@ -392,7 +409,7 @@ diff_ln(lhs::Union{D2Expr, Atom}) = D2Expr(
   wrt=lhs.wrt
 )
 
-diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1) : Atom(0)
+diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1; wrt=sym.wrt) : Atom(0; wrt=sym.wrt)
 
 const DIFF_FN = Dict{Symbol, Function}(
   :+ => diff_sum,
@@ -439,7 +456,7 @@ end
 
 function simplify_add(lhs::Atom, rhs::Atom)::Union{D2Expr, Atom, Nothing}
   if isnumber(lhs) && isnumber(rhs)
-    Atom(lhs.value + rhs.value)
+    Atom(lhs.value + rhs.value; wrt=lhs.wrt)
   elseif isnumber(lhs) && iszero(lhs.value)
     rhs
   elseif isnumber(rhs) && iszero(rhs.value)
@@ -452,7 +469,7 @@ end
 function simplify_sub(lhs::D2Expr, rhs::D2Expr)
   s_lhs, s_rhs = simplify(lhs), simplify(rhs)
   if s_lhs === nothing
-    D2Expr(:*, Atom(-1), s_rhs)
+    D2Expr(:*, Atom(-1; wrt=lhs.wrt), s_rhs; wrt=lhs.wrt)
   elseif s_rhs === nothing
     s_lhs
   elseif s_lhs != lhs || s_rhs != rhs
@@ -464,7 +481,7 @@ end
 
 function simplify_sub(lhs::Atom, rhs::D2Expr)
   if isinteger(lhs.value) && iszero(lhs.value)
-    D2Expr(:*, Atom(-1), simplify(rhs); wrt=rhs.wrt)
+    D2Expr(:*, Atom(-1; wrt=lhs.wrt), simplify(rhs); wrt=rhs.wrt)
   else
     s_rhs = simplify(rhs)
     if s_rhs === nothing
@@ -481,7 +498,7 @@ function simplify_sub(lhs::D2Expr, rhs::Atom)
   else
     s_lhs = simplify(lhs)
     if s_lhs === nothing
-      D2Expr(:*, Atom(-1), lhs; wrt=lhs.wrt)
+      D2Expr(:*, Atom(-1; wrt=lhs.wrt), lhs; wrt=lhs.wrt)
     elseif s_lhs != lhs
       D2Expr(:-, s_lhs, rhs; wrt=rhs.wrt)
     else
@@ -492,9 +509,9 @@ end
 
 function simplify_sub(lhs::Atom, rhs::Atom)
   if isnumber(lhs) && isnumber(rhs)
-    Atom(lhs.value - rhs.value)
+    Atom(lhs.value - rhs.value; wrt=lhs.wrt)
   elseif isnumber(lhs) && iszero(lhs.value)
-    D2Expr(:*, Atom(-1), simplify(rhs); wrt=rhs.wrt)
+    D2Expr(:*, Atom(-1; wrt=lhs.wrt), simplify(rhs); wrt=rhs.wrt)
   elseif isnumber(rhs) && iszero(rhs.value)
     lhs
   else
@@ -507,7 +524,7 @@ simplify_mul(lhs::D2Expr, rhs::D2Expr) = D2Expr(:*, simplify(lhs), simplify(rhs)
 function simplify_mul(lhs::Atom, rhs::D2Expr)
   if isnumber(lhs)
     if iszero(lhs.value)
-      Atom(0)
+      Atom(0; wrt=lhs.wrt)
     elseif isone(lhs.value)
       rhs
     end
@@ -519,7 +536,7 @@ end
 function simplify_mul(lhs::D2Expr, rhs::Atom)
   if isnumber(rhs)
     if iszero(rhs.value)
-      Atom(0)
+      Atom(0; wrt=lhs.wrt)
     elseif isone(rhs.value)
       lhs
     end
@@ -530,22 +547,22 @@ end
 
 function simplify_mul(lhs::Atom, rhs::Atom)
   if isnumber(lhs) && isnumber(rhs)
-    Atom(lhs.value * rhs.value)
+    Atom(lhs.value * rhs.value; wrt=lhs.wrt)
   elseif isnumber(rhs)
      if iszero(rhs.value)
-      Atom(0)
+      Atom(0; wrt=lhs.wrt)
     elseif isone(rhs.value)
        lhs
      #elseif isone(-1 * rhs.value) && isnumber(rhs)
-     #  Atom(-1 * lhs.value)
+     #  Atom(-1 * lhs.value; wrt=lhs.wrt)
      end
   elseif isnumber(lhs)
      if iszero(lhs.value)
-      Atom(0)
+      Atom(0; wrt=lhs.wrt)
     elseif isone(lhs.value)
        rhs
      #elseif isone(-1 * lhs.value) && isnumber(rhs)
-     #  Atom(-1 * rhs.value)
+     #  Atom(-1 * rhs.value; wrt=lhs.wrt)
     end
   else
     nothing
@@ -557,7 +574,7 @@ simplify_div(lhs::D2Expr, rhs::D2Expr) = D2Expr(:/, simplify(lhs), simplify(rhs)
 function simplify_div(lhs::Atom, rhs::D2Expr)
   # = nothing
   if isnumber(lhs) && iszero(lhs.value)
-    Atom(0)
+    Atom(0; wrt=lhs.wrt)
   else
     D2Expr(:/, lhs, simplify(rhs); wrt=lhs.wrt)
   end
@@ -582,14 +599,14 @@ function simplify_div(lhs::Atom, rhs::Atom)
     # reduce to same denominator
     n = gcd(lhs.value, rhs.value)
     l, r = lhs.value ÷ n, rhs.value ÷ n
-    isone(r) && return Atom(l)
-    D2Expr(:/, Atom(l), Atom(r); wrt=lhs.wrt, dosimplify=false)
+    isone(r) && return Atom(l; wrt=lhs.wrt)
+    D2Expr(:/, Atom(l; wrt=lhs.wrt), Atom(r; wrt=lhs.wrt); wrt=lhs.wrt, dosimplify=false)
     #
   elseif isnumber(rhs) && iszero(rhs.value)
     throw(DivideError())
     #
   elseif isnumber(lhs) && iszero(lhs.value)
-    Atom(0)
+    Atom(0; wrt=lhs.wrt)
   else
     nothing
   end
@@ -603,10 +620,10 @@ function simplify_pow(lhs::Atom, rhs::Atom)
   if isnumber(lhs) && isnumber(rhs)
     # 0^0 undefined
     iszero(lhs.value) && iszero(rhs.value) && throw(ArgumentError("Undefined form 0^0"))
-    Atom(lhs.value ^ rhs.value)
+    Atom(lhs.value ^ rhs.value; wrt=lhs.wrt)
   elseif isnumber(rhs)
     if iszero(rhs.value)
-      Atom(0)
+      Atom(0; wrt=lhs.wrt)
     elseif isone(rhs.value)
       lhs
     end
