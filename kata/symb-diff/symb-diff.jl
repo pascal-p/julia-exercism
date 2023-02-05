@@ -1,4 +1,3 @@
-using Base: nothing_sentinel
 import Base: ==
 
 const SUM_OPS = [:+, :-]
@@ -38,7 +37,6 @@ struct D2Expr
 
   function D2Expr(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x, dosimplify=true)
     @assert Symbol(op) ∈ ALL_OPS
-
     if dosimplify
       new(op, lhs, rhs, wrt) |> e -> simplify(e)
     else
@@ -81,7 +79,6 @@ rhs(dexpr::D2Expr) = dexpr.rhs
 Base.length(dexpr::D2Expr) = dexpr.rhs === nothing ? 2 : 3
 
 ==(dexpr₁::D2Expr, dexpr₂::D2Expr) = dexpr₁.op == dexpr₂.op && dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs
-
 
 
 
@@ -220,7 +217,8 @@ function parser(expr::String; wrt=:x)::Union{D2Expr, Atom}
   pop!(argstack)
 end
 
-diff_on_op(dexpr::D2Expr) = (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs, dexpr.rhs)
+diff_on_op(dexpr::D2Expr) = isnothing(dexpr.rhs) ? (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs) :
+  (simplify ∘ DIFF_FN[dexpr.op])(dexpr.lhs, dexpr.rhs)
 
 diff_on_op(sym::Atom) = diffsym(sym)
 
@@ -319,6 +317,23 @@ diff_pow(lhs::Union{D2Expr, Atom}, rhs::Atom) = D2Expr(
   wrt=lhs.wrt
 )
 
+# d cos(u(x))/dx = -sin(u(x)) ⨱ du/dx
+diff_cos(lhs::Union{D2Expr, Atom}) = D2Expr(
+  :*,
+  D2Expr(
+    :*,
+    Atom(-1),
+    D2Expr(
+      :sin,
+      lhs;
+      wrt=lhs.wrt
+    );
+    wrt=lhs.wrt
+  ),
+  (simplify ∘ differentiate)(lhs);
+  wrt=lhs.wrt
+)
+
 diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1) : Atom(0)
 
 const DIFF_FN = Dict{Symbol, Function}(
@@ -327,6 +342,7 @@ const DIFF_FN = Dict{Symbol, Function}(
   :* => diff_mul,
   :/ => diff_div,
   :^ => diff_pow,
+  :cos => diff_cos
 )
 
 ## simplification rules
@@ -454,13 +470,17 @@ function simplify_mul(lhs::Atom, rhs::Atom)
      if iszero(rhs.value)
       Atom(0)
     elseif isone(rhs.value)
-      lhs
+       lhs
+     #elseif isone(-1 * rhs.value) && isnumber(rhs)
+     #  Atom(-1 * lhs.value)
      end
   elseif isnumber(lhs)
      if iszero(lhs.value)
       Atom(0)
     elseif isone(lhs.value)
-      rhs
+       rhs
+     #elseif isone(-1 * lhs.value) && isnumber(rhs)
+     #  Atom(-1 * rhs.value)
     end
   else
     nothing
@@ -542,7 +562,7 @@ const SIMPLIFY_FN = Dict{Symbol, Function}(
   # ...
 )
 
-isnumber(atom::Atom)::Bool = match(r"\A\d+\z", string(atom)) !== nothing
+isnumber(atom::Atom)::Bool = match(r"\A-?\d+\z", string(atom)) !== nothing
 
 """
   Calculate gcd(n, d)

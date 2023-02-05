@@ -18,6 +18,7 @@ include("symb-diff.jl")
   @test differentiate("(+ (* x 3) 5)") == Atom(3)
   @test differentiate("(- (* x 3) 5)") == Atom(3)
   @test differentiate("(- 5 (* x 3))") == Atom(-3)
+  @test differentiate("(* (- -x 3) 5)") == Atom(-5)
 
   @test differentiate("(+ (* x 3) (+ y 2))") == Atom(3)
   @test differentiate("(- (+ y 2) (* x 3))") == Atom(-3)
@@ -55,7 +56,22 @@ include("symb-diff.jl")
     D2Expr(:^, Atom(:x), Atom(2))
   )
 
-  # @test differentiate("(cos x)") == "(* -1 (sin x))"
+  @test differentiate("(cos x)") == D2Expr(
+    :*,
+    Atom(-1),
+    D2Expr(:sin, Atom(:x))
+  ) # == "(* -1 (sin x))"
+
+  # more simplification: (* (* -1 (sin (+ (* 2 x) 1))) 2)
+  # @test differentiate("(cos (+ (* 2 x) 1))") == D2Expr(
+  #   :*,
+  #   Atom(-2),
+  #   D2Expr(
+  #     :sin,
+  #     D2Expr(:+,  Atom(1), D2Expr(:*, Atom(2), Atom(:x)))
+  #   )
+  # ) # == "(* -2 (sin (+ (* 2 x) 1)))"
+
   # @test differentiate("(sin x)") == "(cos x)"
   # @test differentiate("(tan x)") == "(/ 1 (^ (cos x) 2)"
 
