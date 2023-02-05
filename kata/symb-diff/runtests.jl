@@ -21,7 +21,7 @@ include("symb-diff.jl")
 end
 
 # @testset "symbolic differentiation beyond base  cases" begin
-# end
+#end
 
 # @testset "symbolic differentiation invalid expression" begin
 #   # @test_throws ArgumentError foo()
@@ -50,3 +50,18 @@ end
   @test parser("(/ sin(x) cos(x)") == D2Expr(:/, D2Expr(:sin, Atom(:x)), D2Expr(:cos, Atom(:x)))
   @test parser("(/ (^ sin(x) 2) (^ cos(x) 2)") == D2Expr(:/, D2Expr(:^, D2Expr(:sin, Atom(:x)), Atom(2)), D2Expr(:^, D2Expr(:cos, Atom(:x)), Atom(2)))
 end
+
+# function diff_on_op(dexpr::D2Expr; wrt=:x)
+#   D2Expr(dexpr.op, (simplify ∘ DISPATCH_MAP[dexpr.op])(dexpr.lhs, dexpr.rhs; wrt))
+
+#   # dexpr.op == :+ && return D2Expr(dexpr.op, (simplify ∘ diffsum)(dexpr.lhs, dexpr.rhs; wrt))
+#   # dexpr.op == :- && return D2Expr(dexpr.op, (simplify ∘ diffsub)(dexpr.lhs, dexpr.rhs; wrt))
+#   # TODO ...
+
+#   ## DOES NOT WORK:
+#   # for (key, op) ∈ [(:diffsub, :-), (:diffsum, :+)]
+#   #   @eval begin
+#   #     dexpr.op == Symbol($(op)) && return D2Expr(dexpr.op, (simplify ∘ ($(key)))(dexpr.lhs, dexpr.rhs; wrt))
+#   #   end
+#   # end
+# end
