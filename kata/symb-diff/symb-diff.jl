@@ -305,21 +305,8 @@ const DIFF_FN = Dict{Symbol, Function}(
 ## simplification rules
 
 function simplify(dexpr::D2Expr)::Union{D2Expr, Atom}
-  r = if dexpr.op == :+
-    simplify_add(dexpr.lhs, dexpr.rhs)
-
-  elseif dexpr.op == :-
-    simplify_sub(dexpr.lhs, dexpr.rhs)
-
-  elseif dexpr.op == :*
-    simplify_mul(dexpr.lhs, dexpr.rhs)
-
-  elseif dexpr.op == :/
-    # simplify_div(dexpr.lhs, dexpr.rhs)
-    dexpr
-  end
-
-  r === nothing ? dexpr : r
+  r = SIMPLIFY_FN[dexpr.op](dexpr.lhs, dexpr.rhs)
+  isnothing(r) ? dexpr : r
 end
 
 simplify(sym::Atom)::Atom = sym
@@ -453,13 +440,24 @@ function simplify_mul(lhs::Atom, rhs::Atom)
   end
 end
 
+simplify_div(lhs::D2Expr, rhs::D2Expr) = nothing
+simplify_div(lhs::Atom, rhs::D2Expr) = nothing
+simplify_div(lhs::D2Expr, rhs::Atom) = nothing
+simplify_div(lhs::Atom, rhs::Atom) = nothing
+
+simplify_pow(lhs::D2Expr, rhs::D2Expr) = nothing
+simplify_pow(lhs::Atom, rhs::D2Expr) = nothing
+simplify_pow(lhs::D2Expr, rhs::Atom) = nothing
+simplify_pow(lhs::Atom, rhs::Atom) = nothing
+
 # names(Main) => list all symbol under Main
 
 const SIMPLIFY_FN = Dict{Symbol, Function}(
   :+ => simplify_add,
   :- => simplify_sub,
   :* => simplify_mul,
-  # :/ => simplify_div,
+  :/ => simplify_div,
+  :^ => simplify_pow,
   # ...
 )
 

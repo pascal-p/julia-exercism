@@ -80,3 +80,21 @@ end
 #   #   end
 #   # end
 # end
+
+# function simplify(dexpr::D2Expr)::Union{D2Expr, Atom}
+#   r = if dexpr.op == :+
+#     simplify_add(dexpr.lhs, dexpr.rhs)
+
+#   elseif dexpr.op == :-
+#     simplify_sub(dexpr.lhs, dexpr.rhs)
+
+#   elseif dexpr.op == :*
+#     simplify_mul(dexpr.lhs, dexpr.rhs)
+
+#   elseif dexpr.op == :/
+#     # simplify_div(dexpr.lhs, dexpr.rhs)
+#     dexpr
+#   end
+
+#   r === nothing ? dexpr : r
+# end
