@@ -44,6 +44,13 @@ include("symb-diff.jl")
     D2Expr(:^, Atom(:x), Atom(2)),
   ) # == "(* 3 (^ x 2))"
 
+  @test differentiate("(^ y 4)"; wrt=:y) == D2Expr(
+    :*,
+    Atom(4; wrt=:y),
+    D2Expr(:^, Atom(:y; wrt=:y), Atom(3; wrt=:y));
+    wrt=:y
+  ) # == "(* 4 (^ y 3))"
+
   @test differentiate("(/ 1 x)") == D2Expr(
     :/,
     Atom(-1),
@@ -136,8 +143,13 @@ include("symb-diff.jl")
 
 end
 
-# @testset "symbolic differentiation beyond base  cases" begin
-#end
+@testset "symbolic differentiation beyond base  cases" begin
+  # TODO: composition aka chain rule...
+
+  @test differentiate("(ln (exp x))") == Atom(1)
+
+  # ...
+end
 
 @testset "symbolic differentiation invalid expression" begin
   @test_throws ArgumentError differentiate("(tanh x)")
@@ -206,24 +218,3 @@ end
 
 #   r === nothing ? dexpr : r
 # end
-
-
-# ERROR: MethodError: objects of type Bool are not callable
-# Maybe you forgot to use an operator such as *, ^, %, / etc. ?
-# Stacktrace:
-#  [1] (::var"#5#8"{Bool})(e::D2Expr)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:42
-#  [2] |>(x::D2Expr, f::var"#5#8"{Bool})
-#    @ Base ./operators.jl:911
-#  [3] D2Expr(op::Symbol, lhs::Atom, rhs::Atom; wrt::Symbol, simplify::Bool)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:42
-#  [4] (::var"#build_expr!#14"{Symbol, Vector{Union{Nothing, Atom, D2Expr}}, Vector{Symbol}})()
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:118
-#  [5] parser(expr::String; wrt::Symbol)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:176
-#  [6] differentiate(expr::String; wrt::Symbol)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:92
-#  [7] differentiate(expr::String)
-#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:91
-#  [8] top-level scope
-#    @ REPL[2]:1

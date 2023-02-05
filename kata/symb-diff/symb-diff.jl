@@ -607,6 +607,9 @@ function simplify_div(lhs::Atom, rhs::Atom)
     #
   elseif isnumber(lhs) && iszero(lhs.value)
     Atom(0; wrt=lhs.wrt)
+  elseif lhs.value == rhs.value
+    # 2 symbols ==
+    Atom(1; wrt=lhs.wrt)
   else
     nothing
   end
@@ -632,6 +635,12 @@ function simplify_pow(lhs::Atom, rhs::Atom)
   end
 end
 
+for fn ∈ [:simplify_cos, :simplify_sin, :simplify_tan, :simplify_exp, :simplify_ln]
+  @eval begin
+    ($fn)(lhs::D2Expr, ::Nothing) = lhs # identity
+    ($fn)(lhs::Atom, ::Nothing) = lhs # identity
+  end
+end
 
 # names(Main) => list all symbol under Main
 
@@ -642,6 +651,11 @@ const SIMPLIFY_FN = Dict{Symbol, Function}(
   :/ => simplify_div,
   :^ => simplify_pow,
   # ...
+  :cos => simplify_cos,
+  :sin => simplify_sin,
+  :tan => simplify_tan,
+  :exp => simplify_exp,
+  :ln => simplify_ln,
 )
 
 isnumber(atom::Atom)::Bool = match(r"\A-?\d+\z", string(atom)) !== nothing
