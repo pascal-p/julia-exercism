@@ -334,6 +334,18 @@ diff_cos(lhs::Union{D2Expr, Atom}) = D2Expr(
   wrt=lhs.wrt
 )
 
+# d sin(u(x))/dx = cos(u(x)) ⨱ du/dx
+diff_sin(lhs::Union{D2Expr, Atom}) = D2Expr(
+  :*,
+  D2Expr(
+    :cos,
+    lhs;
+    wrt=lhs.wrt
+  ),
+  (simplify ∘ differentiate)(lhs);
+  wrt=lhs.wrt
+)
+
 diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1) : Atom(0)
 
 const DIFF_FN = Dict{Symbol, Function}(
@@ -342,7 +354,8 @@ const DIFF_FN = Dict{Symbol, Function}(
   :* => diff_mul,
   :/ => diff_div,
   :^ => diff_pow,
-  :cos => diff_cos
+  :cos => diff_cos,
+  :sin => diff_sin,
 )
 
 ## simplification rules
