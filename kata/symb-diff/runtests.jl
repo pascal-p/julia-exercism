@@ -9,7 +9,22 @@ include("symb-diff.jl")
   @test differentiate("(+ y 2)") == Atom(0)  # because default is to differentiate wrt :x
   @test differentiate("(+ y 2)"; wrt=:y) == Atom(1)
 
+  @test differentiate("(* 0 x)") == Atom(0)
+  @test differentiate("(* x 0)") == Atom(0)
+  @test differentiate("(* x 1)") == Atom(1)
+  @test differentiate("(* 1 x)") == Atom(1)
+
   @test differentiate("(* (+ x 3) 5)") == Atom(5)
+  @test differentiate("(+ (* x 3) 5)") == Atom(3)
+  @test differentiate("(- (* x 3) 5)") == Atom(3)
+  @test differentiate("(- 5 (* x 3))") == Atom(-3)
+
+  @test differentiate("(+ (* x 3) (+ y 2))") == Atom(3)
+  @test differentiate("(- (+ y 2) (* x 3))") == Atom(-3)
+
+  # @test differentiate("(* (+ x 2) (* x 3))") == D2Expr(:*, Atom(6), Atom(:x))
+  # \=> more ion simplification is required
+
   # @test differentiate("(^ x 3)") ==  "(* 3 (^ x 2))"
 
   # @test differentiate("(cos x)") == "(* -1 (sin x))"
