@@ -36,11 +36,15 @@ struct D2Expr
     new(op, lhs, rhs, wrt)
   end
 
-  function D2Expr(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x)
+  function D2Expr(op::Symbol, lhs::Atom, rhs::Atom; wrt=:x, dosimplify=true)
     @assert Symbol(op) ∈ ALL_OPS
-    new(op, lhs, rhs, wrt) |> e -> simplify(e)
-  end
 
+    if dosimplify
+      new(op, lhs, rhs, wrt) |> e -> simplify(e)
+    else
+      new(op, lhs, rhs, wrt)
+    end
+  end
 end
 
 function D2Expr(op::Symbol, lhs::D2Expr; wrt=:x)
@@ -270,26 +274,49 @@ diff_mul(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}) = D2Expr(
 )
 
 # (du/dx)/(dv/dx) = (du/dx ⨱ v - dv/dx ⨱ u) / v^2
-diff_div(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom})  = D2Expr(
+diff_div(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}) = D2Expr(
   :/,
   D2Expr(
     :-,
     D2Expr(
       :*,
       (simplify ∘ differentiate)(lhs),
-      rhs,
-    ),
+      rhs;
+      wrt=lhs.wrt
+    ) |> simplify,
     D2Expr(
       :*,
       lhs,
-      (simplify ∘ differentiate)(rhs),
-    )
-  ),
+      (simplify ∘ differentiate)(rhs);
+      wrt=rhs.wrt
+    ) |> simplify;
+    wrt=lhs.wrt
+  ) |> simplify,
   D2Expr(
     :^,
     rhs,
-    Atom(2)
-  )
+    Atom(2);
+    wrt=rhs.wrt
+  ); # "(* 3 (^ x 2))"
+  wrt=lhs.wrt
+)
+
+# dx^p/dx = p ⨱ x^(p - 1) / du^p/dx = p ⨱ u^(p-1) ⨱ du/dx
+diff_pow(lhs::Union{D2Expr, Atom}, rhs::Atom) = D2Expr(
+  :*,
+  D2Expr(
+    :*,
+    rhs,
+    D2Expr(
+      :^,
+      lhs,
+      D2Expr(:-, rhs, Atom(1); wrt=lhs.wrt) |> simplify; # D2Expr(:-, rhs, 1; wrt=lhs.wrt)
+      wrt=lhs.wrt
+    );
+    wrt=rhs.wrt
+  ),
+  diff_on_op(lhs);
+  wrt=lhs.wrt
 )
 
 diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1) : Atom(0)
@@ -299,7 +326,7 @@ const DIFF_FN = Dict{Symbol, Function}(
   :- => diff_sub,
   :* => diff_mul,
   :/ => diff_div,
-  # ...
+  :^ => diff_pow,
 )
 
 ## simplification rules
@@ -311,13 +338,13 @@ end
 
 simplify(sym::Atom)::Atom = sym
 
-simplify_add(lhs::D2Expr, rhs::D2Expr) = D2Expr(:+, simplify(lhs), simplify(rhs))
+simplify_add(lhs::D2Expr, rhs::D2Expr) = D2Expr(:+, simplify(lhs), simplify(rhs); wrt=lhs.wrt)
 
 function simplify_add(lhs::Atom, rhs::D2Expr)
   if isinteger(lhs.value) && iszero(lhs.value)
     rhs
   else
-    D2Expr(:+, lhs, simplify(rhs))
+    D2Expr(:+, lhs, simplify(rhs); wrt=lhs.wrt)
   end
 end
 
@@ -325,7 +352,7 @@ function simplify_add(lhs::D2Expr, rhs::Atom)
   if isinteger(rhs.value) && iszero(rhs.value)
     lhs
   else
-    D2Expr(:+, simplify(lhs), rhs)
+    D2Expr(:+, simplify(lhs), rhs; wrt=lhs.wrt)
   end
 end
 
@@ -348,7 +375,7 @@ function simplify_sub(lhs::D2Expr, rhs::D2Expr)
   elseif s_rhs === nothing
     s_lhs
   elseif s_lhs != lhs || s_rhs != rhs
-    D2Expr(:-, s_lhs, s_rhs)
+    D2Expr(:-, s_lhs, s_rhs; wrt=lhs.wrt)
   else
     nothing
   end
@@ -356,13 +383,13 @@ end
 
 function simplify_sub(lhs::Atom, rhs::D2Expr)
   if isinteger(lhs.value) && iszero(lhs.value)
-    D2Expr(:*, Atom(-1), simplify(rhs))
+    D2Expr(:*, Atom(-1), simplify(rhs); wrt=rhs.wrt)
   else
     s_rhs = simplify(rhs)
     if s_rhs === nothing
       lhs
     else
-      D2Expr(:-, lhs, s_rhs)
+      D2Expr(:-, lhs, s_rhs; wrt=lhs.wrt)
     end
   end
 end
@@ -373,9 +400,9 @@ function simplify_sub(lhs::D2Expr, rhs::Atom)
   else
     s_lhs = simplify(lhs)
     if s_lhs === nothing
-      D2Expr(:*, Atom(-1), lhs)
+      D2Expr(:*, Atom(-1), lhs; wrt=lhs.wrt)
     elseif s_lhs != lhs
-      D2Expr(:-, s_lhs, rhs)
+      D2Expr(:-, s_lhs, rhs; wrt=rhs.wrt)
     else
       nothing
     end
@@ -386,7 +413,7 @@ function simplify_sub(lhs::Atom, rhs::Atom)
   if isnumber(lhs) && isnumber(rhs)
     Atom(lhs.value - rhs.value)
   elseif isnumber(lhs) && iszero(lhs.value)
-    D2Expr(:*, Atom(-1), simplify(rhs))
+    D2Expr(:*, Atom(-1), simplify(rhs); wrt=rhs.wrt)
   elseif isnumber(rhs) && iszero(rhs.value)
     lhs
   else
@@ -394,7 +421,7 @@ function simplify_sub(lhs::Atom, rhs::Atom)
   end
 end
 
-simplify_mul(lhs::D2Expr, rhs::D2Expr) = D2Expr(:*, simplify(lhs), simplify(rhs))
+simplify_mul(lhs::D2Expr, rhs::D2Expr) = D2Expr(:*, simplify(lhs), simplify(rhs); wrt=lhs.wrt)
 
 function simplify_mul(lhs::Atom, rhs::D2Expr)
   if isnumber(lhs)
@@ -404,7 +431,7 @@ function simplify_mul(lhs::Atom, rhs::D2Expr)
       rhs
     end
   else
-    D2Expr(:*, lhs, simplify(rhs))
+    D2Expr(:*, lhs, simplify(rhs); wrt=lhs.wrt)
   end
 end
 
@@ -416,7 +443,7 @@ function simplify_mul(lhs::D2Expr, rhs::Atom)
       lhs
     end
   else
-    D2Expr(:*, simplify(lhs), rhs)
+    D2Expr(:*, simplify(lhs), rhs; wrt=lhs.wrt)
   end
 end
 
@@ -440,15 +467,69 @@ function simplify_mul(lhs::Atom, rhs::Atom)
   end
 end
 
-simplify_div(lhs::D2Expr, rhs::D2Expr) = nothing
-simplify_div(lhs::Atom, rhs::D2Expr) = nothing
-simplify_div(lhs::D2Expr, rhs::Atom) = nothing
-simplify_div(lhs::Atom, rhs::Atom) = nothing
+simplify_div(lhs::D2Expr, rhs::D2Expr) = D2Expr(:/, simplify(lhs), simplify(rhs); wrt=lhs.wrt)
+
+function simplify_div(lhs::Atom, rhs::D2Expr)
+  # = nothing
+  if isnumber(lhs) && iszero(lhs.value)
+    Atom(0)
+  else
+    D2Expr(:/, lhs, simplify(rhs); wrt=lhs.wrt)
+  end
+end
+
+function simplify_div(lhs::D2Expr, rhs::Atom)
+  if isnumber(rhs)
+    if iszero(rhs.value)
+      throw(DivideError())
+    elseif isone(rhs.value)
+      lhs
+    end
+  else
+    D2Expr(:/, simplify(lhs), rhs; wrt=lhs.wrt)
+  end
+end
+
+function simplify_div(lhs::Atom, rhs::Atom)
+  if isnumber(lhs) && isnumber(rhs)
+    iszero(rhs.value) && throw(DivideError())
+    #
+    # reduce to same denominator
+    n = gcd(lhs.value, rhs.value)
+    l, r = lhs.value ÷ n, rhs.value ÷ n
+    isone(r) && return Atom(l)
+    D2Expr(:/, Atom(l), Atom(r); wrt=lhs.wrt, dosimplify=false)
+    #
+  elseif isnumber(rhs) && iszero(rhs.value)
+    throw(DivideError())
+    #
+  elseif isnumber(lhs) && iszero(lhs.value)
+    Atom(0)
+  else
+    nothing
+  end
+end
 
 simplify_pow(lhs::D2Expr, rhs::D2Expr) = nothing
 simplify_pow(lhs::Atom, rhs::D2Expr) = nothing
 simplify_pow(lhs::D2Expr, rhs::Atom) = nothing
-simplify_pow(lhs::Atom, rhs::Atom) = nothing
+
+function simplify_pow(lhs::Atom, rhs::Atom)
+  if isnumber(lhs) && isnumber(rhs)
+    # 0^0 undefined
+    iszero(lhs.value) && iszero(rhs.value) && throw(ArgumentError("Undefined form 0^0"))
+    Atom(lhs.value ^ rhs.value)
+  elseif isnumber(rhs)
+    if iszero(rhs.value)
+      Atom(0)
+    elseif isone(rhs.value)
+      lhs
+    end
+  else
+    nothing
+  end
+end
+
 
 # names(Main) => list all symbol under Main
 
@@ -462,3 +543,17 @@ const SIMPLIFY_FN = Dict{Symbol, Function}(
 )
 
 isnumber(atom::Atom)::Bool = match(r"\A\d+\z", string(atom)) !== nothing
+
+"""
+  Calculate gcd(n, d)
+"""
+function gcd(n::Integer, d::Integer)::Integer
+  n, d = n < d ? (d, n) : (n, d)
+  iszero(d) && return n
+  r = n
+  while r > 1
+    r = n % d
+    n, d = d, r
+  end
+  iszero(r) ? n : r
+end

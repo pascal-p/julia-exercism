@@ -22,10 +22,38 @@ include("symb-diff.jl")
   @test differentiate("(+ (* x 3) (+ y 2))") == Atom(3)
   @test differentiate("(- (+ y 2) (* x 3))") == Atom(-3)
 
-  # @test differentiate("(* (+ x 2) (* x 3))") == D2Expr(:*, Atom(6), Atom(:x))
-  # \=> more ion simplification is required
+  @test differentiate("(* (+ x 2) (* x 3))") == D2Expr( # == D2Expr(:*, Atom(6), Atom(:x))
+    :+,
+    D2Expr(:*, Atom(:x), Atom(3)),
+    D2Expr(:*, D2Expr(:+, Atom(:x), Atom(2)), Atom(3))
+  )
+  # \=> more simplification is required
 
-  # @test differentiate("(^ x 3)") ==  "(* 3 (^ x 2))"
+  @test differentiate("(/ (* x 3) 2)") == D2Expr(:/, Atom(3), Atom(2))
+
+  @test differentiate("(^ x 2)") == D2Expr(
+    :*,
+    Atom(2),
+    Atom(:x)
+  )
+
+  @test differentiate("(^ x 3)") == D2Expr(
+    :*,
+    Atom(3),
+    D2Expr(:^, Atom(:x), Atom(2)),
+  ) # == "(* 3 (^ x 2))"
+
+  @test differentiate("(/ 1 x)") == D2Expr(
+    :/,
+    Atom(-1),
+    D2Expr(:^, Atom(:x), Atom(2))
+  )
+
+  @test differentiate("(/ 2 x)") == D2Expr(
+    :/,
+    Atom(-2),
+    D2Expr(:^, Atom(:x), Atom(2))
+  )
 
   # @test differentiate("(cos x)") == "(* -1 (sin x))"
   # @test differentiate("(sin x)") == "(cos x)"
@@ -98,3 +126,24 @@ end
 
 #   r === nothing ? dexpr : r
 # end
+
+
+# ERROR: MethodError: objects of type Bool are not callable
+# Maybe you forgot to use an operator such as *, ^, %, / etc. ?
+# Stacktrace:
+#  [1] (::var"#5#8"{Bool})(e::D2Expr)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:42
+#  [2] |>(x::D2Expr, f::var"#5#8"{Bool})
+#    @ Base ./operators.jl:911
+#  [3] D2Expr(op::Symbol, lhs::Atom, rhs::Atom; wrt::Symbol, simplify::Bool)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:42
+#  [4] (::var"#build_expr!#14"{Symbol, Vector{Union{Nothing, Atom, D2Expr}}, Vector{Symbol}})()
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:118
+#  [5] parser(expr::String; wrt::Symbol)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:176
+#  [6] differentiate(expr::String; wrt::Symbol)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:92
+#  [7] differentiate(expr::String)
+#    @ Main ~/Projects/Exercism/julia/kata/symb-diff/symb-diff.jl:91
+#  [8] top-level scope
+#    @ REPL[2]:1
