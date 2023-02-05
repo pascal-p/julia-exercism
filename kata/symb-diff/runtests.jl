@@ -87,8 +87,26 @@ include("symb-diff.jl")
     ),
   ) # == "(/ 1 (^ (cos x) 2)"
 
-  # @test differentiate("e^x") == "e^x"
+  @test differentiate("(exp x)") == D2Expr(
+    :exp,
+    Atom(:x)
+  ) # == "(exp x)"
+
+   @test differentiate("(exp (* 2 x))") == D2Expr(
+    :*,
+     D2Expr(
+       :exp,
+       D2Expr(
+         :*,
+         Atom(2),
+         Atom(:x)
+       )
+     ),
+     Atom(2),
+  ) # == "(exp x)"
+
   # @test differentiate("(ln x)") == "(/ 1 x)"
+
 end
 
 # @testset "symbolic differentiation beyond base  cases" begin

@@ -373,6 +373,18 @@ diff_tan(lhs::Union{D2Expr, Atom}) = D2Expr(
   wrt=lhs.wrt
 )
 
+# d exp(u(x))/dx = exp(u(x)) ⨱ du/dx
+diff_exp(lhs::Union{D2Expr, Atom}) = D2Expr(
+  :*,
+  D2Expr(
+    :exp,
+    lhs;
+    wrt=lhs.wrt
+  ),
+  (simplify ∘ differentiate)(lhs);
+  wrt=lhs.wrt
+)
+
 diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1) : Atom(0)
 
 const DIFF_FN = Dict{Symbol, Function}(
@@ -384,6 +396,7 @@ const DIFF_FN = Dict{Symbol, Function}(
   :cos => diff_cos,
   :sin => diff_sin,
   :tan => diff_tan,
+  :exp => diff_exp,
 )
 
 
