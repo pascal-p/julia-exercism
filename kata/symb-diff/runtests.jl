@@ -74,7 +74,18 @@ include("symb-diff.jl")
 
   @test differentiate("(sin x)") == D2Expr(:cos, Atom(:x)) # == "(cos x)"
 
-  # @test differentiate("(tan x)") == "(/ 1 (^ (cos x) 2)"
+  @test differentiate("(tan x)") == D2Expr(
+    :/,
+    Atom(1),
+    D2Expr(
+      :^,
+      D2Expr(
+        :cos,
+        Atom(:x)
+      ),
+      Atom(2)
+    ),
+  ) # == "(/ 1 (^ (cos x) 2)"
 
   # @test differentiate("e^x") == "e^x"
   # @test differentiate("(ln x)") == "(/ 1 x)"

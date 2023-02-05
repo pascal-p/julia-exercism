@@ -81,10 +81,9 @@ Base.length(dexpr::D2Expr) = dexpr.rhs === nothing ? 2 : 3
 ==(dexpr₁::D2Expr, dexpr₂::D2Expr) = dexpr₁.op == dexpr₂.op && dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs
 
 
-
-# 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
-# 2. differentiate and simplify
-# 3. stringify back
+## 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
+## 2. differentiate and simplify
+## 3. stringify back
 
 function differentiate(expr::String; wrt=:x)::Union{D2Expr, Atom}
   dexpr = parser(expr; wrt)
@@ -100,6 +99,9 @@ differentiate(dexpr::D2Expr)::Union{D2Expr, Atom} = diff_on_op(dexpr)
 
 differentiate(expr::Atom)::Atom = diffsym(expr)
 
+##
+## Parsing expression given as a string of characters
+##
 
 function parser(expr::String; wrt=:x)::Union{D2Expr, Atom}
   reset_state()::Tuple = ("", 1, nothing)
@@ -222,7 +224,10 @@ diff_on_op(dexpr::D2Expr) = isnothing(dexpr.rhs) ? (simplify ∘ DIFF_FN[dexpr.o
 
 diff_on_op(sym::Atom) = diffsym(sym)
 
+##
 ## derivative rules
+##
+
 # for (key, op) ∈ [(:diff_sub, :-), (:diff_sum, :+)]
 #   @eval begin
 #     ($(key))(lhs::Union{D2Expr, Atom}, rhs::Union{D2Expr, Atom}; wrt=:x) = D2Expr(
@@ -346,6 +351,28 @@ diff_sin(lhs::Union{D2Expr, Atom}) = D2Expr(
   wrt=lhs.wrt
 )
 
+# d tan(u(x))/dx = 1/cos^2(u(x)) ⨱ du/dx
+diff_tan(lhs::Union{D2Expr, Atom}) = D2Expr(
+  :*,
+  D2Expr(
+    :/,
+    Atom(1),
+    D2Expr(
+      :^,
+      D2Expr(
+        :cos,
+        lhs;
+        wrt=lhs.wrt
+      ),
+      Atom(2);
+      wrt=lhs.wrt
+    );
+    wrt=lhs.wrt
+  ),
+  (simplify ∘ differentiate)(lhs);
+  wrt=lhs.wrt
+)
+
 diffsym(sym::Atom) = sym.value == sym.wrt ? Atom(1) : Atom(0)
 
 const DIFF_FN = Dict{Symbol, Function}(
@@ -356,9 +383,13 @@ const DIFF_FN = Dict{Symbol, Function}(
   :^ => diff_pow,
   :cos => diff_cos,
   :sin => diff_sin,
+  :tan => diff_tan,
 )
 
-## simplification rules
+
+##
+## Simplification rules
+##
 
 function simplify(dexpr::D2Expr)::Union{D2Expr, Atom}
   r = SIMPLIFY_FN[dexpr.op](dexpr.lhs, dexpr.rhs)
