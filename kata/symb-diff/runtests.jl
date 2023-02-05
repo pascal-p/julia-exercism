@@ -105,7 +105,11 @@ include("symb-diff.jl")
      Atom(2),
   ) # == "(exp x)"
 
-  # @test differentiate("(ln x)") == "(/ 1 x)"
+  @test differentiate("(ln x)") == D2Expr(
+    :/,
+    Atom(1),
+    Atom(:x)
+  ) # == "(/ 1 x)"
 
 end
 
