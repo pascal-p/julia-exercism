@@ -36,9 +36,9 @@ include("symb-diff.jl")
     :+,
     D2Expr(:*, Atom(4), Atom(:x)),
     D2Expr(:*, Atom(:x), Atom(6))
-  ) # == (+ (* 4 x) (* x 6)) == (* 10 x)
+  ) # == (+ (* 4 x) (* x 6)) == (* 10 x) / requires further simplification
 
-  @test differentiate("(* (+ x 2) (* x 3))") == D2Expr( # == D2Expr(:*, Atom(6), Atom(:x))
+  @test differentiate("(* (+ x 2) (* x 3))") == D2Expr( # == D2Expr(:+, D2Expr(:*, Atom(6), Atom(:x)),  Atom(6))
     :+,
     D2Expr(:*, Atom(:x), Atom(3)),
     D2Expr(:*, D2Expr(:+, Atom(:x), Atom(2)), Atom(3))

@@ -78,8 +78,6 @@ lhs(dexpr::D2Expr) = dexpr.lhs
 rhs(dexpr::D2Expr) = dexpr.rhs
 Base.length(dexpr::D2Expr) = dexpr.rhs === nothing ? 2 : 3
 
-# ==(dexpr₁::D2Expr, dexpr₂::D2Expr) = dexpr₁.op == dexpr₂.op && (dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs)
-
 function ==(dexpr₁::D2Expr, dexpr₂::D2Expr)::Bool
   dexpr₁.op != dexpr₂.op && return false
 
@@ -453,6 +451,8 @@ simplify_add(lhs::D2Expr, rhs::D2Expr) = D2Expr(:+, simplify(lhs), simplify(rhs)
 function simplify_add(lhs::Atom, rhs::D2Expr)
   if isinteger(lhs.value) && iszero(lhs.value)
     rhs
+  elseif rhs.op == :+
+      nested_simplify(+, lhs, rhs)
   else
     D2Expr(:+, lhs, simplify(rhs); wrt=lhs.wrt)
   end
@@ -461,6 +461,8 @@ end
 function simplify_add(lhs::D2Expr, rhs::Atom)
   if isinteger(rhs.value) && iszero(rhs.value)
     lhs
+  elseif lhs.op == :+
+    nested_simplify(+, lhs, rhs)
   else
     D2Expr(:+, simplify(lhs), rhs; wrt=lhs.wrt)
   end
@@ -486,6 +488,8 @@ function simplify_sub(lhs::D2Expr, rhs::D2Expr)
     s_lhs
   elseif s_lhs != lhs || s_rhs != rhs
     D2Expr(:-, s_lhs, s_rhs; wrt=lhs.wrt)
+  elseif lhs.op == :-
+      nested_simplify(-, lhs, rhs)
   else
     nothing
   end
@@ -494,6 +498,8 @@ end
 function simplify_sub(lhs::Atom, rhs::D2Expr)
   if isinteger(lhs.value) && iszero(lhs.value)
     D2Expr(:*, Atom(-1; wrt=lhs.wrt), simplify(rhs); wrt=rhs.wrt)
+  elseif rhs.op == :-
+    nested_simplify(-, lhs, rhs)
   else
     s_rhs = simplify(rhs)
     if s_rhs === nothing
@@ -539,10 +545,8 @@ function simplify_mul(lhs::Atom, rhs::D2Expr)
       Atom(0; wrt=lhs.wrt)
     elseif isone(lhs.value)
       rhs
-    elseif rhs.op == :* && isnumber(rhs.lhs)
-      D2Expr(rhs.op, Atom(lhs.value * rhs.lhs.value; wrt=lhs.wrt), rhs.rhs)
-    elseif  rhs.op == :* && isnumber(rhs.rhs)
-      D2Expr(rhs.op, rhs.lhs, Atom(lhs.value * rhs.rhs.value; wrt=rhs.wrt))
+    elseif rhs.op == :*
+      nested_simplify(*, lhs, rhs)
     end
   else
     D2Expr(:*, lhs, simplify(rhs); wrt=lhs.wrt)
@@ -555,10 +559,8 @@ function simplify_mul(lhs::D2Expr, rhs::Atom)
       Atom(0; wrt=lhs.wrt)
     elseif isone(rhs.value)
       lhs
-    elseif lhs.op == :* && isnumber(lhs.lhs)
-      D2Expr(lhs.op, Atom(rhs.value * lhs.lhs.value; wrt=lhs.wrt), lhs.rhs)
-    elseif  lhs.op == :* && isnumber(lhs.rhs)
-      D2Expr(lhs.op, lhs.lhs, Atom(rhs.value * lhs.rhs.value; wrt=lhs.wrt))
+    elseif lhs.op == :*
+      nested_simplify(*, lhs, rhs)
     end
   else
     D2Expr(:*, simplify(lhs), rhs; wrt=lhs.wrt)
@@ -677,6 +679,22 @@ const SIMPLIFY_FN = Dict{Symbol, Function}(
   :exp => simplify_exp,
   :ln => simplify_ln,
 )
+
+function nested_simplify(op::Function, lhs::D2Expr, rhs::Atom)
+  if isnumber(lhs.lhs)
+    D2Expr(lhs.op, Atom((op)(lhs.lhs.value, rhs.value); wrt=lhs.wrt), lhs.rhs)
+  elseif isnumber(lhs.rhs)
+    D2Expr(lhs.op, lhs.lhs, Atom((op)(lhs.rhs.value, rhs.value); wrt=lhs.wrt))
+  end
+end
+
+function nested_simplify(op::Function, lhs::Atom, rhs::D2Expr)
+  if isnumber(rhs.lhs)
+    D2Expr(rhs.op, Atom((op)(lhs.value, rhs.lhs.value); wrt=lhs.wrt), rhs.rhs)
+  elseif isnumber(rhs.rhs)
+    D2Expr(rhs.op, rhs.lhs, Atom((op)(lhs.value, rhs.rhs.value); wrt=rhs.wrt))
+  end
+end
 
 isnumber(atom::Atom)::Bool = match(r"\A-?\d+\z", string(atom)) !== nothing
 
