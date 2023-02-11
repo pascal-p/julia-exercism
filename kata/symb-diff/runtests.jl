@@ -23,6 +23,21 @@ include("symb-diff.jl")
   @test differentiate("(+ (* x 3) (+ y 2))") == Atom(3)
   @test differentiate("(- (+ y 2) (* x 3))") == Atom(-3)
 
+  @test differentiate("(+ (* 3 x) (* x 2))") == Atom(5)
+
+  @test differentiate("(+ (* 3 (^ x 2)) (* (^ x 2) 2))") == D2Expr(
+    :+,
+    D2Expr(:*, Atom(6), Atom(:x)),
+    D2Expr(:*, Atom(4), Atom(:x))
+  ) # == (+ (* 6 x) (* 4 x))
+
+  # commutativity
+  @test differentiate("(+ (* 3 (^ x 2)) (* (^ x 2) 2))") == D2Expr(
+    :+,
+    D2Expr(:*, Atom(4), Atom(:x)),
+    D2Expr(:*, Atom(:x), Atom(6))
+  ) # == (+ (* 4 x) (* x 6)) == (* 10 x)
+
   @test differentiate("(* (+ x 2) (* x 3))") == D2Expr( # == D2Expr(:*, Atom(6), Atom(:x))
     :+,
     D2Expr(:*, Atom(:x), Atom(3)),
@@ -70,14 +85,15 @@ include("symb-diff.jl")
   ) # == "(* -1 (sin x))"
 
   # more simplification: (* (* -1 (sin (+ (* 2 x) 1))) 2)
-  # @test differentiate("(cos (+ (* 2 x) 1))") == D2Expr(
-  #   :*,
-  #   Atom(-2),
-  #   D2Expr(
-  #     :sin,
-  #     D2Expr(:+,  Atom(1), D2Expr(:*, Atom(2), Atom(:x)))
-  #   )
-  # ) # == "(* -2 (sin (+ (* 2 x) 1)))"
+  # what we get for now is: (* (* -1 (sin (+ (* 2 x) 1))) 2)
+  @test differentiate("(cos (+ (* 2 x) 1))") == D2Expr(
+    :*,
+    Atom(-2),
+    D2Expr(
+      :sin,
+      D2Expr(:+,  Atom(1), D2Expr(:*, Atom(2), Atom(:x)))
+    )
+  ) # == "(* -2 (sin (+ (* 2 x) 1)))"
 
   @test differentiate("(sin x)") == D2Expr(:cos, Atom(:x)) # == "(cos x)"
 

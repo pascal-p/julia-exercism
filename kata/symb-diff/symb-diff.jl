@@ -78,8 +78,20 @@ lhs(dexpr::D2Expr) = dexpr.lhs
 rhs(dexpr::D2Expr) = dexpr.rhs
 Base.length(dexpr::D2Expr) = dexpr.rhs === nothing ? 2 : 3
 
-==(dexpr₁::D2Expr, dexpr₂::D2Expr) = dexpr₁.op == dexpr₂.op && dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs
+# ==(dexpr₁::D2Expr, dexpr₂::D2Expr) = dexpr₁.op == dexpr₂.op && (dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs)
 
+function ==(dexpr₁::D2Expr, dexpr₂::D2Expr)::Bool
+  dexpr₁.op != dexpr₂.op && return false
+
+  # now dexpr₁.op == dexpr₂.op
+
+  if dexpr₁.op == :+ || dexpr₁.op == :*
+    # commutativity
+    return (dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs) || (dexpr₁.lhs == dexpr₂.rhs && dexpr₁.rhs == dexpr₂.lhs)
+  end
+
+  dexpr₁.lhs == dexpr₂.lhs && dexpr₁.rhs == dexpr₂.rhs
+end
 
 ## 1. turn expr into a DExpr => parser / tokenizer, where each token is a DExpr
 ## 2. differentiate and simplify
@@ -527,6 +539,10 @@ function simplify_mul(lhs::Atom, rhs::D2Expr)
       Atom(0; wrt=lhs.wrt)
     elseif isone(lhs.value)
       rhs
+    elseif rhs.op == :* && isnumber(rhs.lhs)
+      D2Expr(rhs.op, Atom(lhs.value * rhs.lhs.value; wrt=lhs.wrt), rhs.rhs)
+    elseif  rhs.op == :* && isnumber(rhs.rhs)
+      D2Expr(rhs.op, rhs.lhs, Atom(lhs.value * rhs.rhs.value; wrt=rhs.wrt))
     end
   else
     D2Expr(:*, lhs, simplify(rhs); wrt=lhs.wrt)
@@ -539,6 +555,10 @@ function simplify_mul(lhs::D2Expr, rhs::Atom)
       Atom(0; wrt=lhs.wrt)
     elseif isone(rhs.value)
       lhs
+    elseif lhs.op == :* && isnumber(lhs.lhs)
+      D2Expr(lhs.op, Atom(rhs.value * lhs.lhs.value; wrt=lhs.wrt), lhs.rhs)
+    elseif  lhs.op == :* && isnumber(lhs.rhs)
+      D2Expr(lhs.op, lhs.lhs, Atom(rhs.value * lhs.rhs.value; wrt=lhs.wrt))
     end
   else
     D2Expr(:*, simplify(lhs), rhs; wrt=lhs.wrt)
