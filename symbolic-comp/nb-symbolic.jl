@@ -23,10 +23,26 @@ using Symbolics
 # ╔═╡ 737bafe8-d590-11ed-3527-5522ceaf04b6
 md"""
 ## Using `Symbolic.jl`
+
+Ref. [http://localhost:6543/?secret=0uuq15zr](https://www.youtube.com/watch?v=L47k2zjPU9s)
+
+April 2023
 """
 
 # ╔═╡ 814376ef-bcc3-4344-a898-29890899f7b4
 PlutoUI.TableOfContents(indent=true, depth=4, aside=true)
+
+# ╔═╡ eb7b6146-e1c1-4128-ae29-996fc1eed48a
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
 
 # ╔═╡ df12d227-905f-4923-ae44-1c446bab833f
 md"""
@@ -121,12 +137,6 @@ velocity_at_time = Symbolics.substitute(velocity, Dict(t => time))
 # ╔═╡ 43a99f45-1429-4403-87cd-21bf3967118c
 acceleration_at_time = Symbolics.substitute(acceleration, Dict(t => time))  # constant
 
-# ╔═╡ f189d79b-f2d4-4ebd-90eb-d6504ec198fd
-
-
-# ╔═╡ e4bf6d54-408f-4d4a-9c58-25975a552275
-
-
 # ╔═╡ 060a21ad-7f59-4f8a-a51e-5169d810a496
 html"""
 <style>
@@ -153,7 +163,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "4cb3cbb2e03b5e643e79c099d4feccf6dee6864e"
+project_hash = "7b5d3a29229e3df5e9773a5c4a028a38ef49f795"
 
 [[deps.AbstractAlgebra]]
 deps = ["GroupsCore", "InteractiveUtils", "LinearAlgebra", "MacroTools", "Markdown", "Random", "RandomExtensions", "SparseArrays", "Test"]
@@ -922,6 +932,7 @@ version = "17.4.0+0"
 # ╟─737bafe8-d590-11ed-3527-5522ceaf04b6
 # ╠═3be37c25-1169-4270-83ad-6fa29e90e3b8
 # ╠═814376ef-bcc3-4344-a898-29890899f7b4
+# ╟─eb7b6146-e1c1-4128-ae29-996fc1eed48a
 # ╠═a84a7118-2b6f-4a4d-a667-3b25851300e2
 # ╟─df12d227-905f-4923-ae44-1c446bab833f
 # ╠═5c9c7409-5dbb-41f6-a4fe-3e43e9670342
@@ -947,8 +958,6 @@ version = "17.4.0+0"
 # ╠═0a125914-9ed7-4364-ac99-f907c395499e
 # ╠═993fd782-b0d7-4ace-8012-762d68d0caee
 # ╠═43a99f45-1429-4403-87cd-21bf3967118c
-# ╠═f189d79b-f2d4-4ebd-90eb-d6504ec198fd
-# ╠═e4bf6d54-408f-4d4a-9c58-25975a552275
 # ╟─060a21ad-7f59-4f8a-a51e-5169d810a496
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
