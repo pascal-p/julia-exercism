@@ -1,63 +1,81 @@
 # using Random
 VT = Vector{T} where T
+# TIn = UInt
 
 """
-  MergeSort standard, not dealing with ties
+    merge_sort!(v::VT)
+
+Standard mergeSort, not dealing with ties
 """
-function merge_sort!(a::VT)::VT
-  length(a) ≤ 1 && return a
+function merge_sort!(v::VT)::VT
+  length(v) ≤ 1 && return v
 
-  function _sort(a::VT, l::T, r::T) where T
-    l ≥ r && return a[l:r]
-
-    n = r - l + 1
+  function _sort(v::VT, l::T₁, r::T₁) where T₁
+    l ≥ r && return v[l:r]
     m = (l + r) ÷ 2
-
-    b = _sort(a, l, m)
-    c = _sort(a, m+1, r)
-
-    return merge(b, c)
+    left, right = _sort(v, l, m), _sort(v, m + 1, r)
+    merge(left, right)
   end
 
-  return _sort(a, 1, length(a))
+  _sort(v, 1, length(v))
 end
 
-function merge_sort!(a::Any)
-  length(a) == 0 && return a
-
+function merge_sort!(v::Any)
+  length(v) == 0 && return v
   # TODO...
   throw(ArgumentError("Not implemented yet"))
 end
 
-function merge(b::VT, c::VT)::VT
-  ix, jx, kx = 1, 1, 1
-  len_b, len_c = length(b), length(c)
-  a = Vector{eltype(b)}(undef, len_b + len_c)
+@inline copy_incr!(v::VT, ov::VT, kx::T₁, ix::T₁) where T₁ = (v[kx] = ov[ix]; ix += 1)
 
-  while ix ≤ len_b && jx ≤ len_c
-    if b[ix] ≤ c[jx]
-      a[kx] = b[ix]
-      ix += 1
+"""
+    merge(vl, vr)
+
+Given 2 sorted vectors defined over the same type, returns the merged sorted sequence as a vector over the same type
+
+# Examples
+```julia-repl
+julia> merge([1, 3, 7, 9], [2, 4, 8])
+7-element Vector{Int64}:
+ 1
+ 2
+ 3
+ 4
+ 7
+ 8
+ 9
+```
+"""
+function merge(vl::VT, vr::VT)::VT
+  ix, jx, kx = 1, 1, 1
+  len_vl, len_vr = length(vl), length(vr)
+  v = Vector{eltype(vl)}(undef, len_vl + len_vr) # Pre-allocate
+
+  # Merge the 2 vectors up to min(len_vl, len_vr)
+  while ix ≤ len_vl && jx ≤ len_vr
+    if vl[ix] ≤ vr[jx]
+      ix = copy_incr!(v, vl, kx, ix)
     else
-      a[kx] = c[jx]
-      jx += 1
+      jx = copy_incr!(v, vr, kx, jx)
     end
     kx += 1
   end
 
-  # copy remaining elements of b
-  if ix ≤ len_b
-    l_ix = kx + len_b - ix
-    a[kx:l_ix] = b[ix:end]
+  # Copy remaining elements of vl
+  if ix ≤ len_vl
+    l_ix = kx + len_vl - ix
+    v[kx:l_ix] = vl[ix:end]
     kx = l_ix + 1
   end
 
-  # copy remaining elements of c
-  if jx ≤ len_c
-    l_jx = kx + len_c - jx
-    a[kx:l_jx] = c[jx:end]
-    kx = l_jx + 1  # not necessary, just for the sake of symmetry
+  # Copy remaining elements of vr
+  if jx ≤ len_vr
+    l_jx = kx + len_vr - jx
+    v[kx:l_jx] = vr[jx:end]
+    kx = l_jx + 1 # one(TIn)  # not necessary (because nothing more to do), just
+    # for the sake of symmetry, however if we were to permute this block with
+    # previous one, this would become necessary.
   end
 
-  return a
+  v
 end

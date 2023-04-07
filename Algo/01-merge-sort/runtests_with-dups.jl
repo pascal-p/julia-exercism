@@ -3,13 +3,13 @@ using Random
 
 include("mergesort.jl")
 
-@testset "qsort basics" begin
+@testset "msort basics" begin
   @test merge_sort!([]) == []
   @test merge_sort!([10]) == [10]
   @test merge_sort!(["b", "a"]) == ["a", "b"]
 end
 
-@testset "qsort on small samples w/o repetition" begin
+@testset "msort on small samples w/o repetition" begin
   ## 4 elements
   x, sorted_x = [-3, 5, 2, -2], [-3, -2, 2, 5]
   @test merge_sort!(x) == sorted_x
@@ -26,7 +26,7 @@ end
   @test merge_sort!(x) == sorted_x
 end
 
-@testset "qsort with repeated elements" begin
+@testset "msort with repeated elements" begin
   # 20 elements
   x = [35, 33, 10, 45, 30, 35, 49, 25, 48, 34, 12, 12, 5, 14, 43, 12, 16, 24, 16, 31]
   sorted_x = [5, 10, 12, 12, 12, 14, 16, 16, 24, 25, 30, 31, 33, 34, 35, 35, 43, 45, 48, 49]
@@ -34,7 +34,7 @@ end
   @test merge_sort!(x) == sorted_x
 end
 
-@testset "8 qsort with repeated elements" begin
+@testset "8 msort with repeated elements" begin
   x = [2, 1, 2, 1, 4, 1, 3, 3]
     sorted_x = [1, 1, 1, 2, 2, 3, 3, 4]
 
@@ -47,14 +47,14 @@ end
   @test merge_sort!(x) == sorted_x
 end
 
-@testset "9 qsort with repeated elements" begin
+@testset "9 msort with repeated elements" begin
   x = [2, 1, 2, 1, 4, 1, 3, 3, 2]
     sorted_x = [1, 1, 1, 2, 2, 2, 3, 3, 4]
 
   @test merge_sort!(x) == sorted_x
 end
 
-@testset "qsort with repeated elements" begin
+@testset "msort with repeated elements" begin
   x = [2, 1, 2, 1, 2, 1, 2, 1, 3, 3, 3, 1, 2, 3, 4, 4, 4, 5, 6, 7, 9, 9, 9, 9, 9, 1, 2, 3, 4, 6]
     sorted_x = [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 6, 6, 7, 9, 9, 9, 9, 9 ]
 
