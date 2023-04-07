@@ -29,8 +29,8 @@ Only three multiplications, which operate on smaller integers, are used to compu
 We get the result by just adding these three partial results, shifted accordingly (and then taking carries into account by decomposing these three inputs in base 1000 like for the input operands):
 
 <pre>
-  result = z<sub>2</sub> × B^<sup>(m × 2)</sup> + z<sub>1</sub> × (B^<sup>m</sup>) + z<sub>0</sub>, i.e.  
-  result = 72 × 10002 + 11538 × 1000 + 272205 = 83810205
+  result = z<sub>2</sub> × B<sup>(m × 2)</sup> + z<sub>1</sub> × B<sup>m</sup> + z<sub>0</sub>, i.e.
+  result = 72 × 1000<sup>2</sup> + 11_538 × 1000 + 272_205 = 83_810_205
 </pre>
 
 ## Version compatibility
