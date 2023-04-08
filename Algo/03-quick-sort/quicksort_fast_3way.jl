@@ -1,71 +1,75 @@
 using Random
 
-"""
-  QuickSort with Fast 3-way partitioning. [Bentley, McIlroy]
-"""
-function quick_sort!(a; shuffle=true, pivot="first")
-  length(a) ≤ 1 && return a
-  length(a) == 2 &&
-    return a[2] < a[1] ? [a[2], a[1]] : a
+const VT = Vector{<: Real}
+const TI = Integer
 
-  function qsort!(a, l, r)
+"""
+  quick_sort!(v; ...)
+
+QuickSort with Fast 3-way partitioning. [Bentley, McIlroy]
+
+Implement fast 3-way partitioning [Bentley, MacIlroy]
+     before:
+| v | ... |   |
+l   |     |   r
+
+     during
+| = v | <v |  ...  | > v | = v |
+|l    px   ix      jx    q     r
+
+| = v | <v     |      > v | = v |
+|l    px     jx ix      q |     r
+
+     end
+| <v | = v | > v |
+l    |     |     h
+
+l, r: left and right ends
+a[l, p - 1], a[q + 1, r] == pivot (=a[l])
+a[p..ix - 1] < pivot && a[jx..q] > pivot  (pivot == a[l])
+
+"""
+function quick_sort!(v; shuffle=true, pivot=:first)
+  length(v) ≤ 1 && return v
+  length(v) == 2 && return v[2] < v[1] ? [v[2], v[1]] : v
+
+  function qsort!(v::VT, l::TI, r::TI)
     r ≤ l && return
 
-    ix = choose_pivot(a, l, r, pivot)
-    a[l], a[ix] = a[ix], a[l]
+    ix = choose_pivot(v, l, r, pivot)
+    v[l], v[ix] = v[ix], v[l]
 
-    lx, rx = partition(a, l, r)
-    qsort!(a, l, lx)
-    qsort!(a, rx, r)
+    lx, rx = partition(v, l, r)
+    qsort!(v, l, lx)
+    qsort!(v, rx, r)
   end
 
-  shuffle && Random.shuffle!(a)
-  qsort!(a, 1, length(a))
-  return a
+  shuffle && Random.shuffle!(v)
+  qsort!(v, 1, length(v))
+  v
 end
 
-# Implement fast 3-way partitioning [Bentley, MacIlroy]
-#      before:
-# | v | ... |   |
-# l   |     |   r
-#
-#      during
-# | = v | <v |  ...  | > v | = v |
-# |l    px   ix      jx    q     r
-#
-# | = v | <v     |      > v | = v |
-# |l    px     jx ix      q |     r
-#
-#      end
-# | <v | = v | > v |
-# l    |     |     h
-#
-# l, r: left and right ends
-# a[l, p - 1], a[q + 1, r] == pivot (=a[l])
-# a[p..ix - 1] < pivot && a[jx..q] > pivot  (pivot == a[l])
-#
-
-function partition(a, l, r)
+function partition(v::VT, l::TI, r::TI)
   ix, jx = l, r + 1
   p, q = l + 1, r
-  pivot = a[l]
+  pivot = v[l]
 
   while true
     ix += 1
-    while a[ix] ≤ pivot
+    while v[ix] ≤ pivot
       ix == r && break
-      if a[ix] == pivot && ix < jx
-        a[ix], a[p] = a[p], a[ix]
+      if v[ix] == pivot && ix < jx
+        v[ix], v[p] = v[p], v[ix]
         p += 1
       end
       ix += 1
     end
 
     jx -= 1
-    while a[jx] ≥ pivot
+    while v[jx] ≥ pivot
       jx == l && break
-      if pivot == a[jx] && jx > ix
-        a[jx], a[q] = a[q], a[jx]
+      if pivot == v[jx] && jx > ix
+        v[jx], v[q] = v[q], v[jx]
         q -= 1
       end
       jx -= 1
@@ -75,14 +79,14 @@ function partition(a, l, r)
     ix ≥ jx && break
 
     ## otherwise swap
-    a[ix], a[jx] = a[jx], a[ix]
+    v[ix], v[jx] = v[jx], v[ix]
   end
 
   ## swap pivots: a[l..p-1] with a[p..jx] (if necessary)
   if l ≤ p ≤ jx
     lix = l
-    for kx in jx:-1:(jx - (p - l) + 1)
-      a[kx], a[lix] = a[lix], a[kx]
+    for kx ∈ jx:-1:(jx - (p - l) + 1)
+      v[kx], v[lix] = v[lix], v[kx]
       lix += 1
     end
     jx = p == l + 1 ? jx - 1 : jx - (p - l)
@@ -91,41 +95,40 @@ function partition(a, l, r)
   ## swap pivots: a[q+1..r] with a[ix..q] (if necessary)
   if r > q ≥ ix
     rix = r
-    for kx in ix:(ix + (r - q) - 1)
-      a[kx], a[rix] = a[rix], a[kx]
+    for kx ∈ ix:(ix + (r - q) - 1)
+      v[kx], v[rix] = v[rix], v[kx]
       rix -= 1
     end
     ix = q == r ? ix + 1 : ix + (r - q)
   end
 
-  return jx, ix
+  jx, ix
 end
 
-function choose_pivot(a, l, r, pivot)
-  if pivot == "first"
+function choose_pivot(v::VT, l::TI, r::TI, pivot::Symbol)
+  if pivot == :first
     l
-  elseif pivot == "last"
+  elseif pivot == :last
     r
-  elseif pivot == "median-3"
-    median_3(a, l, r)
+  elseif pivot == :median3
+    median_3(v, l, r)
   else
     throw(ArgumentError("option not managed yet"))
   end
 end
 
-function median_3(a, l, r)
+function median_3(v::VT, l::TI, r::TI)
   s =  (r - l + 1)
   m = s % 2 == 0 ? s ÷ 2 : ceil(Int, s / 2)
-  x, y, z = a[l], a[m], a[r]
+  x, y, z = v[l], v[m], v[r]
 
   if x < y
     y < z && return m # y
     x < z && return r # z, y ≥ z && y > x
     return l          # x
-
-  else # x ≥ y
-    y > z && return m # y
-    x < z && return l # x,  y ≤ z
-    return r          # z
   end
+  # x ≥ y
+  y > z && return m # y
+  x < z && return l # x,  y ≤ z
+  return r          # z
 end
