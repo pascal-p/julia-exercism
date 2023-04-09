@@ -87,22 +87,82 @@ md"""
 """
 
 # ╔═╡ e1989d71-d7b1-49ab-b4fa-2a3443f832e8
-
+md"Success rate (p): $(@bind p PlutoUI.Slider(0.0:0.01:1.0, 0.4, true))"
 
 # ╔═╡ 419ff0a9-0014-4a63-aacc-4d22f468fe34
-
+begin
+	const N₂ = 10_000
+	b = Distributions.Bernoulli(p)
+	v₂ = rand(b, N₂);
+end
 
 # ╔═╡ 2763e6a2-f725-4fd6-9014-328e893a1fec
+begin
+	f₂ = CairoMakie.Figure(resolution=(400, 400), fontsize=11)
+	
+	ax₂ = CairoMakie.Axis( 
+		f₂[1, 1], 
+		xticks = [0, 1],
+		yticks = 0.:.1:1.,
+		title = "Bernoulli Distribution with success rate $(p)",
+		backgroundcolor = :gray90,
+	)
+	
+	CairoMakie.hist!(
+		ax₂, 
+		v₂,
+		normalization=:probability,
+		color=(:lightgrey, 0.1),
+		strokecolor = (:slateblue, 0.5), 
+		strokewidth = 2, 
+		strokearound = false
+	)
 
+	f₂
+end
 
 # ╔═╡ 5404517f-39a6-4d4c-9bf3-434189e79df5
+md"""
+### Beta Distribution
+"""
 
+# ╔═╡ 0aee312d-f379-4c92-954e-66e1f3551ead
+md"Alpha (α): $(@bind α PlutoUI.Slider(0.1:0.1:5., 1.0, true))"
 
-# ╔═╡ 9e884238-0ed3-44b4-b7dd-f941aa28d731
+# ╔═╡ 779aed0d-89a3-4446-af45-2098242f5b22
+md"Beta (β): $(@bind β PlutoUI.Slider(0.1:0.1:5., 1.0, true))"
 
+# ╔═╡ 45bb347c-9381-4a0d-ac26-c3fc1ce8d5ce
+begin
+	const N₃ = 5_000_000
+	bd = Distributions.Beta(α, β)
+	v₃ = rand(bd, N₃);
+end
 
-# ╔═╡ ccd8c615-e9ed-4a0e-b9dd-60e47f06c239
+# ╔═╡ d8aa5075-3162-4f09-9815-812aa49b5bba
+begin
+	f₃ = CairoMakie.Figure(resolution=(600, 400), fontsize=11)
+	
+	ax₃ = CairoMakie.Axis( 
+		f₃[1, 1], 
+		xticks = [0., 1.],
+		yticks = 0.:0.5:5,
+		title = "Beta Distribution with α $(α) and β $(β)",
+		backgroundcolor = :gray90,
+	)
+	
+	CairoMakie.density!(
+		ax₃, 
+		v₃,
+		normalization=:pdf,
+		color=(:lightgrey, 0.1),
+		strokecolor = (:slateblue, 0.5), 
+		strokewidth = 2, 
+		strokearound = false
+	)
 
+	f₃
+end
 
 # ╔═╡ 572b5857-1990-4465-bb0c-86a6848d3fb7
 html"""
@@ -1763,9 +1823,11 @@ version = "1.4.1+0"
 # ╠═e1989d71-d7b1-49ab-b4fa-2a3443f832e8
 # ╠═419ff0a9-0014-4a63-aacc-4d22f468fe34
 # ╠═2763e6a2-f725-4fd6-9014-328e893a1fec
-# ╠═5404517f-39a6-4d4c-9bf3-434189e79df5
-# ╠═9e884238-0ed3-44b4-b7dd-f941aa28d731
-# ╠═ccd8c615-e9ed-4a0e-b9dd-60e47f06c239
+# ╟─5404517f-39a6-4d4c-9bf3-434189e79df5
+# ╠═0aee312d-f379-4c92-954e-66e1f3551ead
+# ╠═779aed0d-89a3-4446-af45-2098242f5b22
+# ╠═45bb347c-9381-4a0d-ac26-c3fc1ce8d5ce
+# ╠═d8aa5075-3162-4f09-9815-812aa49b5bba
 # ╟─572b5857-1990-4465-bb0c-86a6848d3fb7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
