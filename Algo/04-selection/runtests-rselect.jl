@@ -8,11 +8,11 @@ const TF_DIR = "./testfiles"
 
 
 @testset "rselect basics" begin
-  @test rselect([], 2) == nothing
-  @test rselect([2, 1], 3) == nothing
+  @test rselect([], 2) === nothing
+  @test rselect([2, 1], 3) === nothing
 
-  @test rselect([30, 10, 40, 20], -2) == nothing
-  @test rselect([30, 10, 40, 20], 5) == nothing
+  @test rselect([30, 10, 40, 20], -2) === nothing
+  @test rselect([30, 10, 40, 20], 5) === nothing
 end
 
 @testset "rselect on small samples w/o repetition" begin
@@ -49,7 +49,7 @@ end
 @testset "10_000 random-sample with no repeated values" begin
   x = Random.shuffle(collect(1:10_000))
 
-  for ith in 1000:1000:10_000
+  for ith ∈ 1000:1000:10_000
     @test rselect(x, ith) == ith
   end
 end
@@ -57,7 +57,7 @@ end
 @testset "100_000 random-sample with no repeated values" begin
   x = Random.shuffle(collect(1:100_000))
 
-  for ith in 10000:5000:100_000
+  for ith ∈ 10000:5000:100_000
     @test rselect(x, ith) == ith
   end
 end
@@ -78,7 +78,7 @@ end
   end
 
   n = length(str)
-  x = [ parse(Int, str[ix:ix + 10]) for ix in 3:10:(n - 10) ]
+  x = [parse(Int, str[ix:ix + 10]) for ix ∈ 3:10:(n - 10)]
 
   n = length(x)
   @test rselect(x, n ÷ 2) == 50217159133
