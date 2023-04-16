@@ -45,7 +45,7 @@ end
 @testset "100_000 random-sample with no repeated values" begin
   x = Random.shuffle(collect(1:100_000))
 
-  for ith in 10000:5000:100_000
+  for ith ∈ 10000:5000:100_000
     @test dselect(x, ith) == ith
   end
 end
