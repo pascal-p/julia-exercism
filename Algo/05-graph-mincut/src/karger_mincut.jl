@@ -16,36 +16,38 @@ using Random
 
 import Base.copy
 
-mutable struct UnGraph{T}     ## undirected UnGraph
+const ALT{T} = Dict{T, Vector{T}} where T ## Adjacency List Type
+
+mutable struct UnGraph{T}     ## undirected graph
   n::Int                      ## Number of vertices (or nodes)
   m::Int                      ## Number of edges
-  adj::Dict{T, Vector{T}}     ## Adjacency dict
-  edges::Set{Tuple{T, T}}     ## set of edges in the current graph
+  adj::ALT{T}                 ## Adjacency list, represented as a dict
+  edges::Set{Tuple{T, T}}     ## Set of edges in the current graph
 
   function UnGraph{T}(n::Int) where T
     self = new(n, 0)
     self.adj = Dict()
-    return self
+    self
   end
 
-  function UnGraph{T}(adj::Dict{T, Vector{T}}) where T
+  function UnGraph{T}(adj::ALT{T}) where T
     self = new(length(keys(adj)), 0) # adjacency dict/hash
     add_adj!(self, adj)
-    return self
+    self
   end
 end
 
-function add_adj!(graph::UnGraph{T}, adj::Dict{T, Vector{T}}) where T
+function add_adj!(graph::UnGraph{T}, adj::ALT{T}) where T
   graph.adj = adj
   graph.m, graph.edges = update_edges(adj)
 end
 
-function update_edges(adj::Dict{T, Vector{T}}) where T
+function update_edges(adj::ALT{T}) where T
   ## eliminate parallel edges
   s = Set{Tuple{T, T}}()
 
-  for k in keys(adj)
-    edges = [k < xe ? (k, xe) : (xe, k) for xe in adj[k]]
+  for k ∈ keys(adj)
+    edges = [k < xe ? (k, xe) : (xe, k) for xe ∈ adj[k] if xe != k]
     push!(s, edges...)
   end
 
@@ -57,7 +59,7 @@ function update_edges!(graph::UnGraph{T}, nv::Int, eo::T, ed::T) where T
   sd = Set{Tuple{T, T}}()
   sa = Set{Tuple{T, T}}()
 
-  for (x, y) in graph.edges
+  for (x, y) ∈ graph.edges
     if x == eo || x == ed
       push!(sd, (x, y))
       x = nv
@@ -76,10 +78,10 @@ function update_edges!(graph::UnGraph{T}, nv::Int, eo::T, ed::T) where T
   end
 
   ## delete no longer required edges
-  for (x, y) in sd; delete!(graph.edges, (x, y)); end
+  for (x, y) ∈ sd; delete!(graph.edges, (x, y)); end
 
   ## add renamed edges
-  for (x, y) in sa; push!(graph.edges, (x, y)); end
+  for (x, y) ∈ sa; push!(graph.edges, (x, y)); end
 
   graph.m = length(graph.edges)
   return
@@ -90,7 +92,7 @@ function copy(graph::UnGraph{T}) where T
   UnGraph{T}(adj_cpy)
 end
 
-function cons_graph(graph)
+function cons_graph(_graph::UnGraph{T}) where T
   # TODO...
 end
 
@@ -101,36 +103,43 @@ end
 # -------------------------------------------------------------------
 
 function mincut!(graph::UnGraph{T}; seed=9977) where T
-  nv = graph.n
-  Random.seed!(seed)
+  nᵥ = graph.n
+  Random.Random.seed!(seed)
 
   while graph.n > 2
-    (eo, ed) = rand(graph.edges)                   ## edge orig, edge dest / eo == 1, ed == 3
+    (eo, ed) = rand(graph.edges)                   ## randomly select an edge from graph and assign to eo == 1, ed == 3
+    # @assert(eo < ed, "edge origin $(eo) and edge dest $(ed) should be ordered")
     adj_o, adj_e = graph.adj[eo], graph.adj[ed]    ## get adjacency list
-    nv += 1                                        ## new vertex (replacing the 2 merged ones)
-    graph.adj[nv] = sort([adj_o..., adj_e...])     ## merge vertices
-    graph.adj[nv] = filter(x -> x ∉ (eo, ed),
-                           graph.adj[nv])          ## eliminate self-loop
+    nᵥ += 1                                        ## new vertex (replacing the 2 merged ones)
+
+    graph.adj[nᵥ] = filter(
+      x -> x ∉ (eo, ed),
+      sort([adj_o..., adj_e...])
+    )                                              ## merge vertices && eliminate self-loop
     delete!(graph.adj, eo)                         ## remove 1st merged node
     delete!(graph.adj, ed)                         ## remove 2nd merged node
-    graph.n -= 1                                   ## one vertex/node less
+    graph.n -= 1                                   ## one vertex/node less as a result of the merge operation
 
-    for n in keys(graph.adj)                       ## update edge(s) in rest of graph to point
-      n ∈ (eo, ed) && continue                     ## to new merged node
-      graph.adj[n] = map(x -> x ∈ (eo, ed) ? nv : x, graph.adj[n])
+    for n ∈ keys(graph.adj)                       ## update edge(s) in rest of graph to point
+      n ∈ (eo, ed) && continue                    ## to new merged node
+
+      graph.adj[n] = map(
+        x -> x ∈ (eo, ed) ? nᵥ : x,
+        graph.adj[n]
+      )
     end
 
-    update_edges!(graph, nv, eo, ed)
+    update_edges!(graph, nᵥ, eo, ed)
   end
 
   @assert(graph.n == 2 && length(keys(graph.adj)) == 2,
           "graph.n: $(graph.n) / length(keys(graph.adj)): $(length(keys(graph.adj))) / adj: $(graph.adj)")
 
-  n₁, n₂ = keys(graph.adj)
+  n₁, n₂ = keys(graph.adj)                        ## get the cut number from the 2 last nodes / SHOULD BE EQUAL!
   @assert(length(graph.adj[n₁]) == length(graph.adj[n₂]),
           "graph.adj[n₁] (== $(graph.adj[n₁])) == graph.adj[n₂] (== $(graph.adj[n₂]))")
 
-  return length(graph.adj[n₁])                     ## get the cut number from the 2 last nodes / SHOULD BE EQUAL!
+  length(graph.adj[n₁])
 end
 
 # -------------------------------------------------------------------

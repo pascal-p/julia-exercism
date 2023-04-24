@@ -11,6 +11,18 @@
   
 ref. Coursera/Stanford Algorithms [Divide and Conquer, Sorting and Searching, and Randomized Algorithms](https://www.coursera.org/learn/algorithms-divide-conquer)
 
+## How to run
+
+```
+cd 05-graph-mincut
+
+julia --project=$PROJECT_DIR runtest.jl
+
+julia --project=$PROJECT_DIR runtest-files.jl
+
+julia --project=$PROJECT_DIR runtests-challenge.jl
+```
+
 ## Version compatibility
 This exercise has been tested on Julia versions >=1.0.
 
