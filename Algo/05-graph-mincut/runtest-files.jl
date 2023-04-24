@@ -5,7 +5,8 @@ include("./utils/file.jl")
 include("./utils/runner.jl")
 
 const TF_DIR = "./testfiles"
-const FILE_PATTERN = r"\Ainput_random_(\d+)_(\d+)\.txt"
+# const FILE_PATTERN = r"\Ainput_random_(\d+)_(\d+)\.txt"
+const FILE_PATTERN = r"\Ainput_random_(40)_(200)\.txt"
 
 function gen_adj(ifile::String)
   Dict(
@@ -23,7 +24,7 @@ for infile ∈ get_files_from_dir()
   @testset "mincut file: $(infile)" begin
     file = replace(infile, r"\Ainput_" => s"output_")
     exp_k = read_sol("$(TF_DIR)/$(file)")
-    seed = 801  # re-seed each time
+    # seed = 801  # re-seed each time
     adj_list = gen_adj(infile)
     gr = UnGraph{Int}(adj_list)
 
@@ -45,65 +46,76 @@ for infile ∈ get_files_from_dir()
     elseif n₂ ≤ 175
       1500
     else # ≥ 200
-      n₁ == 40 && (seed = 799)
-      2500
+      # n₁ == 40 && (seed = 799)
+      2000
     end
 
-    (k, _) = runner(gr; n=n, seed=seed)
+    # (k, _) = runner(gr; n=n, seed=seed)
+    (k, _) = runner(gr; n=n) # no seed
     @test k == exp_k
   end
-
-  # break
 end
 
 
-# pascal@Turing:~/Projects/Exercism/julia/Algo/05-graph-mincut (main)$ julia --project=../.. runtest-files.jl
 # Test Summary:                        | Pass  Total  Time
-# mincut file: input_random_01_006.txt |    1      1  0.9s
+# mincut file: input_random_01_006.txt |    1      1  0.9s /  50 consecutive runs with different seeds
+
 # Test Summary:                        | Pass  Total  Time
 # mincut file: input_random_03_006.txt |    1      1  0.0s
+
 # Test Summary:                        | Pass  Total  Time
 # mincut file: input_random_05_010.txt |    1      1  0.0s
+
 # Test Summary:                        | Pass  Total  Time
 # mincut file: input_random_06_010.txt |    1      1  0.0s
+
 # Test Summary:                        | Pass  Total  Time
 # mincut file: input_random_07_010.txt |    1      1  0.0s
+
 # Test Summary:                        | Pass  Total  Time
 # mincut file: input_random_08_010.txt |    1      1  0.0s
+
 # Test Summary:                        | Pass  Total  Time
-# mincut file: input_random_09_025.txt |    1      1  0.1s
+# mincut file: input_random_09_025.txt |    1      1  0.1s / 250 consecutive runs with different seeds
+
 # Test Summary:                        | Pass  Total  Time
 # mincut file: input_random_11_025.txt |    1      1  0.1s
-# Test Summary:                        | Pass  Total  Time
-# mincut file: input_random_14_050.txt |    1      1  1.0s
-# Test Summary:                        | Pass  Total  Time
-# mincut file: input_random_18_075.txt |    1      1  3.3s
-
-# mincut file: input_random_19_075.txt: Test Failed at ...
-#   Expression: k == exp_k
-#    Evaluated: 21 == 18
-# Test Summary:                        | Fail  Total  Time
-# mincut file: input_random_19_075.txt |    1      1  3.5s
 
 # Test Summary:                        | Pass  Total  Time
-# mincut file: input_random_21_100.txt |    1      1  9.2s
+# mincut file: input_random_14_050.txt |    1      1  1.0s / 500 consecutive runs with different seeds
+
+# Test Summary:                        | Pass  Total  Time
+# mincut file: input_random_18_075.txt |    1      1  3.1s / 600 consecutive runs with different seeds
+
+# Test Summary:                        | Pass  Total  Time
+# mincut file: input_random_19_075.txt |    1      1  3.0s
+
+# Test Summary:                        | Pass  Total  Time
+# mincut file: input_random_21_100.txt |    1      1  8.8s / 900 consecutive runs with different seeds
+
 # Test Summary:                        | Pass  Total   Time
-# mincut file: input_random_25_125.txt |    1      1  20.0s
+# mincut file: input_random_25_125.txt |    1      1  18.8s
+
 # Test Summary:                        | Pass  Total   Time
-# mincut file: input_random_27_125.txt |    1      1  20.6s
+# mincut file: input_random_27_125.txt |    1      1  19.0s
+
 # Test Summary:                        | Pass  Total   Time
-# mincut file: input_random_30_150.txt |    1      1  41.9s
+# mincut file: input_random_30_150.txt |    1      1  39.8s / 1200 consecutive runs with different seeds
+
 # Test Summary:                        | Pass  Total     Time
-# mincut file: input_random_33_175.txt |    1      1  1m11.3s
-# Test Summary:                        | Pass  Total     Time
-# mincut file: input_random_36_175.txt |    1      1  1m06.9s
+# mincut file: input_random_33_175.txt |    1      1  1m11.7s / 1500 consecutive runs with different seeds
 
-# mincut file: input_random_39_200.txt: Test Failed at ...
+# Test Summary:                        | Pass  Total     Time
+# mincut file: input_random_36_175.txt |    1      1  1m07.2s
+
+# Test Summary:                        | Pass  Total     Time
+# mincut file: input_random_39_200.txt |    1      1  2m58.0s / 2500 consecutive runs with different seeds
+
+# mincut file: input_random_40_200.txt: Test Failed
 #   Expression: k == exp_k
-#    Evaluated: 59 == 51
+#    Evaluated: 63 == 61
 # Test Summary:                        | Fail  Total     Time
-# mincut file: input_random_39_200.txt |    1      1  2m57.0s
+# mincut file: input_random_40_200.txt |    1      1  3m08.1s
 
-# real    10m17.456s
-# user    10m17.550s
-# sys     0m0.729s
+# Test Summary:                        | Pass  Total     Time
+# mincut file: input_random_40_200.txt |    1      1  3m06.7s

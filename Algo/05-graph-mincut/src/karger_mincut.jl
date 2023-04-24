@@ -120,8 +120,8 @@ function mincut!(graph::UnGraph{T}; seed=9977) where T
     delete!(graph.adj, ed)                         ## remove 2nd merged node
     graph.n -= 1                                   ## one vertex/node less as a result of the merge operation
 
-    for n ∈ keys(graph.adj)                       ## update edge(s) in rest of graph to point
-      n ∈ (eo, ed) && continue                    ## to new merged node
+    for n ∈ keys(graph.adj)                        ## update edge(s) in rest of graph to point
+      n ∈ (eo, ed) && continue                     ## to new merged node
 
       graph.adj[n] = map(
         x -> x ∈ (eo, ed) ? nᵥ : x,
