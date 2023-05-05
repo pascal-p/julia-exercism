@@ -8,33 +8,26 @@ mutable struct DiGraph{T}
   adj::Vector{Vector{T}}   # for adjacency list
 
   function DiGraph{T}(v::Int) where T
-    adj = [ Vector{T}() for _ in 1:v ]
-    self = new(v, 0, adj)
-    return self
+    adj = [Vector{T}() for _ ∈ 1:v]
+    new(v, 0, adj)
   end
 
-  function DiGraph{T}(infile::String) where T
-    from_file(infile, DiGraph{T})
-  end
+  DiGraph{T}(infile::String) where T = from_file(infile, DiGraph{T})
 
-  function DiGraph{T}(infile::String, n::Integer) where T
-    from_file(infile, n, DiGraph{T})
-  end
+  DiGraph{T}(infile::String, n::Integer) where T = from_file(infile, n, DiGraph{T})
 end
 
-function add_edge(self::DiGraph{T}, x::T, y::T) where T
+function add_edge!(self::DiGraph{T}, x::T, y::T) where T
   push!(self.adj[x], y)
   self.e += 1
 end
 
 function reverse(self::DiGraph{T})::DiGraph{T} where T
   rg::DiGraph{T} = DiGraph{T}(self.v)  # copy!
-
-  for v in one(T):T(self.v), w in self.adj[v]
-    add_edge(rg, w, v)
+  for v ∈ one(T):T(self.v), w ∈ self.adj[v]
+    add_edge!(rg, w, v)
   end
-
-  return rg
+  rg
 end
 
 v(g::DiGraph) = g.v
@@ -54,49 +47,19 @@ e(g::DiGraph) = g.e
   2 4
   3 4
   4
-
 """
 function from_file(infile::String, graph_cons; DT::DataType=Int)
   g = graph_cons(0)
   act_nv = 0
-  # try
-    open(infile, "r") do fh
-      # nv = 0
-      # for line in eachline(fh) # read only first line
-      #  nv = parse(Int, line)
-      #  break
-      #end
-      nv = get_nv(fh, DT)
 
-      g = graph_cons(nv)
-
-      # for line in eachline(fh)
-      #   length(line) == 0 && continue
-      #   ary = split(line)
-      #   v = parse(T, ary[1])
-      #   act_nv += 1
-      #   for w in ary[2:end]
-      #     add_edge(g, v, parse(T, w))
-      #   end
-      # end
-      act_nv = load_edges!(g, fh, DT)
-    end
-
+  open(infile, "r") do fh
+    nv = get_nv(fh, DT)
+    g = graph_cons(nv)
+    act_nv = load_edges!(g, fh, DT)
     @assert act_nv == g.v # defer message to catch block
-    return g
+  end
 
-  # catch err
-  #   if isa(err, ArgumentError)
-  #     println("! Problem with content of file $(infile)")
-  #   elseif isa(err, SystemError)
-  #     println("! Problem opening $(infile) in read mode... Exit")
-  #   elseif isa(err, AssertionError)
-  #     println("! Expected $(g.v) vertices, got: $(act_nv)")
-  #   else
-  #     println("! other error: $(err)...")
-  #   end
-  #   exit(1)
-  # end
+  g
 end
 
 function from_file(infile::String, n::Integer, graph_cons; DT::DataType=Int)
@@ -109,7 +72,7 @@ end
 
 function get_nv(fh, DT::DataType)
   nv = 0
-  for line in eachline(fh) # read only first line
+  for line ∈ eachline(fh) # read only first line
     nv = parse(DT, line)
     break
   end
@@ -118,15 +81,13 @@ end
 
 function load_edges!(g::DiGraph, fh, DT::DataType)
   nv = 0
-  for line in eachline(fh)
+  for line ∈ eachline(fh)
     length(line) == 0 && continue
-
     ary = split(line)
     v = parse(DT, ary[1])
-
     nv += 1
-    for w in ary[2:end]
-      add_edge(g, v, parse(DT, w))
+    for w ∈ ary[2:end]
+      add_edge!(g, v, parse(DT, w))
     end
   end
   nv

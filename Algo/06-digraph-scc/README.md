@@ -2,6 +2,7 @@
     
   **Programming Problem 8.10: Computing Strongly Connected Components**  
   using Kosajaru Sharir Algorithm
+
     
 ## Work
 
@@ -25,3 +26,6 @@ This exercise has been tested on Julia versions >=1.0.
 
 ## Submitting Incomplete Solutions
 #NA
+
+<hr />
+<p><sub><em>Corto Inc, Jan 2021, rev. May 2023</sub></em></p>
