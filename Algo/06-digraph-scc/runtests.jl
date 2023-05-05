@@ -1,6 +1,7 @@
 using Test
 
 include("di_graph_scc.jl")
+include("utils/macro_helpers.jl")
 
 const TF_DIR = "./testfiles/"
 
@@ -8,11 +9,11 @@ function read_sol(ifile)
   line = open(ifile) do f
     readline(f)
   end
-
-  map(x -> parse(Int, strip(x)),
-                 split(line, ","))
+  map(
+    x -> parse(Int, strip(x)),
+    split(line, ",")
+  )
 end
-
 
 @testset "loading a DiGraph from file 11v_17e" begin
   g = DiGraph{Int}("$(TF_DIR)/11v_17e.txt")
@@ -46,7 +47,7 @@ end
   @test id(scc_g, 1) != id(scc_g, 11)  # vertices 1, 11 are not in the same SCC
   @test id(scc_g, 6) == id(scc_g, 8) == id(scc_g, 10)
 
-  @test topn(scc_g) == [3 => 4, 4 => 3, 1 => 3, 2 => 1]
+  @yatest topn(scc_g) ==  [3 => 4, 4 => 3, 1 => 3, 2 => 1]
 end
 
 @testset "SCC 13v_21e" begin
@@ -58,7 +59,7 @@ end
   @test id(scc_g, 1) != id(scc_g, 2)  # vertices 1, 2 are not in the same SCC
   @test id(scc_g, 10) == id(scc_g, 11) == id(scc_g, 12) == id(scc_g, 13)
 
-  @test topn(scc_g) == [3 => 5, 1 => 4, 4 => 2, 2 => 1, 5 => 1]
+  @yatest topn(scc_g) == [3 => 5, 1 => 4, 4 => 2, 2 => 1, 5 => 1,]
 end
 
 
@@ -73,7 +74,7 @@ end
   @test id(scc_g, 3) == id(scc_g, 6) == id(scc_g, 9)
   @test id(scc_g, 2) == id(scc_g, 5) == id(scc_g, 8)
 
-  @test topn(scc_g) == [2 => 3, 3 => 3, 1 => 3]
+  @yatest topn(scc_g) == [2 => 3, 3 => 3, 1 => 3]
 end
 
 # Test case #2: An 8-vertex 14-edge graph. Top 5 SCC sizes: 3,3,2,0,0
@@ -87,7 +88,7 @@ end
   @test groupby(scc_g, 1) == [4, 5]
   @test groupby(scc_g, 2) == [6, 7, 8]
 
-  @test topn(scc_g) == [2 => 3, 3 => 3, 1 => 2]
+  @yatest topn(scc_g) == [2 => 3, 3 => 3, 1 => 2]
 end
 
 # Test case #3: An 8-vertex 9-edge graph. Top 5 SCC sizes: 3,3,1,1,0
@@ -102,7 +103,7 @@ end
   @test groupby(scc_g, 3) == [5]
   @test groupby(scc_g, 2) == [6, 7, 8]
 
-  @test topn(scc_g) == [4 => 3, 2 => 3, 3 => 1, 1 => 1]
+  @yatest topn(scc_g) == [4 => 3, 2 => 3, 3 => 1, 1 => 1]
 end
 
 # Test case #4: An 8-vertex 11-edge graph. Top 5 SCC sizes: 7,1,0,0,0
@@ -115,7 +116,7 @@ end
   @test groupby(scc_g, 1) == [1, 2, 3, 4, 6, 7, 8]
   @test groupby(scc_g, 2) == [5]
 
-  @test topn(scc_g) == [1 => 7, 2 => 1]
+  @yatest topn(scc_g) == [1 => 7, 2 => 1]
 end
 
 # Test case #5: A 12-vertex 20-edge graph. Top 5 SCC sizes: 6,3,2,1,0
@@ -130,7 +131,7 @@ end
   @test groupby(scc_g, 2) == [3, 6]
   @test groupby(scc_g, 1) == [7, 8, 9, 10, 11, 12]
 
-  @test topn(scc_g) == [1 => 6, 3 => 3, 2 => 2, 4 => 1] # [6, 3, 2, 1]
+  @yatest topn(scc_g) == [1 => 6, 3 => 3, 2 => 2, 4 => 1] # [6, 3, 2, 1]
 end
 
 for file in filter((fs) -> occursin(r"\Ainput_scc_.+\.txt\z", fs),
@@ -150,9 +151,9 @@ for file in filter((fs) -> occursin(r"\Ainput_scc_.+\.txt\z", fs),
     act_val = map(p -> p[2], topn(scc_g))
     la = length(act_val)
     if la < 5
-      for ix in la+1:5; push!(act_val, zero(DT)); end
+      for ix ∈ la+1:5; push!(act_val, zero(DT)); end
     end
 
-    @test act_val == exp_val
+    @yatest act_val == exp_val
   end
 end
