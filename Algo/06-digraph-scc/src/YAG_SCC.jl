@@ -4,11 +4,11 @@ module YAG_SCC
   using YAQ
   using Printf
 
-  export DiGraph  # Directed G.
+  export DiGraph  # Directed Graph
   export DFO
   export SCC
 
-  export add_edge, v, e
+  export add_edge!, v, e
   export reverse
   export id, count, groupby, topn
   export pre, post, rev_post

@@ -14,20 +14,19 @@ struct SCC{T}               ## Strongly Connected Components
     dfo::DFO{T} = DFO{T}(reverse(g))  ## build reverse edges
     count, args = 1, scc_init(g)
 
-    for s in rev_post(dfo)
+    for s ∈ rev_post(dfo)
       if !args.marked[s]
         args = scc_dfs(g, s, args, count)
         count += 1
       end
     end
 
-    return new(args.marked, count - 1, args.id)
+    new(args.marked, count - 1, args.id)
     # TODO: assert that id[] gives strong comp.
   end
 end
 
-function id(self::SCC{T}, v::T)::T where T
-  # check_vertex(self, v)
+function id(self::SCC{T}, v::T)::T where {T}
   self.id[v]
 end
 
@@ -64,19 +63,18 @@ function scc_init(g::DiGraph{T})::NT_BI where T
   n = g.v
   marked::Vector{Bool} = fill(false, n)
   id = Vector{T}(undef, n)
-  return (marked = marked, id = id)
+  (marked = marked, id = id)
 end
 
 function scc_dfs(g::DiGraph{T}, u::T, args::NT_BI, count::Int)::NT_BI where T
   function _dfs_(u::T)
     args.marked[u] = true
     args.id[u] = count
-
-    for v in g.adj[u]
+    for v ∈ g.adj[u]
       !args.marked[v] && _dfs_(v)
     end
   end
 
   _dfs_(u)
-  return args
+  args
 end
