@@ -14,5 +14,5 @@ function shortest_path(infile::String, s::T; WType::DataType=Int) where T
   @assert s ∈ 1:YA_DSP.v(g) "Expecting vertex source to be in the graph"
   dsp = DSP{typeof(s), WType}(g, s)
 
-  return dsp
+  dsp
 end
