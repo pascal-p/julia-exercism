@@ -4,7 +4,7 @@
   Note: weigths are assumed to be positive integer
 """
 
-# abstract type AEWDiGraph{T <: Integer, T1 <: Real}; end
+# Abstract type AEWDiGraph{T <: Integer, T1 <: Real}; end
 
 mutable struct EWDiGraph{T, T1} <: AEWDiGraph{T, T1}
   _v::Integer                         # num. of vertices 1..v
@@ -54,7 +54,7 @@ function has_edge(g::EWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1}
   v ∈ map(t -> t[1], adj(g, u)) ## adj(g, u) ≡ list of tuple (vertex, weight)
 end
 
-function has_weighted_edge(g::EWDiGraph, u::T, v::T) where {T <: Integer, T1}
+function has_weighted_edge(g::EWDiGraph, u::T, v::T) where {T <: Integer}
   check_valid_vertices(g, u, v)
 
   find_weighted_edge(g, u, v)
@@ -63,19 +63,17 @@ end
 function weight(g::EWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1}
   check_valid_vertices(g, u, v)
 
-  if u == v
-    return zero(T1)
-  else
-    res, w = find_weighted_edge(g, u, v)
-    return res ? w : typemax(T1)
-  end
+  u == v && return zero(T1)
+
+  res, w = find_weighted_edge(g, u, v)
+  res ? w : typemax(T1)
 end
 
 function build_graph!(g::EWDiGraph{T, T1}, edges::Vector{Tuple{T, T, T1}}) where {T <: Integer, T1 <: Real}
-  for edge in edges
-    (_vo, _vd, w) = edge
+  for edge ∈ edges
+    (_, _, w) = edge
     add_edge(g, edge...; positive_weight=w < zero(T) ? false : true)
-  end  
+  end
 end
 
 
@@ -85,14 +83,14 @@ end
 
 function check_valid_vertices(g::EWDiGraph{T, T1}, v₁::T, v₂::T) where {T <: Integer, T1}
   n = v(g)
-  for u in (v₁, v₂)
+  for u ∈ (v₁, v₂)
     1 ≤ u ≤ n || throw(ArgumentError("vertex $(u) not in current digraph"))
   end
 end
 
 function find_weighted_edge(g::EWDiGraph{T, T1}, u::T, v::T) where {T <: Integer, T1}
   ## if there is an edge u -> v, then adj(g, u) must contain v
-  for (ix, (vₒ, w)) in enumerate(adj(g, u))
+  for (ix, (vₒ, w)) ∈ enumerate(adj(g, u))
     vₒ == v && return (true, w, ix)
   end
 
@@ -131,8 +129,7 @@ end
   1 82 31
 
 """
-function from_file(infile::String, graph_cons, VType;
-                   WType=Integer, positive_weight=true)
+function from_file(infile::String, graph_cons, VType; WType=Integer, positive_weight=true)
   # VType => target type for vertices
   # WType => target type for weigth
   g = graph_cons(zero(VType))
@@ -141,25 +138,23 @@ function from_file(infile::String, graph_cons, VType;
   try
     open(infile, "r") do fh
       nv = 0
-      for line in eachline(fh)             ## read only first line
+      for line ∈ eachline(fh)             ## read only first line
         (nv, ) = map(s -> parse(VType, strip(s)),
-                     split(line, r"\s+"))  ## expected number of vertices [opt. num. of edges)
+                     split(line, r"\s+")) ## expected number of vertices [opt. num. of edges)
         break
       end
       g = graph_cons(VType(nv))
 
       prev_u = -1
-      for line in eachline(fh)
+      for line ∈ eachline(fh)
         length(line) == 0 && continue
 
         ary = split(line)
         u = parse(VType, ary[1])
-        if u ≠ prev_u            ## change of vertex?
-          prev_u = u
-        end
+        u ≠ prev_u && (prev_u = u)  ## change of vertex?
 
-        if occursin(',', line)   ## do we have comma... assume following format:
-          for v_w in ary[2:end]  ## v_w == "vertex,weight"
+        if occursin(',', line)      ## do we have comma... assume following format:
+          for v_w ∈ ary[2:end]      ## v_w == "vertex,weight"
             sv, sw = split(v_w, r",")
             v, w = parse(VType, sv), parse(WType, sw)
 
@@ -176,18 +171,22 @@ function from_file(infile::String, graph_cons, VType;
         end
       end
     end
-    @assert nv == v(g) "Expected $(act_nv) vertices, got $(v(g))"   ## defer message to catch block
+    @assert nv == v(g) "Expected $(nv) vertices, got $(v(g))"  ## defer message to catch block
     return g
 
   catch err
     if isa(err, ArgumentError)
       println("! Problem with content of file $(infile)")
+
     elseif isa(err, SystemError)
       println("! Problem opening $(infile) in read mode... Exit")
+
     elseif isa(err, AssertionError)
-      println("! Expected $(g.v) vertices, got: $(act_nv)")
+      println("! Expected $(g.v) vertices, got: $(nv)")
+
     else
       println("! Other error: $(typeof(err))...")
+
     end
     exit(1)
   end
