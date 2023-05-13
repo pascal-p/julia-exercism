@@ -1,7 +1,7 @@
 module YA_EWD
   ## Yet Another Edge Weigthed DiGraph (with extenstion)
 
-  export AEWDiGraph
+  export AEWDiGraph      ## (Abstract) Edge Weighted Directed Graph
   export EWDiGraph       ## Edge Weighted Directed Graph
   export EEWDiGraph      ## Ext(ended) Edge Weighted Directed Graph
 
