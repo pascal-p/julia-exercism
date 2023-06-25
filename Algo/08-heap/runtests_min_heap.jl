@@ -10,7 +10,7 @@ include("min_heap.jl")
   @test isempty(mheap)
 
   insert!(mheap, 21)
-  @test mheap.last == 2  ## next free position
+  @test mheap.last_ix == 2  ## next free position
 end
 
 @testset "min heap insert" begin
@@ -23,7 +23,7 @@ end
   end
 
   @test size(mheap) == 2n   ## should have double
-  @test mheap.last == 4
+  @test mheap.last_ix == 4
 
 end
 
@@ -67,10 +67,10 @@ end
   @test delete!(mheap, 2) == 13
 
   @test peek(mheap) == 10
-  @test mheap.last - 1 == 6
+  @test mheap.last_ix - 1 == 6
 
   # under the hood
-  @test mheap.h[1:(mheap.last - 1)] == [10, 14, 12, 21, 15, 14]
+  @test mheap.h[1:(mheap.last_ix - 1)] == [10, 14, 12, 21, 15, 14]
 end
 
 @testset "exceptions" begin

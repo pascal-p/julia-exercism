@@ -6,13 +6,20 @@ using YAH
 
 
 function check_inv(mheap)
-  n = (mheap.last - 1) ÷ 2
-  for ix in 1:n
-    jx = ix << 1
-    @assert mheap.h[ix].key ≤  mheap.h[jx].key "- HEAP Error(1) at ix:$(ix)  key:$(mheap.h[ix]) ≤ $(mheap.h[jx]) at jx:$(jx)\n$(mheap.h[1:(mheap.last-1)])"
+  n = (mheap.last_ix - 1) ÷ 2
 
-    if jx + 1 < (mheap.last - 1)
-      @assert mheap.h[ix].key ≤  mheap.h[jx + 1].key "- HEAP Error(2) at ix:$(ix)  key:$(mheap.h[ix]) ≤ $(mheap.h[jx + 1]) at jx:$(jx+1)\n$(mheap.h[1:(mheap.last-1)])"
+  for ix ∈ 1:n
+    jx = ix << 1
+    @assert(
+      mheap.h[ix].key ≤ mheap.h[jx].key,
+      "- HEAP Error(1) at ix:$(ix)  key:$(mheap.h[ix]) ≤ $(mheap.h[jx]) at jx:$(jx)\n$(mheap.h[1:(mheap.last_ix - 1)])"
+    )
+
+    if jx + 1 < (mheap.last_ix - 1)
+      @assert(
+        mheap.h[ix].key ≤ mheap.h[jx + 1].key,
+        "- HEAP Error(2) at ix:$(ix)  key:$(mheap.h[ix]) ≤ $(mheap.h[jx + 1]) at jx:$(jx+1)\n$(mheap.h[1:(mheap.last_ix - 1)])"
+      )
     end
   end
 end
@@ -24,7 +31,7 @@ function make_heap()
   # manufacture specific heap
   mheap.h = [(key=10, value=nothing), (key=70, value=nothing), (key=30, value=nothing), (key=80, value=nothing), (key=100, value=nothing), (key=40, value=nothing), (key=51, value=nothing), (key=90, value=nothing), (key=85, value=nothing), (key=110, value=nothing), (key=120, value=nothing), (key=50, value=nothing), (key=55, value=nothing), (key=71, value=nothing), (key=77, value=nothing), (key=200, value=nothing), (key=300, value=nothing), (key=91, value=nothing), (key=94, value=nothing), (key=117, value=nothing), (key=118, value=nothing), (key=122, value=nothing), (key=124, value=nothing), (key=92, value=nothing)]
 
-  mheap.last = length(mheap.h) + 1
+  mheap.last_ix = length(mheap.h) + 1
 
   mheap.map_ix = Dict{NamedTuple{(:key, :value),Tuple{Int64,Nothing}},Int64}((key=10, value=nothing) => 1, (key=70, value=nothing) => 2, (key=30, value=nothing) => 3, (key=80, value=nothing) => 4, (key=100, value=nothing) => 5, (key=40, value=nothing) => 6, (key=51, value=nothing) => 7, (key=90, value=nothing) => 8, (key=85, value=nothing) => 9, (key=110, value=nothing) => 10, (key=120, value=nothing) => 11, (key=50, value=nothing) => 12, (key=55, value=nothing) => 13, (key=71, value=nothing) => 14, (key=77, value=nothing) => 15, (key=200, value=nothing) => 16, (key=300, value=nothing) => 17, (key=91, value=nothing) => 18, (key=94, value=nothing) => 19, (key=117, value=nothing) => 20, (key=118, value=nothing) => 21, (key=122, value=nothing) => 22, (key=124, value=nothing) => 23, (key=92, value=nothing) => 24)
 
@@ -41,7 +48,7 @@ end
   @test isempty(mheap)
 
   insert!(mheap, (key=21, value=1.1))
-  @test mheap.last == 2         ## next free position
+  @test mheap.last_ix == 2         ## next free position
 end
 
 @testset "min heap - deletions at any pos." begin
@@ -112,7 +119,7 @@ end
   end
 
   @test size(mheap) == 2n       ## should have double
-  @test mheap.last[1] == 4
+  @test mheap.last_ix[1] == 4   ## FIXME check this and correct if required!
 
 end
 
@@ -172,7 +179,7 @@ end
   end
 
   @test size(mheap) == 2n   ## should have double
-  @test mheap.last == 4
+  @test mheap.last_ix == 4
 
 end
 
@@ -187,7 +194,7 @@ end
   end
 
   @test size(mheap) == 2n   ## should have double
-  @test mheap.last == 4
+  @test mheap.last_ix == 4
 
   @test map(t -> mheap.map_ix[t], xs) == [2, 3, 1]
   # Dict(1.0471975511965976 => 3, 2.0 => 1, 1.3591409142295225 => 2))
@@ -345,10 +352,10 @@ end
   @test delete!(mheap, 2)[1] == 13
 
   @test peek(mheap)[1] == 10
-  @test mheap.last - 1 == 6
+  @test mheap.last_ix - 1 == 6
 
   ## under the hood - now using iterator
-  # @test map(t -> t[1], mheap.h[1:(mheap.last - 1)]) == [10, 14, 12, 21, 15, 14]
+  # @test map(t -> t[1], mheap.h[1:(mheap.last_ix - 1)]) == [10, 14, 12, 21, 15, 14]
   @test map(t -> t[1], collect(mheap)) == [10, 14, 12, 21, 15, 14]
 
 end
@@ -370,10 +377,10 @@ end
   @test delete!(mheap, ix)[1] == k
   @test length(mheap) == length(xs) - 1       ## one less item
   @test peek(mheap)[1] == 10                  ## no change for the root (key)
-  @test mheap.last - 1 == 6
+  @test mheap.last_ix - 1 == 6
 
   ## under the hood
-  @test map(t -> t[1], mheap.h[1:(mheap.last - 1)]) == [10, 14, 12, 21, 15, 14]
+  @test map(t -> t[1], mheap.h[1:(mheap.last_ix - 1)]) == [10, 14, 12, 21, 15, 14]
 
   @test map(t -> mheap.map_ix[t], filter(x -> x.key != k, xs)) == [4, 1, 6, 2, 3, 5]
 
@@ -405,7 +412,7 @@ end
   @test delete!(mheap, 2)[1] == 14
 
   @test peek(mheap)[1] == 21
-  @test mheap.last - 1 == 6
+  @test mheap.last_ix - 1 == 6
 
   # under the hood - using iterator
   @test collect(mheap) == [(key=21, value=√2), (key=14, value=√7), (key=15, value=2π), (key=10, value=√3), (key=13, value=√2/2), (key=12, value=π/2)]
@@ -420,14 +427,14 @@ end
   @test delete!(mheap, 2) == (key=14, value="titi")  # because inserted after (key=14, value="toto")
 
   @test peek(mheap) == (key=21, value="foo")
-  @test mheap.last - 1 == 5
+  @test mheap.last_ix - 1 == 5
 
   # under the hood - using iterator
   @test map(t -> t[1], collect(mheap)) == [21, 13, 14, 10, 12]
 
   ## delete non-existent pair - w/o raising exception
   @test delete!(mheap, (key=42, value="meaning of life"); ignore_absence=true) == nothing
-  @test mheap.last - 1 == 5 ## no change
+  @test mheap.last_ix - 1 == 5 ## no change
 end
 
 @testset "repeated insert!/delete! operations on heap" begin
@@ -435,7 +442,7 @@ end
   xs = [(key=21, value="bar"), (key=-10, value="boo"), (key=-14, value="foo"), (key=-14, value="moo"), (key=13, value="tar"), (key=-12, value="rar"), (key=15, value="xoo")]
   l = length(xs)
 
-  for x in xs
+  for x ∈ xs
     insert!(mheap, x)
     @test haskey(mheap.map_ix, x)
 
@@ -449,7 +456,7 @@ end
 
     # re-insert deleted element with lower priority and delete again... and again
     (k, v) = xs[ix]
-    for _ix in 1:10 # 10_000
+    for _ix ∈ 1:10 # 10_000
       k -= 10
       insert!(mheap, (key=k, value=v); ignore_presence=true)
       delete!(mheap, (key=k+10, value=v); ignore_absence=true)
@@ -457,20 +464,20 @@ end
   end
 
   ## delete last item
-  n = mheap.last - 1
-  delete!(mheap, mheap.last - 1)
-  @test mheap.last - 1 == n - 1
+  n = mheap.last_ix - 1
+  delete!(mheap, mheap.last_ix - 1)
+  @test mheap.last_ix - 1 == n - 1
 
   ## delete first
-  n = mheap.last - 1
+  n = mheap.last_ix- 1
   delete!(mheap, 1)
-  @test mheap.last - 1 == n - 1
+  @test mheap.last_ix - 1 == n - 1
 
-  for _ix in 1:(mheap.last - 1)
+  for _ix in 1:(mheap.last_ix - 1)
     delete!(mheap, 1)
   end
 
-  @test mheap.last == 1
+  @test mheap.last_ix == 1
   @test length(mheap.map_ix) == 0
 end
 
