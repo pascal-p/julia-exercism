@@ -72,8 +72,8 @@ md"""
 
 # ╔═╡ 78efbbe9-c402-4ce7-9322-b91924f7f9dd
 julia_lang_archive = join(
-	[URI_PREFIX, DIST, ARCH, MAJOR_VER, "julia-$(FULL_VER)-$(DIST)-$(CPU_ARCH).$(EXT)"], 
-	"/"
+  [URI_PREFIX, DIST, ARCH, MAJOR_VER, "julia-$(FULL_VER)-$(DIST)-$(CPU_ARCH).$(EXT)"],
+  "/"
 )
 
 # ╔═╡ 620a7adf-88c7-47dd-9b7b-ee3d48f7f585
@@ -81,8 +81,8 @@ julia_lang_archive = join(
 
 # ╔═╡ c8849b84-7dd9-4f10-8a8d-153ff19dda57
 julia_cksum = join(
-	[URI_PREFIX, "checksums", "julia-$(FULL_VER).$(CKSUM)"],
-	"/"
+  [URI_PREFIX, "checksums", "julia-$(FULL_VER).$(CKSUM)"],
+  "/"
 )
 
 # ╔═╡ 82535dfa-844b-44a2-90bb-4da22f394ddc
@@ -90,8 +90,8 @@ julia_cksum = join(
 
 # ╔═╡ 6f4bfb1a-fc55-452d-a94e-2a57375eea74
 julia_gpg = join(
-	[URI_PREFIX, DIST, ARCH, MAJOR_VER, "julia-$(FULL_VER)-$(DIST)-$(CPU_ARCH).$(EXT).asc"],
-	"/"
+  [URI_PREFIX, DIST, ARCH, MAJOR_VER, "julia-$(FULL_VER)-$(DIST)-$(CPU_ARCH).$(EXT).asc"],
+  "/"
 )
 
 # ╔═╡ 24a8a72d-ba1a-4160-b40c-ea12ae08fd1c
@@ -102,21 +102,21 @@ wd = pwd()
 
 # ╔═╡ cf661c32-d93d-45ab-b0d8-31f9b873793d
 function _download(file_list=[julia_lang_archive, julia_cksum, julia_gpg], force_download=false)
-	for file_url ∈ file_list
-		try
-			target_filepath = join([DOWNLOAD_DIR, basename(file_url)], "/")
-			if !isfile(target_filepath) || force_download
-    			HTTP.download(file_url, target_filepath; update_period=5.1)
-    			println("- file $(target_filepath) downloaded successfully.")
-			else
-				println("- file $(target_filepath) is already downloaded, nothing to do...")
-			end
-    		# create_symlink(target_filepath, target_linkpath)    
-  		catch
-    		println("Downloading file fromn url: $(file_url) failed")
-    		exit(1)
-  		end
-	end
+  for file_url ∈ file_list
+    try
+      target_filepath = join([DOWNLOAD_DIR, basename(file_url)], "/")
+      if !isfile(target_filepath) || force_download
+    	HTTP.download(file_url, target_filepath; update_period=5.1)
+    	println("- file $(target_filepath) downloaded successfully.")
+      else
+	println("- file $(target_filepath) is already downloaded, nothing to do...")
+      end
+      # create_symlink(target_filepath, target_linkpath)
+    catch
+      println("Downloading file fromn url: $(file_url) failed")
+      exit(1)
+    end
+  end
 end
 
 # ╔═╡ fc37491a-deb8-42b4-9a78-4868f991de28
@@ -125,26 +125,26 @@ end
 or exit on any error.
 """
 function _exec(cmd::String, cmd_switches::Vector{String}, args::Vector{String})
-	println("""About to exec $(join([cmd, cmd_switches..., (args .|> basename)...], " "))\n""")
-	for _file ∈ args 
-		if !isfile(_file)
-			println("Problem with file $(_file) which may not exist or might not be defined or...")
-			exit(2)
-		end
-	end
-	fcmd = Cmd([cmd, cmd_switches..., (args .|> basename)...])
-	try
-		rc = run(Cmd(fcmd, dir=DOWNLOAD_DIR, detach=false)); 
-		if rc.exitcode != 0
-			println("The excution of command using $(cmd) failed")
-			exit(3)
-		end
-		# propertynames(rc) == (:cmd, :handle, :in, :out, :err, :exitcode, :termsignal, :exitnotify)
-		println("Verification with $(cmd) completed successfully")
-	catch err
-		println("There was an error while the $(cmd) verification was performed." , err)
-		exit(4)
-	end
+  println("""About to exec $(join([cmd, cmd_switches..., (args .|> basename)...], " "))\n""")
+  for _file ∈ args
+    if !isfile(_file)
+      println("Problem with file $(_file) which may not exist or might not be defined or...")
+      exit(2)
+    end
+  end
+  fcmd = Cmd([cmd, cmd_switches..., (args .|> basename)...])
+  try
+    rc = run(Cmd(fcmd, dir=DOWNLOAD_DIR, detach=false));
+    if rc.exitcode != 0
+      println("The excution of command using $(cmd) failed")
+      exit(3)
+    end
+    # propertynames(rc) == (:cmd, :handle, :in, :out, :err, :exitcode, :termsignal, :exitnotify)
+    println("Verification with $(cmd) completed successfully")
+  catch err
+    println("There was an error while the $(cmd) verification was performed." , err)
+    exit(4)
+  end
 end
 
 # ╔═╡ 32205c33-57cf-4633-b86b-3bda45ac3f47
@@ -205,9 +205,9 @@ unpack_archive(src_file=julia_lang_archive, cmd="tar", cmd_switches=["xzvf"]) =
 
 # ╔═╡ 30a2186e-bad0-462e-804d-ee38b6589860
 if isdir("$(DOWNLOAD_DIR)/julia-$(FULL_VER)")
-	mv("$(DOWNLOAD_DIR)/julia-$(FULL_VER)", "$(TARGT_DIR)/julia-$(FULL_VER)", force=true)
-	islink("$(TARGT_DIR)/julia") && rm("$(TARGT_DIR)/julia", force=true)
-	cd(TARGT_DIR); symlink("julia-$(FULL_VER)", "julia"; dir_target=false); cd(wd)
+  mv("$(DOWNLOAD_DIR)/julia-$(FULL_VER)", "$(TARGT_DIR)/julia-$(FULL_VER)", force=true)
+  islink("$(TARGT_DIR)/julia") && rm("$(TARGT_DIR)/julia", force=true)
+  cd(TARGT_DIR); symlink("julia-$(FULL_VER)", "julia"; dir_target=false); cd(wd)
 end
 
 # ╔═╡ 005442ed-c527-424c-b2fc-f02ec2bafd9c
