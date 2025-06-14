@@ -1,3 +1,0 @@
-range:-10000:10000 distinct sums: 7
-# on input: input_random_12_40.txt
-# (7, Set([4924, -2731, 8032, -9857, 9267, 3408, 1368]))

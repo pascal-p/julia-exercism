@@ -1,4 +1,0 @@
-range:-10000:10000 distinct sums: 13
-# on input: input_random_16_80.txt
-# (13, Set([-5724, -5963, -2149, -412, -335, 7417, 2738, 7578, 225, -3015, -9788, 2851, -316]))
-#  0.000156 seconds (223 allocations: 9.594 KiB)
