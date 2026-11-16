@@ -40,6 +40,13 @@ Sieve of Eratosthenes at Wikipedia [http://en.wikipedia.org/wiki/Sieve_of_Eratos
 - **Eliminating `%` and Redundant Work:** Pre-marking evens (`cprimes[4:2:limit] .= false`) and starting the inner marking at `cand * cand` with step `2 * cand` avoids division/remainder operations (`%`) and skips even multiples.
 - **Boundary Behavior (`typemax`):** `StepRange` (`T(3):T(2):limit`) handles `typemax(T)` safely without infinite-loop wraparound (verified up to `typemax(UInt32)` with `SIEVE_FULL_TESTS=true`); `typemax(UInt64)` is bounded by `BitVector` size (`typemax(Int64)`) and RAM rather than arithmetic overflow.
 
+## Interactive Notebook
+Launch the Pluto notebook from inside `sieve/`:
+```bash
+julia --project=.. -e 'using Pluto; Pluto.run(notebook="./sieve_pluto.jl")'
+```
+
+
 
 ## Version compatibility
 This exercise has been tested on Julia versions >=1.0.
