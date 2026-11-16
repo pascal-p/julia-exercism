@@ -4,6 +4,7 @@
 .exercism
 *.org
 sum/*
+**/archive/
 
 Algo/*/testfiles/problem8.10.txt
 Algo/*/testfiles/875714v_5105043e_tc.txt
