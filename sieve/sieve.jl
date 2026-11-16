@@ -15,13 +15,13 @@ function sieve(limit::T)::Vector{T} where {T<:Unsigned}
 
     for cand ∈ 2:isqrt(limit)
         !cprimes[cand] && continue
-        cprimes[cand*cand:2*cand:limit] .= false
+        cprimes[(cand*cand):(2*cand):limit] .= false
     end
 
     ## how many primes
     num_cand = sum(cprimes)
     primes = Vector{T}(undef, num_cand) # Vector{T}(undef, num_candArray{T,1}(undef, num_cand)
-    primes[1], kx  = 2, 2
+    primes[1], kx = 2, 2
 
     for ix ∈ T(3):T(2):limit
         cprimes[ix] && (primes[kx] = ix; kx += 1)
