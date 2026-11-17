@@ -123,6 +123,12 @@ Wikipedia [http://en.wikipedia.org/wiki/Circular_buffer](http://en.wikipedia.org
 - **Non-Allocating `append!`:** Using a unified `for x ∈ src` loop with `Iterators.take(items, cb.capacity - cb.occupancy)` (and keyword shorthand `push!(cb, x; overwrite)`) avoids `map`'s throwaway result array and handles arbitrary iterables, not just `1:n`.
 - **Docstrings:** Placing `"""..."""` docstrings *above* `function` definitions (rather than inside function bodies) ensures Julia's doc system (`?push!`, `?append!`, etc.) attaches them properly.
 
+## Interactive Notebook
+Launch the Pluto notebook from inside `circular-buffer/`:
+```bash
+julia --project=.. -e 'using Pluto; Pluto.run(notebook="./circular-buffer_pluto.jl")'
+```
+
 ## Version compatibility
 This exercise has been tested on Julia versions >=1.0.
 
