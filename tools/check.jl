@@ -29,7 +29,7 @@ function collect_jl_files(ex_dir::String)
     for (root, dirs, fnames) in walkdir(ex_dir)
         filter!(d -> d != "archive" && !startswith(d, "."), dirs)
         for f in sort(fnames)
-            endswith(f, ".jl") && push!(files, joinpath(root, f))
+            !startswith(f, ".") && !startswith(f, "#") && endswith(f, ".jl") && push!(files, joinpath(root, f))
         end
     end
     return files
