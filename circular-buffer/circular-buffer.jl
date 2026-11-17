@@ -29,14 +29,14 @@ function push!(cb::CircularBuffer, item; overwrite::Bool = false)
     "Add an element to the back and overwrite front if full"
     ## typeof(item) === typeof(cb.buffer[1]) || throw(TypeError())
 
-    if !isfull(cb)                ## insert at tail (back)
+    if !isfull(cb)                    ## insert at tail (back)
         cb.head == 0 && (cb.head = 1)
         _inc_tail(cb)
         cb.buffer[cb.tail] = item
         cb.occupancy += 1
 
     else
-        if overwrite                ## cb.occupancy remains invariant
+        if overwrite                  ## cb.occupancy remains invariant
             cb.buffer[cb.head] = item ## insert at head (front)
             _inc_head(cb)
             _inc_tail(cb)             ## symetry with  pushfirst!
@@ -51,14 +51,14 @@ end
 function pushfirst!(cb::CircularBuffer, item; overwrite::Bool = false)
     "Add an element to the front (head) and overwrite back (tail) if full"
 
-    if !isfull(cb)               ## insert before head (front)
+    if !isfull(cb)                    ## insert before head (front)
         cb.tail == 0 && (cb.tail = cb.capacity)
         _dec_head(cb)
-        cb.buffer[cb.head] = item  ## insert at head (front)
+        cb.buffer[cb.head] = item     ## insert at head (front)
         cb.occupancy += 1
 
     else
-        if overwrite                ## cb.occupancy remains invariant
+        if overwrite                  ## cb.occupancy remains invariant
             cb.buffer[cb.tail] = item ## insert at tail (back)
             _dec_tail(cb)
             _dec_head(cb)             ## Need to update head (front) to most recent element in most recent position
@@ -75,19 +75,12 @@ function append!(cb::CircularBuffer, items; overwrite::Bool = false)
     Push at most last `capacity` items if overwrite is false
     Push everything if overwrite is true (overwritting oldest elements)
     """
+    !overwrite && isfull(cb) && throw(BoundsError())
 
-    if overwrite
-        map(x -> push!(cb, x; overwrite = true), items)
-
-    else
-        isfull(cb) && throw(BoundsError())
-
-        n = length(items)
-        n = n > cb.capacity - cb.occupancy ? cb.capacity - cb.occupancy : n
-
-        map(x -> push!(cb, x; overwrite = true), 1:n)
+    src = overwrite ? items : Iterators.take(items, cb.capacity - cb.occupancy)
+    for x ∈ src
+        push!(cb, x; overwrite)
     end
-
     cb
 end
 
@@ -148,15 +141,8 @@ end
 
 
 ## Iteration ##
-function iterate(cb::CircularBuffer{T}, ix::Integer = cb.head) where {T}
-    limit = cb.tail < cb.head ? cb.tail + cb.capacity : cb.tail
+iterate(cb::CircularBuffer, ix::Integer = 1) = ix > length(cb) ? nothing : (cb[ix], ix + 1)
 
-    if ix ≤ limit
-        (cb.buffer[ix], ix + 1)
-    else
-        nothing
-    end
-end
 
 ## Negative indexing is not supported
 function getindex(cb::CircularBuffer{T}, ix::Integer) where {T}
@@ -169,7 +155,6 @@ function setindex!(cb::CircularBuffer{T}, item::T, ix::Integer) where {T}
     cb.buffer[jx] = item
     return
 end
-
 
 
 ## Utilities
@@ -185,33 +170,10 @@ for (fn, fdn) in [(:_dec_head, :head), (:_dec_tail, :tail)]
     end
 end
 
-function _to_ary(cb::CircularBuffer{T}) where {T}
-    istart, iend = if cb.head < cb.tail
-        (cb.head, cb.tail)
-
-    elseif cb.head == cb.tail
-        if isfull(cb)         ## either full
-            (cb.head, cb.tail + cb.capacity - 1)
-
-        else                  ## or 1 item left
-            (cb.tail, cb.tail)  ## ≡ (cb.head, cb.head)
-
-        end
-    else
-        (cb.head, cb.tail + cb.capacity)  ## cb.head ≥ cb.tail, depends how full or empty buffer is...
-    end
-
-    if isempty(cb)
-        T[]
-    else
-        T[cb.buffer[ix ≤ cb.capacity ? ix : ix - cb.capacity] for ix = istart:iend]
-    end
-end
+_to_ary(cb::CircularBuffer{T}) where {T} = T[cb[i] for i = 1:length(cb)]
 
 function _offset(cb::CircularBuffer{T}, ix::Integer)::Integer where {T}
     "offset from head of circular buffer"
-    !(1 ≤ ix ≤ cb.capacity) && throw(BoundsError())
-
-    jx = cb.head + ix - 1
-    jx ≤ cb.capacity ? jx : jx % cb.capacity
+    !(1 ≤ ix ≤ cb.occupancy) && throw(BoundsError())
+    jx = mod1(cb.head + ix - 1, cb.capacity)
 end

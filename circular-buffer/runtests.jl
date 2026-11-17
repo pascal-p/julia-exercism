@@ -339,6 +339,23 @@ if @isdefined(enable_bonus_tests) && enable_bonus_tests
             @test convert(Array, cb1) == collect(items)
         end
 
+        @testset "Iteration, bounds checking, and non-1:n append!" begin
+            cb = CircularBuffer{Int}(5)
+            @test collect(cb) == Int[]
+
+            append!(cb, [10, 20])
+            @test collect(cb) == [10, 20]
+            @test_throws BoundsError cb[3]
+            @test_throws BoundsError cb[0]
+
+            # Force wrap-around (head > tail) and iterate
+            append!(cb, [30, 40, 50])
+            @test popfirst!(cb) == 10
+            @test popfirst!(cb) == 20
+            append!(cb, [60, 70])
+            @test collect(cb) == [30, 40, 50, 60, 70]
+        end
+
     end
 
 end
