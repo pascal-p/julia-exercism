@@ -115,6 +115,14 @@ If you are working at the REPL, you may prefer to use the [`@edit`](https://docs
 
 Wikipedia [http://en.wikipedia.org/wiki/Circular_buffer](http://en.wikipedia.org/wiki/Circular_buffer)
 
+## Lessons Learned
+- **Julia's `AbstractVector{T}` Interface:** Subtyping `CircularBuffer{T} <: CircularBufferAbstract{T} <: AbstractVector{T}` and implementing `size`, `length`, `eltype`, `getindex`, `setindex!`, and `iterate` unlocks generic `Base` array behaviors (`collect`, indexing, iteration) without reimplementing them.
+- **Ring Buffer Indexing (`mod1`):** `mod1(cb.head + ix - 1, cb.capacity)` maps 1-based logical offsets cleanly onto the 1-based physical `Vector{T}` across wrap-around boundaries.
+- **Bounds Checking Against `occupancy`:** `_offset` must check `1 ≤ ix ≤ cb.occupancy` (not `cb.capacity`) so reading beyond currently stored elements raises `BoundsError` instead of returning stale buffer slots.
+- **Safe `iterate` Across Empty & Wrapped Buffers:** Delegating `iterate(cb, ix = 1)` to `ix > length(cb) ? nothing : (cb[ix], ix + 1)` handles empty buffers (`length == 0`) and wrapped buffers (`head > tail`) uniformly without raw buffer index overflows.
+- **Non-Allocating `append!`:** Using a unified `for x ∈ src` loop with `Iterators.take(items, cb.capacity - cb.occupancy)` (and keyword shorthand `push!(cb, x; overwrite)`) avoids `map`'s throwaway result array and handles arbitrary iterables, not just `1:n`.
+- **Docstrings:** Placing `"""..."""` docstrings *above* `function` definitions (rather than inside function bodies) ensures Julia's doc system (`?push!`, `?append!`, etc.) attaches them properly.
+
 ## Version compatibility
 This exercise has been tested on Julia versions >=1.0.
 

@@ -25,8 +25,8 @@ mutable struct CircularBuffer{T} <: CircularBufferAbstract{T}
     end
 end
 
+"""Add an element to the back and overwrite front if full."""
 function push!(cb::CircularBuffer, item; overwrite::Bool = false)
-    "Add an element to the back and overwrite front if full"
     ## typeof(item) === typeof(cb.buffer[1]) || throw(TypeError())
 
     if !isfull(cb)                    ## insert at tail (back)
@@ -48,8 +48,8 @@ function push!(cb::CircularBuffer, item; overwrite::Bool = false)
     cb
 end
 
+"""Add an element to the front (head) and overwrite back (tail) if full."""
 function pushfirst!(cb::CircularBuffer, item; overwrite::Bool = false)
-    "Add an element to the front (head) and overwrite back (tail) if full"
 
     if !isfull(cb)                    ## insert before head (front)
         cb.tail == 0 && (cb.tail = cb.capacity)
@@ -70,11 +70,11 @@ function pushfirst!(cb::CircularBuffer, item; overwrite::Bool = false)
     cb
 end
 
+"""
+Push at most `capacity - occupancy` items if `overwrite` is `false`.
+Push everything if `overwrite` is `true` (overwriting oldest elements).
+"""
 function append!(cb::CircularBuffer, items; overwrite::Bool = false)
-    """
-    Push at most last `capacity` items if overwrite is false
-    Push everything if overwrite is true (overwritting oldest elements)
-    """
     !overwrite && isfull(cb) && throw(BoundsError())
 
     src = overwrite ? items : Iterators.take(items, cb.capacity - cb.occupancy)
@@ -84,8 +84,8 @@ function append!(cb::CircularBuffer, items; overwrite::Bool = false)
     cb
 end
 
+"""Remove and return the element at the front (head)."""
 function popfirst!(cb::CircularBuffer)
-    "Remove the element at the front (head)"
     isempty(cb) && throw(BoundsError()) ## buffer is empty!
 
     item = cb.buffer[cb.head]
@@ -95,8 +95,8 @@ function popfirst!(cb::CircularBuffer)
     return item
 end
 
+"""Remove and return the element at the back (tail)."""
 function pop!(cb::CircularBuffer)
-    "Remove the element at the back (tail)"
     isempty(cb) && throw(BoundsError()) ## buffer is empty!
 
     item = cb.buffer[cb.tail]
@@ -172,8 +172,8 @@ end
 
 _to_ary(cb::CircularBuffer{T}) where {T} = T[cb[i] for i = 1:length(cb)]
 
+"""Compute the 1-based buffer index at offset `ix` from `head`."""
 function _offset(cb::CircularBuffer{T}, ix::Integer)::Integer where {T}
-    "offset from head of circular buffer"
     !(1 ≤ ix ≤ cb.occupancy) && throw(BoundsError())
     jx = mod1(cb.head + ix - 1, cb.capacity)
 end
