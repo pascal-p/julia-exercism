@@ -65,7 +65,15 @@ Devastating Donkeys;Courageous Californians;draw
 Means that the Devastating Donkeys and Courageous Californians tied.
 
 
+## Lessons Learned
+- **Immutable Value Types (`struct`) + `Base.:+`:** Replacing a `mutable struct Team` (with `name`) with an immutable `struct TeamStats` (pure counters) stores values inline in `Dict{String,TeamStats}` with zero per-team heap allocation, and overloading `Base.:+` lets stats accumulate cleanly.
+- **Lookup Tables over Branching & Enums:** A `const OUTCOME_DELTAS = Dict(...)` mapping `"win"`, `"draw"`, `"loss"` to `(lhs_delta, rhs_delta)` tuples replaces `@enum Outcome`, `outcome_convert`, `flip_outcome`, and `if/elseif/else` in `update!` with a single `O(1)` `get(...) do ... end` lookup and validation.
+- **Flexible Abstract Signatures:** Using `AbstractVector{<:AbstractString}` accepts `Vector{String}`, `Vector{SubString{String}}`, and array views alike.
+- **Sorting `Dict` Pairs & `UInt` Negation Trap:** `sort!(collect(dteams); by = ((name, ts),) -> (-Int(ts.pts), name))` sorts descending by points and ascending by name; converting `ts.pts` to `Int` before negating avoids `UInt` wraparound.
+
+
 ## Running the tests
 
 To run the tests, run `julia runtests.jl`
+
 
