@@ -4,43 +4,35 @@ const VS = AbstractVector{<:AbstractString}
 const THEADER = "Team                           | MP |  W |  D |  L |  P"
 const SEP = ";"
 
-@enum Outcome loss=0 draw=1 win=3
-
-mutable struct TeamStats
+struct TeamStats
     m_played::UInt   # MP / Matches Played
     m_won::UInt      # W  / Matches Won
     m_drawn::UInt    # D  / Matches Drawn (Tied)
     m_loss::UInt     # L  /  Matches Lost
     pts::UInt        # P  / Points
-
-    # function Team(name::AbstractString, res::Outcome)
-    #     m_played = 1
-    #     m_won = res == win::Outcome ? 1 : 0
-    #     m_drawn = res == draw::Outcome ? 1 : 0
-    #     m_loss = res == loss::Outcome ? 1 : 0
-    #     #
-    #     pts = 3 * m_won + 1 * m_drawn
-    #     new(m_played, m_won, m_drawn, m_loss, pts)
-    # end
-
-    TeamStats() = new(0, 0, 0, 0, 0)
 end
 
-function update!(ts::TeamStats, outcome::Outcome)
-    ts.m_played += 1
-    ts.m_won += outcome == win
-    ts.m_drawn += outcome == draw
-    ts.m_loss += outcome == loss
-    ts.pts += UInt(outcome)
+TeamStats() = TeamStats(0, 0, 0, 0, 0)
+
+function Base.:+(a::TeamStats, b::TeamStats)
+    TeamStats(
+        a.m_played + b.m_played,
+        a.m_won + b.m_won,
+        a.m_drawn + b.m_drawn,
+        a.m_loss + b.m_loss,
+        a.pts + b.pts,
+    )
 end
 
-# function Base.show(io::IO, t::Team)
-#   print(io, ...)
-# end
+const WIN_STATS = TeamStats(1, 1, 0, 0, 3)
+const DRAW_STATS = TeamStats(1, 0, 1, 0, 1)
+const LOSS_STATS = TeamStats(1, 0, 0, 1, 0)
 
-# function Base.isless(t₁::Team, t₂::Team)::Bool
-#     t₁.pts > t₂.pts || (t₁.pts == t₂.pts && t₁.name < t₂.name)
-# end
+const OUTCOME_DELTAS = Dict(
+    "win" => (WIN_STATS, LOSS_STATS),
+    "draw" => (DRAW_STATS, DRAW_STATS),
+    "loss" => (LOSS_STATS, WIN_STATS),
+)
 
 function tally(results::VS)::VS
     length(results) == 0 && return String[THEADER]
@@ -49,13 +41,13 @@ function tally(results::VS)::VS
     dteams = Dict{String,TeamStats}()
 
     for entry ∈ results
-        (lhs_team, rhs_team, sres) = split(entry, SEP)
-        res = outcome_convert(sres)
-
-        for t ∈ (lhs_team, rhs_team)
-            update!(get!(TeamStats, dteams, t), res)
-            res = flip_outcome(res)
+        lhs_team, rhs_team, sres = split(entry, SEP)
+        lhs_delta, rhs_delta = get(OUTCOME_DELTAS, sres) do
+            throw(ArgumentError("Invalid outcome: $sres (expected win, draw, or loss)"))
         end
+
+        dteams[lhs_team] = get(dteams, lhs_team, TeamStats()) + lhs_delta
+        dteams[rhs_team] = get(dteams, rhs_team, TeamStats()) + rhs_delta
     end
 
     ## All teams updated => display
@@ -79,27 +71,4 @@ function tally(results::VS)::VS
     end
 
     table
-end
-
-##
-## Internal helpers
-##
-
-function outcome_convert(res::AbstractString)::Outcome
-    ## validation
-    Symbol(res) ∉ map(s -> Symbol(s), instances(Outcome)) &&
-        throw(ArgumentError("Only: $(instances(Outcome))"))
-
-    ## conversion
-    return filter(s -> Symbol(res) == Symbol(s), instances(Outcome))[1]
-end
-
-function flip_outcome(res::Outcome)::Outcome
-    if res == win::Outcome
-        return loss::Outcome
-    elseif res == loss::Outcome
-        return win::Outcome
-    end
-
-    return draw::Outcome
 end
