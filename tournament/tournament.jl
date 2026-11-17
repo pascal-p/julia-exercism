@@ -1,92 +1,79 @@
 using Printf
 
-const VS = Vector{String}
+const VS = AbstractVector{<:AbstractString}
 const THEADER = "Team                           | MP |  W |  D |  L |  P"
 const SEP = ";"
 
 @enum Outcome loss=0 draw=1 win=3
 
-mutable struct Team
-    name::String
-    m_played::Int   # MP / Matches Played
-    m_won::Int      # W  / Matches Won
-    m_drawn::Int    # D  / Matches Drawn (Tied)
-    m_loss::Int     # L  /  Matches Lost
-    pts::Int        # P  / Points
+mutable struct TeamStats
+    m_played::UInt   # MP / Matches Played
+    m_won::UInt      # W  / Matches Won
+    m_drawn::UInt    # D  / Matches Drawn (Tied)
+    m_loss::UInt     # L  /  Matches Lost
+    pts::UInt        # P  / Points
 
-    function Team(name::AbstractString, res::Outcome)
-        m_played = 1
-        m_won = res == win::Outcome ? 1 : 0
-        m_drawn = res == draw::Outcome ? 1 : 0
-        m_loss = res == loss::Outcome ? 1 : 0
-        #
-        pts = 3 * m_won + 1 * m_drawn
-        new(string(name), m_played, m_won, m_drawn, m_loss, pts)
-    end
+    # function Team(name::AbstractString, res::Outcome)
+    #     m_played = 1
+    #     m_won = res == win::Outcome ? 1 : 0
+    #     m_drawn = res == draw::Outcome ? 1 : 0
+    #     m_loss = res == loss::Outcome ? 1 : 0
+    #     #
+    #     pts = 3 * m_won + 1 * m_drawn
+    #     new(m_played, m_won, m_drawn, m_loss, pts)
+    # end
+
+    TeamStats() = new(0, 0, 0, 0, 0)
 end
 
-function update!(t::Team, res::Outcome)
-    t.m_played += 1
-
-    if res == win::Outcome
-        t.pts += 3
-        t.m_won += 1
-
-    elseif res == draw::Outcome
-        t.pts += 1
-        t.m_drawn += 1
-
-    else
-        t.m_loss += 1    ## loss
-    end
-
+function update!(ts::TeamStats, outcome::Outcome)
+    ts.m_played += 1
+    ts.m_won += outcome == win
+    ts.m_drawn += outcome == draw
+    ts.m_loss += outcome == loss
+    ts.pts += UInt(outcome)
 end
 
 # function Base.show(io::IO, t::Team)
 #   print(io, ...)
 # end
 
-function Base.isless(t₁::Team, t₂::Team)::Bool
-    t₁.pts > t₂.pts || (t₁.pts == t₂.pts && t₁.name < t₂.name)
-end
+# function Base.isless(t₁::Team, t₂::Team)::Bool
+#     t₁.pts > t₂.pts || (t₁.pts == t₂.pts && t₁.name < t₂.name)
+# end
 
 function tally(results::VS)::VS
     length(results) == 0 && return String[THEADER]
 
-    # length(results) > 0
-    dteams = Dict{String,Team}()
+    # now length(results) > 0
+    dteams = Dict{String,TeamStats}()
 
     for entry ∈ results
-        (lt, rt, sres) = split(entry, SEP)
+        (lhs_team, rhs_team, sres) = split(entry, SEP)
         res = outcome_convert(sres)
 
-        for t ∈ (lt, rt)
-            t == rt && (res = outcome_reverse(res))
-
-            if get(dteams, t, nothing) != nothing
-                update!(dteams[t], res)  ## team update
-            else
-                dteams[t] = Team(t, res) ## team create
-            end
+        for t ∈ (lhs_team, rhs_team)
+            update!(get!(TeamStats, dteams, t), res)
+            res = flip_outcome(res)
         end
     end
 
     ## All teams updated => display
-    teams = Vector{Team}([vt for (_, vt) ∈ dteams])
-    sort!(teams, lt = Base.isless, rev = false)
+    teams = collect(dteams)                                   # ≝ Vector{Pair{String,TeamStats}})
+    sort!(teams; by = ((name, ts),) -> (-Int(ts.pts), name))  # NOTE: Int(ts.pts) so negating a UInt doesn't wrap around!
 
     table = [THEADER]
-    for t ∈ teams
+    for (tname, ts) ∈ teams
         push!(
             table,
             @sprintf(
                 "%-31s|%3d |%3d |%3d |%3d |%3d",
-                t.name,
-                t.m_played,
-                t.m_won,
-                t.m_drawn,
-                t.m_loss,
-                t.pts
+                tname,
+                ts.m_played,
+                ts.m_won,
+                ts.m_drawn,
+                ts.m_loss,
+                ts.pts
             ),
         )
     end
@@ -107,7 +94,7 @@ function outcome_convert(res::AbstractString)::Outcome
     return filter(s -> Symbol(res) == Symbol(s), instances(Outcome))[1]
 end
 
-function outcome_reverse(res::Outcome)::Outcome
+function flip_outcome(res::Outcome)::Outcome
     if res == win::Outcome
         return loss::Outcome
     elseif res == loss::Outcome
