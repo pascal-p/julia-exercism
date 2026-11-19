@@ -44,3 +44,10 @@ This exercise has been tested on Julia versions >=1.0.
 
 ## Submitting Incomplete Solutions
 It's possible to submit an incomplete solution so you can see how others have completed the exercise.
+
+## Interactive Notebook
+Launch the Pluto notebook from inside `allergies/`:
+```bash
+julia --project=.. -e 'using Pluto; Pluto.run(notebook="./allergies_pluto.jl")'
+```
+
