@@ -33,6 +33,10 @@ score is 257, your program should only report the eggs (1) allergy.
 
 Jumpstart Lab Warm-up [http://jumpstartlab.com](http://jumpstartlab.com)
 
+## Lessons learned
+- **Handling Unknown High Bits (`≥ 256`):** Clamping `ix > N ? N : ix` in `next_pow` caused scores like `256` or `257` to be misattributed to `"cats"` (`128`). Masking/reducing `score` modulo `256` (`score % 256` / `score & 0xff`) before decomposing ensures unknown allergen bits (`256`, `512`, ...) are ignored.
+- **Boundary Conditions on `score` and `ix`:** Guarding `score < 0` with `DomainError` prevents `log(score)` from failing silently or unexpectedly, and keeping `while ix ≥ 1` ensures the highest known allergen (`128` → `"cats"`, index `N = 8`) is included.
+
 ## Version compatibility
 This exercise has been tested on Julia versions >=1.0.
 
