@@ -42,6 +42,10 @@ end
     @testset "hexa -> hexa" begin
         @test all_your_base([10, 11, 15, 12], 16, 16) == [10, 11, 15, 12]
     end
+
+    @testset "leading zeros with same base" begin
+        @test all_your_base([0, 6, 0], 10, 10) == [6, 0]
+    end
 end
 
 @testset "decimal_to_hexadecimal" begin
@@ -66,6 +70,10 @@ end
 
 @testset "empty list" begin
     @test all_your_base([], 2, 10) == [0]
+    @test all_your_base(Int[], 2, 10) == [0]
+    @test all_your_base(Int[], 2, 10) isa Vector{Int}
+    @test all_your_base(UInt[], 2, 10) == UInt[0]
+    @test all_your_base(UInt[], 2, 10) isa Vector{UInt}
 end
 
 @testset "single zero" begin
@@ -86,7 +94,7 @@ end
 end
 
 @testset "Non integer as input" begin
-    @test_throws InexactError all_your_base([true, false], 7, 10)
+    @test_throws ArgumentError all_your_base([true, false], 7, 10)
 end
 
 @testset "input base is one" begin
