@@ -132,3 +132,28 @@ end
 @testset "both bases are negative" begin
     @test_throws DomainError all_your_base([1], -2, -7)
 end
+
+@testset "Functional style parity with Imperative" begin
+    for style in (Imperative(), Functional())
+        @test all_your_base([1], 2, 10; style) == [1]
+        @test all_your_base([1, 0, 1, 0, 1, 0], 2, 10; style) == [4, 2]
+        @test all_your_base([4, 2], 10, 2; style) == [1, 0, 1, 0, 1, 0]
+        @test all_your_base([1, 1, 2, 0], 3, 16; style) == [2, 10]
+        @test all_your_base([3, 46, 60], 97, 73; style) == [6, 10, 45]
+        @test all_your_base([0, 6, 0], 10, 10; style) == [6, 0]
+        @test all_your_base([], 2, 10; style) == [0]
+        @test all_your_base(Int[], 2, 10; style) isa Vector{Int}
+        @test all_your_base(UInt[], 2, 10; style) isa Vector{UInt}
+        @test all_your_base([0, 0, 0], 10, 2; style) == [0]
+        @test all_your_base(
+            [1, 8, 4, 4, 6, 7, 4, 4, 0, 7, 3, 7, 0, 9, 5, 5, 1, 6, 2, 6],
+            10,
+            16;
+            style,
+        ) == [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10]
+        @test_throws ArgumentError all_your_base([true, false], 7, 10; style)
+        @test_throws DomainError all_your_base([1, -1, 0], 2, 10; style)
+        @test_throws DomainError all_your_base([1, 2, 0], 2, 10; style)
+        @test_throws DomainError all_your_base([1], 1, 10; style)
+    end
+end
