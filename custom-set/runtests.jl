@@ -237,35 +237,35 @@ end
     # 2. equality on unorderable element types (e.g. Complex)
     @test CustomSet([1 + 2im, 3 + 4im]) == CustomSet([3 + 4im, 1 + 2im])
 
-    # # 3. no aliasing on non-mutating ops
-    # @test begin
-    #     cs1 = CustomSet([1, 2])
-    #     cs2 = complement(cs1, CustomSet(Int[]))
-    #     push!(cs2, 99)
-    #     cs1 == CustomSet([1, 2])
-    # end
-    # @test begin
-    #     cs1 = CustomSet([1, 2])
-    #     cs2 = union(cs1, CustomSet(Int[]))
-    #     push!(cs2, 99)
-    #     cs1 == CustomSet([1, 2])
-    # end
+    # 3. no aliasing on non-mutating ops
+    @test begin
+        cs1 = CustomSet([1, 2])
+        cs2 = complement(cs1, CustomSet(Int[]))
+        push!(cs2, 99)
+        cs1 == CustomSet([1, 2])
+    end
+    @test begin
+        cs1 = CustomSet([1, 2])
+        cs2 = union(cs1, CustomSet(Int[]))
+        push!(cs2, 99)
+        cs1 == CustomSet([1, 2])
+    end
 
-    # # 4. mixed-type union and Base.∪ operator
-    # @test union(CustomSet([1]), CustomSet([2.5])) == CustomSet([1, 2.5])
-    # @test (CustomSet([1, 2]) ∪ CustomSet([2, 3])) isa CustomSet
+    # 4. mixed-type union and Base.∪ operator
+    @test union(CustomSet([1]), CustomSet([2.5])) == CustomSet([1, 2.5])
+    @test (CustomSet([1, 2]) ∪ CustomSet([2, 3])) isa CustomSet
 
-    # # 5. mutating functions return the mutated set
-    # @test begin
-    #     cs = CustomSet([1, 2])
-    #     push!(cs, 3) === cs
-    # end
-    # @test begin
-    #     cs = CustomSet([1, 2, 3])
-    #     intersect!(cs, CustomSet([2, 3])) === cs
-    # end
-    # @test begin
-    #     cs = CustomSet([1, 2])
-    #     union!(cs, CustomSet([3])) === cs
-    # end
+    # 5. mutating functions return the mutated set
+    @test begin
+        cs = CustomSet([1, 2])
+        push!(cs, 3) === cs
+    end
+    @test begin
+        cs = CustomSet([1, 2, 3])
+        intersect!(cs, CustomSet([2, 3])) === cs
+    end
+    @test begin
+        cs = CustomSet([1, 2])
+        union!(cs, CustomSet([3])) === cs
+    end
 end

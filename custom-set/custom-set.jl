@@ -3,10 +3,10 @@ Custom set implementation
 
 """
 
-const ∩ = intersect
+# const ∩ = intersect
 
 import Base: ==, ≠, ∈, ∉, intersect, intersect!
-import Base: iterate, isempty, length, keys, issubset, push!
+import Base: iterate, isempty, length, keys, issubset, push!, copy, union, union!, show
 
 
 struct CustomSet{T} <: AbstractSet{T}
@@ -36,7 +36,6 @@ isempty(s::CustomSet{T}) where {T} = iszero(length(s.hsh))
 
 length(s::CustomSet{T}) where {T} = length(s.hsh)
 
-# ∈(elt::T, s::CustomSet{T}) where {T} = haskey(s.hsh, elt)
 ∈(elt, s::CustomSet) = haskey(s.hsh, elt)
 
 keys(s::CustomSet{T}) where {T} = keys(s.hsh)
@@ -52,94 +51,71 @@ function disjoint(s₁::CustomSet, s₂::CustomSet)
     all(∉(big), small)
 end
 
-push!(s::CustomSet{T}, elt::T) where {T} = s.hsh[elt] = nothing
+function push!(s::CustomSet, elt)
+    s.hsh[elt] = nothing
+    return s
+end
 
-add(s::CustomSet{T}, elt::T) where {T} = s.hsh[elt] = nothing
+add(s::CustomSet, elt) = push!(s, elt)
 
 copy(s::CustomSet{T}) where {T} = CustomSet{T}(s)
 
+function intersect(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1,T2}
+    s = CustomSet{promote_type(T1, T2)}()
+    (isempty(s₁) || isempty(s₂)) && return s
 
-function intersect(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
-    isempty(s₁) && return s₁
-    isempty(s₂) && return s₂
-
-    s = CustomSet{typejoin(T1, T2)}()
-    s₁, s₂ = length(s₁) > length(s₂) ? (s₁, s₂) : (s₂, s₁)
-    for elt ∈ s₁  # using iterator # collect(keys(s₁))
-        elt ∈ s₂ && add(s, elt)
+    small, big = length(s₁) ≤ length(s₂) ? (s₁, s₂) : (s₂, s₁)
+    for elt ∈ small
+        elt ∈ big && push!(s, elt)
     end
-
-    s
+    return s
 end
 
-
-function intersect!(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
-    isempty(s₁) && return
-
+function intersect!(s₁::CustomSet, s₂::CustomSet)
+    isempty(s₁) && return s₁
     if isempty(s₂)
-        for elt ∈ collect(keys(s₁)) # side-effect s₁
-            delete!(s₁.hsh, elt)
-        end
-        return
+        empty!(s₁.hsh)
+        return s₁
     end
 
-    # finally
     for elt ∈ s₁
         elt ∉ s₂ && delete!(s₁.hsh, elt)
     end
+    return s₁
 end
 
-function complement(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
-    isempty(s₁) && return s₁
-    isempty(s₂) && return s₁
+function complement(s₁::CustomSet{T1}, s₂::CustomSet) where {T1}
+    (isempty(s₁) || isempty(s₂)) && return copy(s₁)
 
-    s = CustomSet{typejoin(T1, T2)}()
+    s = CustomSet{T1}()
     for elt ∈ s₁
-        elt ∉ s₂ && add(s, elt)
+        elt ∉ s₂ && push!(s, elt)
     end
-
-    s
+    return s
 end
 
-function complement!(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
-    isempty(s₁) && return
-    isempty(s₂) && return
+function complement!(s₁::CustomSet, s₂::CustomSet)
+    (isempty(s₁) || isempty(s₂)) && return s₁
 
     for elt ∈ s₁
         elt ∈ s₂ && delete!(s₁.hsh, elt)
     end
+    return s₁
 end
 
-
-function union(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
-    isempty(s₁) && return s₂
-    isempty(s₂) && return s₁
-
-    s₁, s₂ = length(s₁) > length(s₂) ? (s₁, s₂) : (s₂, s₁)
-    T = typejoin(T1, T2)
-    s = CustomSet{T}(s₂)
-    for elt ∈ s₁
-        add(s, T(elt))
-    end
-
-    s
+function union(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1,T2}
+    s = CustomSet{promote_type(T1, T2)}()
+    union!(s, s₁)
+    union!(s, s₂)
+    return s
 end
 
-function union!(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
-    isempty(s₂) && return s₁
-
-    if isempty(s₁)
-        for elt ∈ s₂
-            add(s₁, elt)
-        end
-        return
-    end
-
+function union!(s₁::CustomSet, s₂::CustomSet)
     for elt ∈ s₂
-        add(s₁, elt)
+        push!(s₁, elt)
     end
+    return s₁
 end
-
 
 function show(io::IO, s::CustomSet)
     if isempty(s)
@@ -151,7 +127,7 @@ function show(io::IO, s::CustomSet)
         end
     else
         print(io, "CustomSet(")
-        show_vector(io, s)
+        Base.show_vector(io, collect(s))
         print(io, ')')
     end
 end
