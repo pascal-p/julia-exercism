@@ -38,6 +38,19 @@ A binary search is a dichotomic divide and conquer search algorithm.
 ## Bonus task
 Implement keyword arguments `by`, `lt` and `rev` so that `by` specifies a transformation applied to all elements of the list, `lt` specifies a comparison and `rev` specifies if the list is ordered in reverse.
 
+## Lessons learned
+- **Exact Insertion Range (`l:(l-1)`):** When `while l ≤ r` exits without a match, `l == r + 1`, so `l:(l-1)` is always the exact empty insertion range (fixing the off-by-1 bug where `m:(m-1)` failed whenever the final step moved `l = m + 1`, e.g., searching for `5` in `[1, 3, 4, 6, 8, 9, 11]`).
+- **Generic Signature (`AbstractVector`, untyped `elem`):** Requiring `Vector{T}, elem::T` or `<:Real` rejects `[]` (`Vector{Any}`), mixed numeric types (`Vector{Float64}` with `Int`), and non-numeric ordered types (`String`, `Date`). Accepting `(ary::AbstractVector, elem; ...)` is both more general and still fully specialized by Julia's compiler.
+- **Composing `by`, `lt`, `rev` via a Local Closure:** Defining `is_lt(x, y) = rev ? lt(by(y), by(x)) : lt(by(x), by(y))` inside `binarysearch` captures `by`, `lt`, and `rev` cleanly and replaces `O(n log n)` sorting and raw `<`/`>` checks with a single `O(log n)` comparator.
+- **`O(log n)` Duplicate Bounds (`lower_bound` & `upper_bound`):** Replacing the linear `O(k)` scan (`find_others`) with two binary-search passes (`lower_bound` using floor midpoint `lo + (hi - lo) ÷ 2` and `upper_bound` using ceiling midpoint `lo + (hi - lo + 1) ÷ 2` so `lo = mid` always progresses) keeps `all = true` `O(log n)` even with many duplicates and automatically honors `by`/`lt`/`rev`.
+- **Debugging in Tests:** `@show l r m` prints variable names and values directly even inside `@testset`.
+
+## Interactive Notebook
+Launch the Pluto notebook from inside `binary-search/`:
+```bash
+julia --project=.. -e 'using Pluto; Pluto.run(notebook="./binary-search_pluto.jl")'
+```
+
 ## Source
 
 Wikipedia [http://en.wikipedia.org/wiki/Binary_search_algorithm](http://en.wikipedia.org/wiki/Binary_search_algorithm)
