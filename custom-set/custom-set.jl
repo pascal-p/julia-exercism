@@ -36,7 +36,8 @@ isempty(s::CustomSet{T}) where {T} = iszero(length(s.hsh))
 
 length(s::CustomSet{T}) where {T} = length(s.hsh)
 
-∈(elt::T, s::CustomSet{T}) where {T} = haskey(s.hsh, elt)
+# ∈(elt::T, s::CustomSet{T}) where {T} = haskey(s.hsh, elt)
+∈(elt, s::CustomSet) = haskey(s.hsh, elt)
 
 keys(s::CustomSet{T}) where {T} = keys(s.hsh)
 
@@ -57,20 +58,12 @@ function issubset(s₁::CustomSet{T}, s₂::CustomSet{T}) where {T}
     return true
 end
 
-function disjoint(s₁::CustomSet{T}, s₂::CustomSet{T}) where {T}
-    isempty(s₁) && return true
-    length(s₁) > 0 && isempty(s₂) && return false
+function disjoint(s₁::CustomSet, s₂::CustomSet)
+    (isempty(s₁) || isempty(s₂)) && return true
 
-    for elt in s₁ # using iterator vs collect(keys(s₁.hsh))
-        elt ∈ s₂ && return false
-    end
-
-    return true
+    small, big = length(s₁) ≤ length(s₂) ? (s₁, s₂) : (s₂, s₁)
+    all(∉(big), small)
 end
-
-disjoint(s::CustomSet{Any}, ::CustomSet{T}) where {T} = isempty(s)
-disjoint(::CustomSet{T}, s::CustomSet{Any}) where {T} = isempty(s)
-disjoint(s₁::CustomSet{Any}, s₂::CustomSet{Any}) = isempty(s₁) && isempty(s₂)
 
 push!(s::CustomSet{T}, elt::T) where {T} = s.hsh[elt] = nothing
 
@@ -85,11 +78,11 @@ function intersect(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:
 
     s = CustomSet{typejoin(T1, T2)}()
     s₁, s₂ = length(s₁) > length(s₂) ? (s₁, s₂) : (s₂, s₁)
-    for elt in s₁  # using iterator # collect(keys(s₁))
+    for elt ∈ s₁  # using iterator # collect(keys(s₁))
         elt ∈ s₂ && add(s, elt)
     end
 
-    return s
+    s
 end
 
 
@@ -97,17 +90,16 @@ function intersect!(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<
     isempty(s₁) && return
 
     if isempty(s₂)
-        for elt in collect(keys(s₁)) # side-effect s₁
+        for elt ∈ collect(keys(s₁)) # side-effect s₁
             delete!(s₁.hsh, elt)
         end
         return
     end
 
     # finally
-    for elt in s₁
+    for elt ∈ s₁
         elt ∉ s₂ && delete!(s₁.hsh, elt)
     end
-    return
 end
 
 function complement(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
@@ -115,21 +107,20 @@ function complement(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<
     isempty(s₂) && return s₁
 
     s = CustomSet{typejoin(T1, T2)}()
-    for elt in s₁
+    for elt ∈ s₁
         elt ∉ s₂ && add(s, elt)
     end
 
-    return s
+    s
 end
 
 function complement!(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
     isempty(s₁) && return
     isempty(s₂) && return
 
-    for elt in s₁
+    for elt ∈ s₁
         elt ∈ s₂ && delete!(s₁.hsh, elt)
     end
-    return
 end
 
 
@@ -140,27 +131,26 @@ function union(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
     s₁, s₂ = length(s₁) > length(s₂) ? (s₁, s₂) : (s₂, s₁)
     T = typejoin(T1, T2)
     s = CustomSet{T}(s₂)
-    for elt in s₁
+    for elt ∈ s₁
         add(s, T(elt))
     end
 
-    return s
+    s
 end
 
 function union!(s₁::CustomSet{T1}, s₂::CustomSet{T2}) where {T1<:Any,T2<:Any}
     isempty(s₂) && return s₁
 
     if isempty(s₁)
-        for elt in s₂
+        for elt ∈ s₂
             add(s₁, elt)
         end
         return
     end
 
-    for elt in s₂
+    for elt ∈ s₂
         add(s₁, elt)
     end
-    return
 end
 
 
