@@ -14,16 +14,9 @@ function binarysearch(
     # empty array case
     isempty(ary) && return 1:0
 
-    # 1-length array
-    n = length(ary)
-    n == 1 && ary[1] == elem && return 1:1
+    n = length(ary)  # 1-length array
 
-    # apply transfo.
-    n_ary = rev ? sort(ary, by = by, rev = rev, lt = lt) : ary
-
-    # edge cases
-    elem < n_ary[1] && return 1:0
-    elem > n_ary[end] && return (n+1):n
+    is_lt(x, y) = rev ? lt(by(y), by(x)) : lt(by(x), by(y))
 
     # general case
     l, r = 1, n
@@ -32,10 +25,10 @@ function binarysearch(
     while l ≤ r
         m = (l + r) ÷ 2
 
-        if elem < n_ary[m]
+        if is_lt(elem, ary[m])
             r = m - 1
 
-        elseif elem > n_ary[m]
+        elseif is_lt(ary[m], elem)
             l = m + 1
 
         else
@@ -47,9 +40,9 @@ function binarysearch(
     if all       ## return all occurences
         if found
             lx = m
-            m > l && (lx = find_others(n_ary, elem, lx, l))
+            m > l && (lx = find_others(ary, elem, lx, l))
             rx = m
-            m < r && (rx = find_others(n_ary, elem, rx, r, cmp = isgreater, inc = 1))
+            m < r && (rx = find_others(ary, elem, rx, r, cmp = isgreater, inc = 1))
 
             (lx:rx)
         else
