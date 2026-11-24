@@ -234,8 +234,8 @@ end
     @test disjoint(CustomSet(Int[]), CustomSet([1]))
     @test disjoint(CustomSet(Any[1]), CustomSet([2]))
 
-    # # 2. equality on unorderable element types (e.g. Complex)
-    # @test CustomSet([1 + 2im, 3 + 4im]) == CustomSet([3 + 4im, 1 + 2im])
+    # 2. equality on unorderable element types (e.g. Complex)
+    @test CustomSet([1 + 2im, 3 + 4im]) == CustomSet([3 + 4im, 1 + 2im])
 
     # # 3. no aliasing on non-mutating ops
     # @test begin

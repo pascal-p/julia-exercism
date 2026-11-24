@@ -41,22 +41,9 @@ length(s::CustomSet{T}) where {T} = length(s.hsh)
 
 keys(s::CustomSet{T}) where {T} = keys(s.hsh)
 
-function ==(s₁::CustomSet{T}, s₂::CustomSet{T}) where {T}
-    isempty(s₁) && isempty(s₂) && return true
+==(s₁::CustomSet, s₂::CustomSet) = length(s₁) == length(s₂) && issubset(s₁, s₂)
 
-    length(s₁) == length(s₂) && (sort ∘ collect ∘ keys)(s₁) == (sort ∘ collect ∘ keys)(s₂)
-end
-
-function issubset(s₁::CustomSet{T}, s₂::CustomSet{T}) where {T}
-    isempty(s₁) && return true
-    length(s₁) > length(s₂) && return false
-
-    for elt in s₁ # using iterator vs collect(keys(s₁.hsh))
-        elt ∉ s₂ && return false
-    end
-
-    return true
-end
+issubset(s₁::CustomSet, s₂::CustomSet) = length(s₁) ≤ length(s₂) && all(∈(s₂), s₁)
 
 function disjoint(s₁::CustomSet, s₂::CustomSet)
     (isempty(s₁) || isempty(s₂)) && return true
