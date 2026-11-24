@@ -38,34 +38,34 @@ function binarysearch(
     end
 
     if all       ## return all occurences
-        if found
-            lx = m
-            m > l && (lx = find_others(ary, elem, lx, l))
-            rx = m
-            m < r && (rx = find_others(ary, elem, rx, r, cmp = isgreater, inc = 1))
+        found &&
+            (return lower_bound(ary, elem, l, m, is_lt):upper_bound(ary, elem, m, r, is_lt))
 
-            (lx:rx)
+        return (l:(l-1)) # as l > r, i.e. l == r + 1, when elem is not found
+    end
+    found ? (m:m) : (l:(l-1))
+end
+
+function lower_bound(ary::AbstractVector, elem, lo::Int, hi::Int, is_lt)
+    while lo < hi
+        mid = lo + (hi - lo) ÷ 2
+        if is_lt(ary[mid], elem)
+            lo = mid + 1
         else
-            (l:(l-1)) # as l > r, i.e. l == r + 1, when elem is not found
+            hi = mid
         end
-    else
-        found ? (m:m) : (l:(l-1))
     end
+    lo
 end
 
-function find_others(
-    ary::AbstractVector,
-    elem,
-    ix::Integer,
-    n::Integer;
-    cmp = isless,
-    inc::Integer = -1,
-)
-    while elem == ary[ix]
-        ix += inc
-        cmp(ix, n) && break
+function upper_bound(ary::AbstractVector, elem, lo::Int, hi::Int, is_lt)
+    while lo < hi
+        mid = lo + (hi - lo + 1) ÷ 2   # ceiling midpoint so lo = mid always progresses 
+        if is_lt(elem, ary[mid])
+            hi = mid - 1
+        else
+            lo = mid
+        end
     end
-    ix -= inc
+    lo
 end
-
-isgreater(x::T, y::T) where {T} = x > y
