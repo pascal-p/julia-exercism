@@ -134,10 +134,11 @@ end
 
 
         @testset "value not in array" begin
-            @test_skip binarysearch([11, 9, 8, 6, 4, 3, 1], 7, rev = true) == 4:3
-            @test_skip binarysearch([11, 9, 8, 6, 4, 3, 1], 0, rev = true) == 8:7
-            @test_skip binarysearch([11, 9, 8, 6, 4, 3, 1], 13, rev = true) == 1:0
-            @test_skip binarysearch([], 1, rev = true) == 1:0
+            @test binarysearch([1, 3, 4, 6, 8, 9, 11], 5) == 4:3
+            @test binarysearch([11, 9, 8, 6, 4, 3, 1], 7, rev = true) == 4:3
+            @test binarysearch([11, 9, 8, 6, 4, 3, 1], 0, rev = true) == 8:7
+            @test binarysearch([11, 9, 8, 6, 4, 3, 1], 13, rev = true) == 1:0
+            @test binarysearch([], 1, rev = true) == 1:0
         end
     end
 
@@ -162,13 +163,10 @@ end
             ) == 6:6
         end
         @testset "value not in array" begin
-            @test_skip binarysearch([1.1, 2.9, 4.4, 5.5, 8.1, 9.0, 10.8], 7, by = round) ==
-                       5:4
-            @test_skip binarysearch([1.1, 2.9, 4.4, 5.5, 8.1, 9.0, 10.8], 0, by = round) ==
-                       1:0
-            @test_skip binarysearch([1.1, 2.9, 4.4, 5.5, 8.1, 9.0, 10.8], 13, by = round) ==
-                       8:7
-            @test_skip binarysearch([], 1, by = round) == 1:0
+            @test binarysearch([1.1, 2.9, 4.4, 5.5, 8.1, 9.0, 10.8], 7, by = round) == 5:4
+            @test binarysearch([1.1, 2.9, 4.4, 5.5, 8.1, 9.0, 10.8], 0, by = round) == 1:0
+            @test binarysearch([1.1, 2.9, 4.4, 5.5, 8.1, 9.0, 10.8], 13, by = round) == 8:7
+            @test binarysearch([], 1, by = round) == 1:0
         end
     end
 
@@ -192,10 +190,10 @@ end
         end
 
         @testset "value not in array" begin
-            @test_skip binarysearch([11, 9, 8, 6, 4, 3, 1], 7, lt = >) == 4:3
-            @test_skip binarysearch([11, 9, 8, 6, 4, 3, 1], 0, lt = >) == 8:7
-            @test_skip binarysearch([11, 9, 8, 6, 4, 3, 1], 13, lt = >) == 1:0
-            @test_skip binarysearch([], 1, lt = >) == 1:0
+            @test binarysearch([11, 9, 8, 6, 4, 3, 1], 7, lt = >) == 4:3
+            @test binarysearch([11, 9, 8, 6, 4, 3, 1], 0, lt = >) == 8:7
+            @test binarysearch([11, 9, 8, 6, 4, 3, 1], 13, lt = >) == 1:0
+            @test binarysearch([], 1, lt = >) == 1:0
         end
     end
 end

@@ -3,13 +3,13 @@ Binary Search (Assume array sorted, but can be in reverse order)
 Assume duplicate values
 """
 function binarysearch(
-    ary::Vector{T},
-    elem::T;
+    ary::AbstractVector,
+    elem;
     by = identity,
     lt = isless,
     rev::Bool = false,
     all::Bool = false,
-) where {T}
+)
 
     # empty array case
     isempty(ary) && return 1:0
@@ -30,7 +30,7 @@ function binarysearch(
     found, m = false, -1
 
     while l ≤ r
-        m = div(l + r, 2)
+        m = (l + r) ÷ 2
 
         if elem < n_ary[m]
             r = m - 1
@@ -53,21 +53,21 @@ function binarysearch(
 
             (lx:rx)
         else
-            (m:(m-1))
+            (l:(l-1)) # as l > r, i.e. l == r + 1, when elem is not found
         end
     else
-        return found ? (m:m) : (m:(m-1))
+        found ? (m:m) : (l:(l-1))
     end
 end
 
 function find_others(
-    ary::Vector{T},
-    elem::T,
+    ary::AbstractVector,
+    elem,
     ix::Integer,
     n::Integer;
     cmp = isless,
     inc::Integer = -1,
-) where {T}
+)
     while elem == ary[ix]
         ix += inc
         cmp(ix, n) && break
