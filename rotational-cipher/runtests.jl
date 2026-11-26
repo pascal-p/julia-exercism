@@ -36,6 +36,29 @@ include("rotational-cipher.jl")
         @test rotate(13, "The quick brown fox jumps over the lazy dog.") ==
               "Gur dhvpx oebja sbk whzcf bire gur ynml qbt."
     end
+
+    @testset "edge cases: punctuation, whitespace, unicode, empty" begin
+        @test rotate(13, "") == ""
+        @test rotate(13, "hello-world (2026)!") == "uryyb-jbeyq (2026)!"
+        @test rotate(1, "a\tb\nc") == "b\tc\nd"
+        @test rotate(1, "café") == "dbgé"
+    end
+
+    @testset "edge cases: negative and extreme keys" begin
+        @test rotate(-1, 'a') == 'z'
+        @test rotate(-1, 'A') == 'Z'
+        @test rotate(-13, "Gur dhvpx oebja sbk.") == "The quick brown fox."
+        @test rotate(typemax(Int), 'a') == rotate(mod(typemax(Int), 26), 'a')
+        @test rotate(typemax(Int), 'b') == rotate(mod(typemax(Int), 26), 'b')
+        @test rotate(typemin(Int), 'a') == rotate(mod(typemin(Int), 26), 'a')
+        @test rotate(typemin(Int), 'b') == rotate(mod(typemin(Int), 26), 'b')
+    end
+
+    @testset "edge cases: generic Integer and AbstractString" begin
+        @test rotate(Int32(13), 'm') == 'z'
+        @test rotate(UInt8(5), "OMG") == "TRL"
+        @test rotate(13, SubString("hello world", 1, 5)) == "uryyb"
+    end
 end
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -43,7 +66,7 @@ end
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Bonus A
-if isdefined(Main, Symbol("@R13_str"))
+if isdefined(@__MODULE__, Symbol("@R13_str"))
     @eval @testset "Bonus A: string literal R13" begin
         @test R13"The quick brown fox jumps over the lazy dog." ==
               "Gur dhvpx oebja sbk whzcf bire gur ynml qbt."
@@ -51,7 +74,7 @@ if isdefined(Main, Symbol("@R13_str"))
 end
 
 # Bonus B
-if isdefined(Main, Symbol("@R1_str"))
+if isdefined(@__MODULE__, Symbol("@R1_str"))
     @eval @testset "Bonus B: string literals" begin
         @test R5"OMG" == "TRL"
         @test R4"Testing 1 2 3 testing" == "Xiwxmrk 1 2 3 xiwxmrk"
