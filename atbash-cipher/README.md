@@ -28,8 +28,14 @@ things based on word boundaries.
 - Decoding `gvhg` gives `test`
 - Decoding `gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt` gives `thequickbrownfoxjumpsoverthelazydog`
 
-## Source
+## Lessons learned
+- **Concrete `String` Return via `IOBuffer`:** Previously `foldl` + `init = " "` + `strip(s, ' ')` returned a `SubString{String}` (retaining the padded backing buffer) and did $O(L^2)$ reallocations. Building into `IOBuffer(; sizehint = ncodeunits(plain))` and returning `String(take!(io))` runs in $O(L)$ and returns a concrete `String`.
+- **Direct `Char` Predicates Over Per-Char Regex:** Replacing `occursin(r"[a-zA-Z0-9]+", string(ch))` and `collect(input)` with direct `'0' ≤ ch ≤ '9'`, `'a' ≤ ch ≤ 'z'`, `'A' ≤ ch ≤ 'Z'` checks eliminates per-character `String` allocations and regex overhead.
+- **Separator-Before-Write Grouping:** Counting only emitted characters and writing `' '` *before* the next character when `group && count > 0 && count % 5 == 0` avoids leading/trailing spaces without needing `strip` or `GROUP_FACT = 5 + 1`.
+- **Unicode Operator Gotcha (`≤` vs `⩽`):** Julia defines `≤` (`\le`, U+2264), not `⩽` (`\leqslant`, U+2A7D), which raises `UndefVarError`.
+- **Clean Signatures & Docstrings:** Removed the dead `encode_v1` function, omitted abstract `::AbstractString` return annotations, and attached proper `"""..."""` docstrings directly above `encode` and `decode`.
 
+## Source
 Wikipedia [http://en.wikipedia.org/wiki/Atbash](http://en.wikipedia.org/wiki/Atbash)
 
 ## Version compatibility
@@ -37,3 +43,9 @@ This exercise has been tested on Julia versions >=1.0.
 
 ## Submitting Incomplete Solutions
 It's possible to submit an incomplete solution so you can see how others have completed the exercise.
+
+## Interactive Notebook
+Launch the Pluto notebook from inside `atbash-cipher/`:
+```bash
+julia --project=.. -e 'using Pluto; Pluto.run(notebook="./atbash-cipher_pluto.jl")'
+```

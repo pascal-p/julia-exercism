@@ -1,29 +1,25 @@
+const GROUP_SIZE = 5
+
 """
-  Atbash Cipher
-  Assume only valid char (ascii)
+    encode(plain::AbstractString; group::Bool = true)
 
-  - Valid input set is given by regexp /[a-zA-Z0-9]+/
-  - Ignoring punctuation (comprising space),
-  - Ignoring any non ascii letter (but keep the 10 digit)
-  - Ignoring case
-  - Grouping by 5
+Encode `plain` using the Atbash cipher over ASCII Latin letters (`a` ↔ `z`,
+`b` ↔ `y`, …). Digits `0`–`9` are preserved, case is normalized to lowercase,
+and all punctuation, whitespace, and non-ASCII characters are ignored.
+
+When `group` is `true` (default), output characters are separated into groups
+of `5` with spaces. Returns a concrete `String`.
 """
-
-const GROUP_FACT = 5
-
-
 function encode(plain::AbstractString; group::Bool = true)
-    io = IOBuffer(; sizehint = ncodeunits(plain))  # or just: io = IOBuffer()
+    io = IOBuffer(; sizehint = ncodeunits(plain))
     count = 0
 
     for ch ∈ plain
-        # 1. Decide whether `ch` is kept/mapped, or skip it with `continue`
         out =
             '0' ≤ ch ≤ '9' ? ch :
             (('a' ≤ ch ≤ 'z' || 'A' ≤ ch ≤ 'Z') ? 'z' - lowercase(ch) + 'a' : continue)
 
-        # 2. Insert group separator *before* the next char (so never leading/trailing)
-        if group && count > 0 && count % GROUP_FACT == 0
+        if group && count > 0 && count % GROUP_SIZE == 0
             write(io, ' ')
         end
 
@@ -31,7 +27,13 @@ function encode(plain::AbstractString; group::Bool = true)
         count += 1
     end
 
-    String(take!(io))
+    return String(take!(io))
 end
 
-decode(cipher::AbstractString)::AbstractString = encode(cipher; group = false)
+"""
+    decode(cipher::AbstractString)
+
+Decode an Atbash-encoded string `cipher` back to lowercase ASCII letters and
+digits with grouping spaces removed. Returns a concrete `String`.
+"""
+decode(cipher::AbstractString) = encode(cipher; group = false)
