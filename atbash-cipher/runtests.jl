@@ -22,43 +22,53 @@ What here shall miss, our toil shall strive to mend.
 """
 
 @testset "encoding from English to atbash" begin
-  @test encode("  ") == ""
-  @test encode("yes") == "bvh"
-  @test encode("no") == "ml"
-  @test encode("OMG") == "lnt"
-  @test encode("O M G") == "lnt"
-  @test encode("mindblowingly") == "nrmwy oldrm tob"
-  @test encode("Testing,1 2 3, testing.") == "gvhgr mt123 gvhgr mt"
-  @test encode("Truth is fiction.") == "gifgs rhurx grlm"
-  @test encode("Truthisfiction.") == "gifgs rhurx grlm"
-  @test encode("Free Will is a delusion. Face it") == "uivvd roorh zwvof hrlmu zxvrg"
-  @test encode("The quick brown fox jumps over the lazy dog.") == "gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt"
+    @test encode("  ") == ""
+    @test encode("yes") == "bvh"
+    @test encode("no") == "ml"
+    @test encode("OMG") == "lnt"
+    @test encode("O M G") == "lnt"
+    @test encode("mindblowingly") == "nrmwy oldrm tob"
+    @test encode("Testing,1 2 3, testing.") == "gvhgr mt123 gvhgr mt"
+    @test encode("Truth is fiction.") == "gifgs rhurx grlm"
+    @test encode("Truthisfiction.") == "gifgs rhurx grlm"
+    @test encode("Free Will is a delusion. Face it") == "uivvd roorh zwvof hrlmu zxvrg"
+    @test encode("The quick brown fox jumps over the lazy dog.") ==
+          "gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt"
 
-  @test (encode ∘ string)(long_str) == "xslig dlslf hvslo whylg szorp vrmwr tmrgb rmuzr ievil mzdsv ivdvo zblfi hxvmv uilnz mxrvm gtifw tvyiv zpglm vdnfg rmbds vivxr eroyo llwnz pvhxr erosz mwhfm xovzm uilnu ligsg svuzg zoolr mhlug svhvg dlulv hzkzr iluhg zixil hhwol evihg zpvgs vrior uvdsl hvnrh zwevm gfiwk rgvlf hlevi gsild hwlgs drgsg svriw vzgsy fibgs vrikz ivmgh hgiru vgsvu vziuf okzhh ztvlu gsvri wvzgs nzipw olevz mwgsv xlmgr mfzmx vlugs vrikz ivmgh iztvd srxsy fggsv rixsr owivm hvmwm zftsg xlfow ivnle vrhml dgsvg dlslf ihgiz uurxl ulfih gztvg svdsr xsrub lfdrg skzgr vmgvz ihzgg vmwds zgsvi vhszo onrhh lfigl rohsz oohgi revgl nvmw"
+    @test (encode ∘ string)(long_str) ==
+          "xslig dlslf hvslo whylg szorp vrmwr tmrgb rmuzr ievil mzdsv ivdvo zblfi hxvmv uilnz mxrvm gtifw tvyiv zpglm vdnfg rmbds vivxr eroyo llwnz pvhxr erosz mwhfm xovzm uilnu ligsg svuzg zoolr mhlug svhvg dlulv hzkzr iluhg zixil hhwol evihg zpvgs vrior uvdsl hvnrh zwevm gfiwk rgvlf hlevi gsild hwlgs drgsg svriw vzgsy fibgs vrikz ivmgh hgiru vgsvu vziuf okzhh ztvlu gsvri wvzgs nzipw olevz mwgsv xlmgr mfzmx vlugs vrikz ivmgh iztvd srxsy fggsv rixsr owivm hvmwm zftsg xlfow ivnle vrhml dgsvg dlslf ihgiz uurxl ulfih gztvg svdsr xsrub lfdrg skzgr vmgvz ihzgg vmwds zgsvi vhszo onrhh lfigl rohsz oohgi revgl nvmw"
 end
 
 @testset "decoding from atbash to English" begin
-  @test decode("vcvix rhn") == "exercism"
-  @test decode("zmlyh gzxov rhlug vmzhg vkkrm thglm v") == "anobstacleisoftenasteppingstone"
-  @test decode("gvhgr mt123 gvhgr mt") == "testing123testing"
-  @test decode("gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt") == "thequickbrownfoxjumpsoverthelazydog"
-  @test decode("vc vix    r hn") == "exercism"
-  @test decode("zmlyhgzxovrhlugvmzhgvkkrmthglmv") == "anobstacleisoftenasteppingstone"
-  @test decode("zmlyh gzxov rhlug vmzh gvkkr mthgl mv") == "anobstacleisoftenasteppingstone"
-  @test decode("AnObstacleIsOftenASteppingStone") == "zmlyhgzxovrhlugvmzhgvkkrmthglmv"
+    @test decode("vcvix rhn") == "exercism"
+    @test decode("zmlyh gzxov rhlug vmzhg vkkrm thglm v") ==
+          "anobstacleisoftenasteppingstone"
+    @test decode("gvhgr mt123 gvhgr mt") == "testing123testing"
+    @test decode("gsvjf rxpyi ldmul cqfnk hlevi gsvoz abwlt") ==
+          "thequickbrownfoxjumpsoverthelazydog"
+    @test decode("vc vix    r hn") == "exercism"
+    @test decode("zmlyhgzxovrhlugvmzhgvkkrmthglmv") == "anobstacleisoftenasteppingstone"
+    @test decode("zmlyh gzxov rhlug vmzh gvkkr mthgl mv") ==
+          "anobstacleisoftenasteppingstone"
+    @test decode("AnObstacleIsOftenASteppingStone") == "zmlyhgzxovrhlugvmzhgvkkrmthglmv"
 end
 
 @testset "encoding ∘ decoding" begin
-  for text in ["yes", "omg", "OMG", "mindblowingly",
-               "I M A G I N E!",
-               "Truth is fiction.",
-               "The quick brown fox jumps over the lazy dog.",
-               "Testing,1 2 3, testing.",
-               "zmlyhgzxovrhlugvmzhgvkkrmthglmv",
-               "anobstacleisoftenasteppingstone",
-               "An obstacle is often a stepping stone",
-               long_str]
-    @test (decode ∘ encode)(text) == replace(lowercase(text),
-                                             r"\s+|\.|,|\?|!|;|;|\+|\*|\-|/|%|\$|\^|&|'|\"" => "")
-  end
+    for text in [
+        "yes",
+        "omg",
+        "OMG",
+        "mindblowingly",
+        "I M A G I N E!",
+        "Truth is fiction.",
+        "The quick brown fox jumps over the lazy dog.",
+        "Testing,1 2 3, testing.",
+        "zmlyhgzxovrhlugvmzhgvkkrmthglmv",
+        "anobstacleisoftenasteppingstone",
+        "An obstacle is often a stepping stone",
+        long_str,
+    ]
+        @test (decode ∘ encode)(text) ==
+              replace(lowercase(text), r"\s+|\.|,|\?|!|;|;|\+|\*|\-|/|%|\$|\^|&|'|\"" => "")
+    end
 end

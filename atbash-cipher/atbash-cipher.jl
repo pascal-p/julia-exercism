@@ -13,30 +13,28 @@ const GROUP_FACT = 5 + 1  # counting 1 extra space
 
 const ALPHA_REXP = r"[a-zA-Z0-9]+"
 
-function encode_v1(input::AbstractString; enc=true)::AbstractString
-  s = " "
+function encode_v1(input::AbstractString; enc = true)::AbstractString
+    s = " "
 
-  for ch in input
-    !occursin(r"[a-zA-Z0-9]+", string(ch)) && continue
+    for ch in input
+        !occursin(r"[a-zA-Z0-9]+", string(ch)) && continue
 
-    s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
-    enc && length(s) % (GROUP_FACT + 1) == 0  && (s = string(s, ' '))
-  end
+        s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
+        enc && length(s) % (GROUP_FACT + 1) == 0 && (s = string(s, ' '))
+    end
 
-  return strip(s, ' ')
+    return strip(s, ' ')
 end
 
-function encode(input::AbstractString; enc=true)::AbstractString
-  trans_fn = function(s, ch)
-    !occursin(ALPHA_REXP, string(ch)) && (return s)
+function encode(input::AbstractString; enc = true)::AbstractString
+    trans_fn = function (s, ch)
+        !occursin(ALPHA_REXP, string(ch)) && (return s)
 
-    s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
-    enc && length(s) % GROUP_FACT == 0 ? string(s, ' ') : s
-  end
+        s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
+        enc && length(s) % GROUP_FACT == 0 ? string(s, ' ') : s
+    end
 
-  foldl((s, ch) -> trans_fn(s, ch),
-        collect(input),
-        init=" ") |> s -> strip(s, ' ')
+    foldl((s, ch) -> trans_fn(s, ch), collect(input), init = " ") |> s -> strip(s, ' ')
 end
 
-decode(input::AbstractString)::AbstractString = encode(input; enc=false)
+decode(input::AbstractString)::AbstractString = encode(input; enc = false)
