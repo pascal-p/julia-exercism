@@ -52,6 +52,14 @@ R4"Testing 1 2 3 testing" == "Xiwxmrk 1 2 3 xiwxmrk"
 R13"abcdefghijklmnopqrstuvwxyz" == "nopqrstuvwxyzabcdefghijklm"
 ```
 
+## Lessons learned
+- **Pass-Through Instead of Allowlists:** Maintaining explicit `Punctuation` and `Digit_As_Char` arrays (and allocating a temporary `Vector` on every character check) rejected valid characters like `-`, `(`, `\t`, `\n`, and Unicode letters (`é`). Any character outside ASCII `'a'..'z'` and `'A'..'Z'` should pass through unchanged.
+- **Modular Arithmetic & Overflow (`mod` vs `%`):** In Julia, `%` is truncated remainder (`rem`), so `rotate(-1, 'a')` produced `` '`' `` instead of `'z'`. Reducing the key *first* via `mod(n, 26)` handles negative keys and prevents `Int` overflow on `typemax(Int)` / `typemin(Int)`.
+- **Multiple Dispatch & Generic Signatures:** Replacing `rotate(n::Int, src::Union{String,Char})` + `===(typeof(src), Char)` with separate methods on `(::Integer, ::AbstractChar)` and `(::Integer, ::AbstractString)` supports `Int32`, `UInt8`, `SubString`, etc., cleanly.
+- **$O(L)$ String Transformation (`map`):** Replacing `foldl` + quadratic `string(s, l)` concatenation with `map(rot_n_maker(n), src)` builds the result in linear time via `Base`'s internal `IOBuffer`.
+- **Avoiding `Base` Shadowing:** Renaming helpers from `islowercase`/`isuppercase`/`transcode` to `isasciilower`/`isasciiupper`/`shift_letter` avoids shadowing `Base` exports and makes the ASCII-only predicate explicit (unlike Unicode-aware `Base.islowercase('é') == true`).
+- **Module-Scoped Macro Tests:** Checking `isdefined(@__MODULE__, Symbol("@R13_str"))` instead of `Main` ensures Bonus A & B tests execute when `runtests.jl` is evaluated inside a sandbox module.
+
 ## Source
 
 Wikipedia [https://en.wikipedia.org/wiki/Caesar_cipher](https://en.wikipedia.org/wiki/Caesar_cipher)
@@ -61,3 +69,9 @@ This exercise has been tested on Julia versions >=1.0.
 
 ## Submitting Incomplete Solutions
 It's possible to submit an incomplete solution so you can see how others have completed the exercise.
+
+## Interactive Notebook
+Launch the Pluto notebook from inside `rotational-cipher/`:
+```bash
+julia --project=.. -e 'using Pluto; Pluto.run(notebook="./rotational-cipher_pluto.jl")'
+```
