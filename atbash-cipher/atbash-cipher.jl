@@ -9,32 +9,29 @@
   - Grouping by 5
 """
 
-const GROUP_FACT = 5 + 1  # counting 1 extra space
+const GROUP_FACT = 5
 
-const ALPHA_REXP = r"[a-zA-Z0-9]+"
 
-function encode_v1(input::AbstractString; enc = true)::AbstractString
-    s = " "
+function encode(plain::AbstractString; group::Bool = true)
+    io = IOBuffer(; sizehint = ncodeunits(plain))  # or just: io = IOBuffer()
+    count = 0
 
-    for ch in input
-        !occursin(r"[a-zA-Z0-9]+", string(ch)) && continue
+    for ch ∈ plain
+        # 1. Decide whether `ch` is kept/mapped, or skip it with `continue`
+        out =
+            '0' ≤ ch ≤ '9' ? ch :
+            (('a' ≤ ch ≤ 'z' || 'A' ≤ ch ≤ 'Z') ? 'z' - lowercase(ch) + 'a' : continue)
 
-        s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
-        enc && length(s) % (GROUP_FACT + 1) == 0 && (s = string(s, ' '))
+        # 2. Insert group separator *before* the next char (so never leading/trailing)
+        if group && count > 0 && count % GROUP_FACT == 0
+            write(io, ' ')
+        end
+
+        write(io, out)
+        count += 1
     end
 
-    return strip(s, ' ')
+    String(take!(io))
 end
 
-function encode(input::AbstractString; enc = true)::AbstractString
-    trans_fn = function (s, ch)
-        !occursin(ALPHA_REXP, string(ch)) && (return s)
-
-        s = '0' ≤ ch ≤ '9' ? string(s, ch) : string(s, 'z' - lowercase(ch) + 'a')
-        enc && length(s) % GROUP_FACT == 0 ? string(s, ' ') : s
-    end
-
-    foldl((s, ch) -> trans_fn(s, ch), collect(input), init = " ") |> s -> strip(s, ' ')
-end
-
-decode(input::AbstractString)::AbstractString = encode(input; enc = false)
+decode(cipher::AbstractString)::AbstractString = encode(cipher; group = false)

@@ -72,3 +72,17 @@ end
               replace(lowercase(text), r"\s+|\.|,|\?|!|;|;|\+|\*|\-|/|%|\$|\^|&|'|\"" => "")
     end
 end
+
+@testset "edge cases & concrete return types" begin
+    @test encode("") == ""
+    @test decode("") == ""
+    @test encode("yes") isa String
+    @test decode("bvh") isa String
+    @test encode("") isa String
+    @test encode("abcde") == "zyxwv"
+    @test encode("abcdefghij") == "zyxwv utsrq"
+    @test encode("café") == "xzu"
+    @test encode("αβγ 123") == "123"
+    @test encode(SubString("Testing, 1 2 3!", 1, 7)) == "gvhgr mt"
+    @test decode("Gvhg, 123!") == "test123"
+end
