@@ -1,45 +1,48 @@
-const FIRST_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19]
+const FIRST_PRIMES::Vector{Integer} = [2, 3, 5, 7, 11, 13, 17, 19]
+
+const BASE::Vector{Integer}  = [2, 3, 5];
+const WHEEL_INC::Vector{Integer} = [4, 2, 4, 2, 4, 6, 2, 6];
 
 
 ## entry point => dispatch
-function prime_factors(n::Integer; algo=pf_wheel)
-  n ≤ 0 && throw(DomainError("n should be positive"))
-  isone(n) && return []
-  n ∈ FIRST_PRIMES && return [n]
+function prime_factors(n::Integer; algo = pf_wheel)
+    n ≤ 0 && throw(DomainError("n should be positive"))
+    isone(n) && return []
+    n ∈ FIRST_PRIMES && return [n]
 
-  algo(n)
+    algo(n)
 end
 
 
 ## Trial division
 function pf_trial(n::Integer)::Vector{Integer}
-  divisors::Vector{UInt128} = [1, ]
+    divisors::Vector{UInt128} = [1]
 
-  function try_div(d::Unsigned)
-    while true
-      q, r = divrem(n, d)
-      !iszero(r) && break
+    function try_div(d::Unsigned)
+        while true
+            q, r = divrem(n, d)
+            !iszero(r) && break
 
-      push!(divisors, d)
-      n = q
+            push!(divisors, d)
+            n = q
 
-      isone(n) && break
+            isone(n) && break
+        end
     end
-  end
 
-  d = Unsigned(isodd(n) ? 3 : 2)
-  if d == 2
-    try_div(d)
-    d += 1
-  end
+    d = Unsigned(isodd(n) ? 3 : 2)
+    if d == 2
+        try_div(d)
+        d += 1
+    end
 
-  while d * d ≤ n
-    try_div(d)
-    d += 2
-  end
+    while d * d ≤ n
+        try_div(d)
+        d += 2
+    end
 
-  !isone(n) && push!(divisors, n)
-  return divisors[2:end]
+    !isone(n) && push!(divisors, n)
+    return divisors[2:end]
 end
 
 
@@ -62,35 +65,32 @@ One can notice the same gap between factors in each turn:
 last increment(inc) (6 here) is what we need for first factor of next turn
 """
 function pf_wheel(n::Integer)::Vector{Integer}
-  base = (2, 3, 5,)
-  base_prod = reduce(*, base; init=1)
-  inc  = [4, 2, 4, 2, 4, 6, 2, 6]
-  lim = length(inc)
+    lim = length(WHEEL_INC)
 
-  divisors::Vector{UInt128} = [1, ]
-  for q in base
-    while true
-      nq, r = divrem(n, q)
-      r ≠ 0 && break
+    divisors::Vector{UInt128} = [1]
+    for q in BASE
+        while true
+            nq, r = divrem(n, q)
+            r ≠ 0 && break
 
-      push!(divisors, q)
-      n = nq
+            push!(divisors, q)
+            n = nq
+        end
     end
-  end
 
-  q, ix = 7, 1
-  while q * q ≤ n
-    nq, r = divrem(n, q)
+    q, ix = 7, 1
+    while q ≤ n ÷ q
+        nq, r = divrem(n, q)
 
-    if r == 0
-      push!(divisors, q)
-      n = nq
-    else
-      q += inc[ix]
-      ix = ix < lim ? ix + 1 : 1
+        if r == 0
+            push!(divisors, q)
+            n = nq
+        else
+            q += WHEEL_INC[ix]
+            ix = ix < lim ? ix + 1 : 1
+        end
     end
-  end
 
-  !isone(n) && push!(divisors, n)
-  return divisors[2:end]
+    !isone(n) && push!(divisors, n)
+    return divisors[2:end]
 end
