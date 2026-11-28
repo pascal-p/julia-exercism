@@ -4,11 +4,21 @@ const WHEEL_INC::NTuple = (4, 2, 4, 2, 4, 6, 2, 6)
 
 
 ## entry point => dispatch
+"""
+    prime_factors(n::T; algo = pf_wheel) where {T<:Integer}
+
+Compute the prime factorization of a positive integer `n`, returning a
+`Vector{T}` of its prime factors in non-decreasing order.
+
+Throws a `DomainError` if `n ≤ 0`. Returns an empty `T[]` for `n == 1`.
+The `algo` keyword selects the factorization strategy (`pf_wheel` by default,
+or `pf_trial`).
+"""
 function prime_factors(n::T; algo = pf_wheel) where {T<:Integer}
     n ≤ 0 && throw(DomainError(n, "n $(n) should be a positive integer"))
 
     isone(n) && return T[]
-    n ∈ FIRST_PRIMES && return [n]
+    n ∈ FIRST_PRIMES && return T[n]
 
     algo(n)
 end
@@ -89,7 +99,7 @@ function pf_wheel(n::T) where {T<:Integer}
             n = nq
         else
             q += WHEEL_INC[ix]
-            ix = ix < lim ? ix + 1 : 1
+            ix = mod1(ix + 1, lim)  # mod1(x, m) returns values in 1:m
         end
     end
 
