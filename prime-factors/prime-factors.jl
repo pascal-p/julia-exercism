@@ -62,19 +62,14 @@ end
 """
 cf. https://en.wikipedia.org/wiki/Wheel_factorization
 
-Given a basis: (2, 3, 5,) we obtain a first turn (of divisors):
-  (7, 11, 13, 17, 19, 23, 29, 31)
+Given a basis: (2, 3, 5,) we obtain
+- a 1st turn (of divisors): (7, 11, 13, 17, 19, 23, 29, 31)
+- a 2nd turn is produced by adding 30 (Σ(basis)) to 1st turn:  (37, 41, 43, 47, 49, 53, 59, 61)
+- a 3rd turn: (67, 71, 73, 77, 79, 83, 89, 91)
+- and so forth...
 
-a second turn is produced by adding 30 (Σ(basis)) to first turn:
-  (37, 41, 43, 47, 49, 53, 59, 61)
-
-a third turn: (67, 71, 73, 77, 79, 83, 89, 91)
-And so forth...
-
-One can notice the same gap between factors in each turn:
-(4, 2, 4, 2, 4, 6, 2, 6)
-
-last increment(inc) (6 here) is what we need for first factor of next turn
+One can notice the same gap between factors in each turn: (4, 2, 4, 2, 4, 6, 2, 6)
+Last increment(WHEEL_INC) (i.e. 6) is what we need for first factor of next turn
 """
 function pf_wheel(n::T) where {T<:Integer}
     lim = length(WHEEL_INC)
