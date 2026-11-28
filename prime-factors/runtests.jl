@@ -58,8 +58,29 @@ for algo in (pf_trial, pf_wheel)
         @test prime_factors(93819012551; algo) == [11, 9539, 894119]
     end
 
-    @testset "factors of a huge integer 2^64 - 1" begin
+    @testset "factors of a huge integer 2^128 - 1" begin
         @test prime_factors(UInt128(340282366920938463463374607431768211455); algo) ==
               [3, 5, 17, 257, 641, 65537, 274177, 6_700_417, 672_804_213_107_21]
+    end
+
+    @testset "domain errors" begin
+        @test_throws DomainError prime_factors(0; algo)
+        @test_throws DomainError prime_factors(-12; algo)
+        err = try
+            prime_factors(0; algo)
+        catch e
+            e
+        end
+        @test err isa DomainError && err.val == 0
+    end
+
+    @testset "concrete return types & BigInt" begin
+        @test prime_factors(1; algo) isa Vector{Int}
+        @test prime_factors(2; algo) isa Vector{Int}
+        @test prime_factors(60; algo) isa Vector{Int}
+        @test prime_factors(Int32(60); algo) isa Vector{Int32}
+        @test prime_factors(UInt8(60); algo) isa Vector{UInt8}
+        @test prime_factors(BigInt(2)^130; algo) == fill(BigInt(2), 130)
+        @test prime_factors(BigInt(2)^130; algo) isa Vector{BigInt}
     end
 end
