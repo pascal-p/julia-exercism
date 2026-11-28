@@ -41,12 +41,8 @@ function pf_trial(n::T) where {T<:Integer}
         n
     end
 
-    d = isodd(n) ? T(3) : T(2)
-
-    if d == T(2)
-        n = try_div(n, d)
-        d += T(1)
-    end
+    n = try_div(n, T(2))
+    d = T(3)
 
     while d ≤ n ÷ d  # overflow-safe
         n = try_div(n, d)
